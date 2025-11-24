@@ -6,8 +6,10 @@ if status is-interactive
     set -gx CLICOLOR yes
 
     abbr --add c bat
+    abbr --add cm chezmoi
     abbr --add gst git status
     abbr --add gl git log --oneline -n 20
+    abbr --add gp git push
     abbr --add e $EDITOR
 end
 
