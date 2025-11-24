@@ -12,3 +12,5 @@ hk.pkl
 
 # Machine-specific mise tools
 .config/mise/config.local.toml
+.config/fish/fish_variables
+.config/mise/config.local.toml
