@@ -1,14 +1,10 @@
 function chezmoi-status
+    # Get unmanaged files in managed directories (excludes ignored files)
     set -l managed_dirs (chezmoi managed | grep -o '^\.config/[^/]*' | sort -u)
-    
-    # Get files on disk
-    set -l disk_files (for dir in $managed_dirs; find ~/$dir -type f 2>/dev/null; end | sed "s|$HOME/||" | sort)
-    
-    # Get managed files
-    set -l managed_files (chezmoi managed | sort)
-    
-    # Find untracked (in disk but not managed)
-    set -l untracked (comm -23 (printf '%s\n' $disk_files | psub) (printf '%s\n' $managed_files | psub))
+    set -l untracked
+    for dir in $managed_dirs
+        set -a untracked (chezmoi unmanaged ~/$dir 2>/dev/null | sed "s|$HOME/||")
+    end
     
     # Git status for modifications
     set -l git_status (git -C ~/.local/share/chezmoi status --porcelain 2>/dev/null)
