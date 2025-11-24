@@ -26,6 +26,16 @@ if ! command -v fish &> /dev/null; then
     fi
 fi
 
+# Set fish as default shell
+if [[ "$SHELL" != *fish ]]; then
+    echo "🐚 Setting fish as default shell..."
+    fish_path=$(which fish)
+    if ! grep -q "$fish_path" /etc/shells; then
+        echo "$fish_path" | sudo tee -a /etc/shells > /dev/null
+    fi
+    sudo chsh -s "$fish_path" "$USER"
+fi
+
 # Apply dotfiles
 echo "📂 Applying dotfiles..."
 if [ -d "$HOME/.local/share/chezmoi/.git" ]; then
