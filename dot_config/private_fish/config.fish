@@ -13,6 +13,11 @@ if status is-interactive
     abbr --add e $EDITOR
 end
 
-/Users/jkp/.local/bin/mise activate fish | source # added by https://mise.run/fish
-zoxide init fish --cmd n | source
-source ~/.config/op/plugins.sh
+# Activate mise if available
+command -v mise &>/dev/null && mise activate fish | source
+
+# Initialize zoxide if available
+command -v zoxide &>/dev/null && zoxide init fish --cmd n | source
+
+# Source 1Password plugins if available (macOS)
+test -f ~/.config/op/plugins.sh && source ~/.config/op/plugins.sh
