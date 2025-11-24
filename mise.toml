@@ -6,5 +6,60 @@ gitleaks = "latest"
 hk = "latest"
 pkl = "latest"
 
+[tasks.test-bootstrap]
+description = "Test bootstrap in a fresh Docker container using local dotfiles"
+run = """
+docker run --rm \
+  -v "$PWD:/dotfiles:ro" \
+  -e DEBIAN_FRONTEND=noninteractive \
+  ubuntu:latest \
+  bash -c "
+    set -e
+    echo '🧪 Setting up test environment...'
+    apt-get update -qq 2>&1 > /dev/null
+    apt-get install -y -qq apt-utils 2>&1 > /dev/null
+    apt-get install -y -qq curl git sudo 2>&1 > /dev/null
+    useradd -m -s /bin/bash testuser
+    echo 'testuser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+    echo
+    su - testuser -c '
+      set -e
+      export PATH=\\$HOME/bin:\\$HOME/.local/bin:\\$PATH
+      export DEBIAN_FRONTEND=noninteractive
+
+      echo \\\"🚀 Running bootstrap as testuser...\\\"
+      echo
+
+      # Install chezmoi
+      echo \\\"📦 Installing chezmoi...\\\"
+      curl -fsLS get.chezmoi.io | sh 2>&1 | grep -E \\\"(installed|error)\\\" || true
+
+      # Install fish
+      echo \\\"🐚 Installing fish shell...\\\"
+      sudo apt-get update -qq > /dev/null 2>&1
+      sudo apt-get install -y -qq fish > /dev/null 2>&1
+
+      # Apply dotfiles from local directory
+      echo \\\"📂 Applying dotfiles...\\\"
+      chezmoi init --apply /dotfiles
+
+      # Install mise
+      echo \\\"🔧 Installing mise...\\\"
+      curl -fsSL https://mise.run | sh 2>&1 | grep -E \\\"(installed|error)\\\" || true
+
+      # Install tools and setup git hooks
+      echo \\\"⚙️  Installing development tools and git hooks...\\\"
+      cd ~/.local/share/chezmoi
+      ~/.local/bin/mise trust 2>&1 | grep -v \\\"^mise\\\" || true
+      ~/.local/bin/mise install
+
+      echo
+      echo \\\"✅ Bootstrap test completed successfully!\\\"
+      echo \\\"✅ Git hooks installed:\\\"
+      ls -la ~/.local/share/chezmoi/.git/hooks/pre-commit 2>&1 | grep pre-commit || echo \\\"  ❌ No hooks found\\\"
+    '
+  "
+"""
+
 [hooks]
 postinstall = "hk install --mise"
