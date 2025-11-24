@@ -22,6 +22,35 @@ This will:
 - **Fish Shell**: with fisher, mise, zoxide, and 1Password integration
 - **Git Hooks**: Pre-commit secret scanning with gitleaks
 
+## Development
+
+### Testing Bootstrap
+
+Test the bootstrap script in a fresh Docker container:
+
+```bash
+mise run test-bootstrap
+```
+
+This tests with your local uncommitted changes, ensuring the bootstrap works before you commit.
+
+### Pre-commit Hooks
+
+This repository uses `hk` to manage git hooks:
+
+- **Fast hooks** (always run): gitleaks scans for secrets
+- **Slow hooks** (optional): Full bootstrap test in Docker
+
+```bash
+# Normal commit - only runs gitleaks (fast)
+git commit
+
+# Run with slow tests (includes Docker bootstrap test)
+hk run pre-commit --slow
+# or
+hk run pre-commit -s
+```
+
 ## Manual Setup
 
 If you already have chezmoi installed:

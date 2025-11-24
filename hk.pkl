@@ -7,6 +7,11 @@ hooks {
                 check = "gitleaks protect --staged --verbose"
                 exclusive = true
             }
+            ["test-bootstrap"] {
+                check = "mise run test-bootstrap"
+                exclusive = true
+                profiles = List("slow")
+            }
         }
     }
 }

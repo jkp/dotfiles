@@ -29,8 +29,22 @@ fi
 # Apply dotfiles
 echo "📂 Applying dotfiles..."
 if [ -d "$HOME/.local/share/chezmoi/.git" ]; then
-    chezmoi update
+    # Already initialized - update from wherever it was initialized from
+    if [ -n "$DOTFILES_SOURCE" ]; then
+        # Local source: use apply (update expects git remote)
+        chezmoi apply --source "$DOTFILES_SOURCE"
+    else
+        # Normal case: pull from GitHub
+        chezmoi update
+    fi
+elif [ -n "$DOTFILES_SOURCE" ]; then
+    # First time with local source - copy to standard location
+    echo "Copying dotfiles from $DOTFILES_SOURCE..."
+    mkdir -p "$HOME/.local/share"
+    cp -r "$DOTFILES_SOURCE" "$HOME/.local/share/chezmoi"
+    chezmoi apply
 else
+    # First time from GitHub
     chezmoi init --apply jkp
 fi
 

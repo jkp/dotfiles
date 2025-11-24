@@ -26,38 +26,24 @@ docker run --rm \
       set -e
       export PATH=\\$HOME/bin:\\$HOME/.local/bin:\\$PATH
       export DEBIAN_FRONTEND=noninteractive
+      export DOTFILES_SOURCE=/dotfiles
 
-      echo \\\"🚀 Running bootstrap as testuser...\\\"
+      # Run bootstrap script with local source
+      bash /dotfiles/bootstrap.sh
+
+      echo
+      echo \\\"✅ First bootstrap completed successfully!\\\"
       echo
 
-      # Install chezmoi
-      echo \\\"📦 Installing chezmoi...\\\"
-      curl -fsLS get.chezmoi.io | sh 2>&1 | grep -E \\\"(installed|error)\\\" || true
-
-      # Install fish
-      echo \\\"🐚 Installing fish shell...\\\"
-      sudo apt-get update -qq > /dev/null 2>&1
-      sudo apt-get install -y -qq fish > /dev/null 2>&1
-
-      # Apply dotfiles from local directory
-      echo \\\"📂 Applying dotfiles...\\\"
-      chezmoi init --apply /dotfiles
-
-      # Install mise
-      echo \\\"🔧 Installing mise...\\\"
-      curl -fsSL https://mise.run | sh 2>&1 | grep -E \\\"(installed|error)\\\" || true
-
-      # Install tools and setup git hooks
-      echo \\\"⚙️  Installing development tools and git hooks...\\\"
-      cd ~/.local/share/chezmoi
-      ~/.local/bin/mise trust 2>&1 | grep -v \\\"^mise\\\" || true
-      ~/.local/bin/mise install
+      # Test idempotency - run again
+      echo \\\"🔄 Testing idempotency - running bootstrap again...\\\"
+      bash /dotfiles/bootstrap.sh
 
       echo
       echo \\\"✅ Bootstrap test completed successfully!\\\"
       echo \\\"✅ Git hooks installed:\\\"
       ls -la ~/.local/share/chezmoi/.git/hooks/pre-commit 2>&1 | grep pre-commit || echo \\\"  ❌ No hooks found\\\"
-    '
+    ' || exit 1
   "
 """
 
