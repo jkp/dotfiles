@@ -1,5 +1,6 @@
 if status is-interactive
-    set -gx EDITOR ~/.bin/edit
+    # Default EDITOR (override locally with: set -U EDITOR <path>)
+    set -gx EDITOR nvim
     set -gx VISUAL $EDITOR
     set -gx PAGER less
     set -gx LESS '-F -g -i -M -R -S -w -X -z-4'
