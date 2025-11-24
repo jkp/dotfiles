@@ -1,0 +1,8 @@
+add_newline = true
+
+[python]
+symbol = " "
+pyenv_version_name = true
+
+[gcloud]
+format = 'on [$symbol$account(\($project\))]($style) '

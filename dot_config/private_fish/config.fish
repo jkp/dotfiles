@@ -1,6 +1,5 @@
 if status is-interactive
-    # Default EDITOR (override locally with: set -U EDITOR <path>)
-    set -gx EDITOR nvim
+    set -gx EDITOR ~/.bin/edit
     set -gx VISUAL $EDITOR
     set -gx PAGER less
     set -gx LESS '-F -g -i -M -R -S -w -X -z-4'
@@ -16,6 +15,9 @@ end
 
 # Activate mise if available
 command -v mise &>/dev/null && mise activate fish | source
+
+# Use a fancier prompt if possible
+command -v starship &>/dev/null && starship init fish | source
 
 # Initialize zoxide if available
 command -v zoxide &>/dev/null && zoxide init fish --cmd n | source
