@@ -22,28 +22,7 @@ docker run --rm \
     useradd -m -s /bin/bash testuser
     echo 'testuser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
     echo
-    su - testuser -c '
-      set -e
-      export PATH=\\$HOME/bin:\\$HOME/.local/bin:\\$PATH
-      export DEBIAN_FRONTEND=noninteractive
-      export DOTFILES_SOURCE=/dotfiles
-
-      # Run bootstrap script with local source
-      bash /dotfiles/bootstrap.sh
-
-      echo
-      echo \\\"✅ First bootstrap completed successfully!\\\"
-      echo
-
-      # Test idempotency - run again
-      echo \\\"🔄 Testing idempotency - running bootstrap again...\\\"
-      bash /dotfiles/bootstrap.sh
-
-      echo
-      echo \\\"✅ Bootstrap test completed successfully!\\\"
-      echo \\\"✅ Git hooks installed:\\\"
-      ls -la ~/.local/share/chezmoi/.git/hooks/pre-commit 2>&1 | grep pre-commit || echo \\\"  ❌ No hooks found\\\"
-    ' || exit 1
+    su - testuser -c 'bash /dotfiles/test-bootstrap.sh'
   "
 """
 

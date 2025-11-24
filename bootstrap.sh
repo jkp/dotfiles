@@ -11,7 +11,7 @@ echo
 # Install chezmoi
 if ! command -v chezmoi &> /dev/null; then
     echo "📦 Installing chezmoi..."
-    curl -fsLS get.chezmoi.io | sh 2>&1 | grep -E "(installed|error)" || true
+    curl -fsLS get.chezmoi.io | sh 2>&1 | grep -E "(installed|error)"
 fi
 
 # Install fish (detect OS)

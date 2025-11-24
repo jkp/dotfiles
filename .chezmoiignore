@@ -2,6 +2,10 @@ logs
 README.md
 CLAUDE.md
 bootstrap.sh
+test-bootstrap.sh
 mise.toml
 hk.pkl
 .git
+
+# Tool state files (not config)
+.config/fish/fish_variables
