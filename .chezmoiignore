@@ -9,3 +9,6 @@ hk.pkl
 
 # Tool state files (not config)
 .config/fish/fish_variables
+
+# Machine-specific mise tools
+.config/mise/config.local.toml

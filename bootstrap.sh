@@ -70,6 +70,11 @@ cd ~/.local/share/chezmoi
 mise trust 2>&1 | grep -v "^mise" || true
 mise install
 
+# Install global mise tools (from ~/.config/mise/config.toml)
+echo "⚙️  Installing global mise tools..."
+cd ~
+mise install
+
 echo
 echo "✅ Bootstrap complete!"
 echo

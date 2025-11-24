@@ -1,0 +1,17 @@
+# Minimal global tools for all machines
+# Pinned versions for reproducibility
+# For machine-specific tools, create ~/.config/mise/config.local.toml
+[tools]
+bat = "0.26.0"
+fd = "10.3.0"
+jq = "1.8.1"
+neovim = "0.11.5"
+rg = "15.1.0"
+zoxide = "0.9.8"
+
+[tasks.llm-context]
+run = "repomix --style plain --output-show-line-numbers -o code.llm.txt"
+
+[settings]
+experimental = true
+idiomatic_version_file_enable_tools = []
