@@ -25,8 +25,18 @@ After `mise install`, the pre-commit hook automatically scans for secrets using 
 
 ```bash
 chezmoi apply               # Apply changes to home directory
-chezmoi edit <target>       # Edit a managed file
+chezmoi edit <target>       # Edit a managed file (applies on save)
 chezmoi cd                  # Enter source directory for git operations
 mise install                # Install tools and setup git hooks
 mise trust                  # Trust mise.toml (required once)
 ```
+
+## Editing Managed Files (Agents)
+
+**IMPORTANT:** When modifying chezmoi-managed files, use this workflow:
+
+1. Use the Edit/Write tool to modify the source file in `~/.local/share/chezmoi/dot_*`
+2. **ALWAYS** run `chezmoi apply` immediately after editing the source file
+3. Verify the changes with `chezmoi status` (should show clean state)
+
+**DON'T:** Edit files in `~/.local/share/chezmoi/dot_*` without running `chezmoi apply` - this creates a confusing state where the source is updated but the deployed file in the home directory is not.
