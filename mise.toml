@@ -6,8 +6,8 @@ gitleaks = "latest"
 hk = "latest"
 pkl = "latest"
 
-[tasks.test-bootstrap]
-description = "Test bootstrap in a fresh Docker container using local dotfiles"
+[tasks.test]
+description = "Test dotfiles in a fresh Docker container using local source"
 run = """
 docker run --rm \
   -v "$PWD:/dotfiles:ro" \
@@ -22,7 +22,7 @@ docker run --rm \
     useradd -m -s /bin/bash testuser
     echo 'testuser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
     echo
-    su - testuser -c 'bash /dotfiles/test-bootstrap.sh'
+    su - testuser -c 'bash /dotfiles/test.sh'
   "
 """
 

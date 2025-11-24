@@ -2,7 +2,7 @@ logs
 README.md
 CLAUDE.md
 bootstrap.sh
-test-bootstrap.sh
+test.sh
 mise.toml
 hk.pkl
 .git
