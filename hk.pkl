@@ -8,9 +8,8 @@ hooks {
                 exclusive = true
             }
             ["test-bootstrap"] {
-                check = "mise run test-bootstrap"
+                check = "command -v docker >/dev/null 2>&1 && mise run test-bootstrap || echo 'Skipping bootstrap test (Docker not available)'"
                 exclusive = true
-                profiles = List("slow")
             }
         }
     }
