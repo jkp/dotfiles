@@ -25,10 +25,12 @@ function chezmoi-commit
     # Commit if there are changes
     if test -n "$(git -C ~/.local/share/chezmoi status --porcelain)"
         git -C ~/.local/share/chezmoi add -A
-        git -C ~/.local/share/chezmoi commit
-        
-        read -P "Push? (y/n) " push
-        test "$push" = "y" && git -C ~/.local/share/chezmoi push
+        if git -C ~/.local/share/chezmoi commit
+            read -P "Push? (y/n) " push
+            test "$push" = "y" && git -C ~/.local/share/chezmoi push
+        else
+            echo "Commit aborted"
+        end
     else
         echo "Nothing to commit"
     end
