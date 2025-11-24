@@ -1,0 +1,7 @@
+[tools]
+gitleaks = "latest"
+hk = "latest"
+pkl = "latest"
+
+[hooks]
+postinstall = "hk install --mise"
