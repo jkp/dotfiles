@@ -28,7 +28,11 @@ fi
 
 # Apply dotfiles
 echo "📂 Applying dotfiles..."
-chezmoi init --apply jkp
+if [ -d "$HOME/.local/share/chezmoi/.git" ]; then
+    chezmoi update
+else
+    chezmoi init --apply jkp
+fi
 
 # Install mise
 if ! command -v mise &> /dev/null; then
