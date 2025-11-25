@@ -1,0 +1,46 @@
+[user]
+    name = {{ .name }}
+    email = {{ .email }}
+    signingkey = {{ .signingkey }}
+
+[branch]
+    autosetuprebase = always
+
+[color]
+    status = auto
+    diff = auto
+    branch = auto
+    ui = true
+
+[merge]
+    # http://psung.blogspot.com/2011/02/reducing-merge-headaches-git-meets.html
+    conflictstyle = diff3
+
+[core]
+    excludesfile = ~/.config/git/ignore
+    trustctime = false
+    editor = edit
+
+[apply]
+    whitespace = nowarn
+
+[push]
+    default = current
+
+[rerere]
+    enabled = 1
+
+[alias]
+    ls = "!f() { git show --pretty=\"format:\" --name-only $1 | grep -v \"^$\"; }; f"
+    top = "!f() { git shortlog --numbered --summary | head -n 15; }; f"
+    cleanup-branches = !git branch | grep -v \"\\*\" | awk \"{ print $1 }\" | xargs git branch -d
+    identity = "! git config user.name \"$(git config user.$1.name)\"; git config user.email \"$(git config user.$1.email)\"; :"
+
+[rebase]
+    autosquash = true
+
+[filter "lfs"]
+    clean = git-lfs clean -- %f
+    smudge = git-lfs smudge -- %f
+    process = git-lfs filter-process
+    required = true
