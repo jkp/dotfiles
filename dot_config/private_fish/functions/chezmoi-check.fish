@@ -11,7 +11,7 @@ function chezmoi-check
 
     if test -n "$untracked"
         echo "⚠️  untracked dotfiles:"
-        printf '    %s\n' $untracked
+        printf '    ~/%s\n' $untracked
     end
 
     if test -n "$git_status"
