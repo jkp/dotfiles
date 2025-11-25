@@ -1,0 +1,65 @@
+# explicit ignores here
+.#*
+.DS_Store
+.Trash/
+.authinfo
+.balena/
+.bash_history
+.bash_sessions/
+.cache
+.chpwd-recent-dirs
+.config/docker/config.json
+.emacs.d/projectile-bookmarks.eld
+.emacs.d/projectile.cache
+.emacs.d/recentf
+.history
+.pyenv
+.ssh
+.terminfo/
+.tmux/plugins
+.tmux/resurrect/
+.zcompdump
+.zinit/
+.zsh_history
+
+# Environment variables
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+
+# Unit test / coverage reports
+.tox/
+.nox/
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Ruff
+.ruff_cache/
+
+# IDE
+.aider.*
+
+# Logs
+logs/
+*.log
+
+# LLM
+code.llm.txt
+
+**/.claude/settings.local.json
