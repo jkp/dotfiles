@@ -1,4 +1,0 @@
-local wezterm = require("wezterm")
-local config = {}
-config.default_prog = { "/opt/homebrew/bin/fish" }
-return config
