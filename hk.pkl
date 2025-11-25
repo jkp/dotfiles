@@ -8,6 +8,7 @@ hooks {
                 exclusive = true
             }
             ["test"] {
+                glob = List("dot_*/**", "bootstrap.sh", "test.sh", "mise.toml")
                 check = "command -v docker >/dev/null 2>&1 && mise run test || echo 'Skipping test (Docker not available)'"
                 exclusive = true
             }
