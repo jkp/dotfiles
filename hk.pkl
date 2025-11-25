@@ -2,6 +2,7 @@ amends "package://github.com/jdx/hk/releases/download/v1.2.0/hk@1.2.0#/Config.pk
 
 hooks {
     ["pre-commit"] {
+        stash = "git"
         steps {
             ["gitleaks"] {
                 check = "gitleaks protect --staged --verbose"
