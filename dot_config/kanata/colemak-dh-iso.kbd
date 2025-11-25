@@ -1,0 +1,128 @@
+;;
+;; Colemak Mod-DH keyboard layout for Kanata (ISO keyboards)
+;;
+;; The Colemak Mod-DH layout is an improved version of Colemak that addresses 
+;; the D and H key positions for better comfort on row-staggered keyboards.
+;; This ISO version is designed for European/UK keyboards with the extra key.
+;; 
+;; Visit https://colemakmods.github.io/mod-dh/ for more information.
+;;
+;; This configuration includes:
+;; - Standard Colemak-DH layout for ISO keyboards
+;; - Colemak-DHk variant (k and m swapped)
+;; - Optional Extend layer for navigation and function keys
+;; - Layer switching via Caps Lock + number keys
+;;
+
+(defcfg
+  ;; ** For Linux **
+  ;; input  (device-file "/dev/input/by-id/usb-04d9_USB-HID_Keyboard-event-kbd")
+  ;; output (uinput-sink "Kanata Colemak-DH ISO output")
+
+  ;; ** For Windows **
+  ;; input  (low-level-hook)
+  ;; output (send-event-sink)
+
+  ;; ** For MacOS **
+  ;; input  (iokit-name "my-keyboard-product-string")
+  ;; output (kext)
+
+  process-unmapped-keys   yes
+  concurrent-tap-hold     yes
+  allow-hardware-repeat   no
+  macos-dev-names-include (
+      "Apple Internal Keyboard / Trackpad"
+      "Jamie’s Magic Keyboard" 
+  )
+)
+
+;; Source layer - defines which keys are intercepted (ISO layout)
+(defsrc
+  esc     f1   f2   f3   f4   f5   f6   f7   f8   f9   f10  f11  f12
+  nubs    1    2    3    4    5    6    7    8    9    0    -    =    bspc
+  tab     q    w    e    r    t    y    u    i    o    p    [    ]
+  caps    a    s    d    f    g    h    j    k    l    ;    '    \    ret
+  lsft    grv  z    x    c    v    b    n    m    ,    .    /    rsft
+          lctl lalt lmet           spc            rmet ralt
+)
+
+;; Colemak Mod-DH main layer (ISO)
+(deflayer colemak-dh
+  esc     brdn brup @ext sls  dtn  dnd  prev pp   next mute vold volu
+  nubs    1    2    3    4    5    6    7    8    9    0    -    =    bspc
+  tab     q    w    f    p    b    j    l    u    y    ;    [    ]
+  bspc    @a   @r   @s   @t   g    m    @n   e    @i   @o   '    \    ret
+  lsft    z    x    c    d    v    grv  k    h    ,    .    /    rsft
+          lctl lalt @lmet          @spc           @rmet ralt
+)
+
+;; QWERTY layer for comparison/sallback (ISO)
+(deflayer qwerty
+  esc     f1   f2   @ext f4   f5   f6   f7   f8   f9   f10  f11  f12
+  nubs    1    2    3    4    5    6    7    8    9    0    -    =    bspc
+  tab     q    w    e    r    t    y    u    i    o    p    [    ]
+  caps    a    s    d    f    g    h    j    k    l    ;    '    \    ret
+  lsft    grv  z    x    c    v    b    n    m    ,    .    /    rsft
+          lctl lalt lmet           @spc           rmet ralt
+)
+
+;; Layer switching layer
+(deflayer cmd-override
+  _       _    _    _    _    _    _    _    _    _    _    _    _
+  _       _    _    _    _    _    _    _    _    _    _    _    _    _
+  _       _    _    _    r    _    _    _    _    _    _    _    _
+  _       _    _    _    _    _    _    _    _    _    _    _    _    _
+  _       _    _    _    c    _    _    _    _    _    _    _    _
+          _    _    lmet           _              rmet _      
+)
+
+
+;; Nav layer
+(deflayer nav 
+  _       _    _    _    _    _    _    _    _    _    _    _    _
+  _       _    _    _    _    _    _    _    _    _    _    _    _    _
+  _       _    _    _    _    _    _    _    _    _    _    _    _   
+  _       _    _    _    _    _    ←    ↓    ↑    →    _    _    _    -
+  _       _    _    _    _    _    _    _    _    _    _    _    _ 
+          _    _    _              _              _    _
+)
+
+;; Layer switching layer
+(deflayer layers
+  _       _    _    _    _    _    _    _    _    _    _    _    _
+  _       @lq  @lh  _    _    _    _    _    _    _    _    _    _    _
+  _       _    _    _    _    _    _    _    _    _    _    _    _
+  _       _    _    _    _    _    _    _    _    _    _    _    _    _
+  _       _    _    _    _    _    _    _    _    _    _    _    _
+          _    _    _              _              _    _      
+)
+
+;; Aliases for cleaner layer definitions
+(defalias
+  ;; Extend layer toggle on Caps Lock (tap for , hold for Extend)
+  ext  (layer-switch layers)
+  
+  ;; Layer switching aliases
+  lq   (layer-switch qwerty)      ;; Switch to QWERTY ISO
+  lh   (layer-switch colemak-dh)  ;; Switch to Colemak-DH ISO
+
+
+  ;; Home row mods - Left hand (Control, Option, Command, Shift)
+  a    (tap-hold 300 200 a lctl)
+  r    (tap-hold 300 200 r lalt)
+  s    (tap-hold 300 200 s (layer-toggle nav))
+  t    (tap-hold 300 200 t lsft)
+
+  ;; Home row mods - Right hand (Shift, Command, Option, Control)
+  n    (tap-hold 300 200 n rsft)
+  ;;e  (tap-hold 300 200 e ???)
+  i    (tap-hold 300 200 i ralt)
+  o    (tap-hold 300 200 o rctl)
+
+  ;;  
+  meh  (multi lctl lalt lsft)
+  spc  (tap-hold 300 200 spc @meh)
+
+  lmet (multi lmet (layer-while-held cmd-override))
+  rmet (multi rmet (layer-while-held cmd-override))
+)
