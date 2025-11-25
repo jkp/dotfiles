@@ -6,6 +6,7 @@ test.sh
 mise.toml
 hk.pkl
 .git
+**/.claude
 
 # Tool state files (not config)
 .config/fish/fish_variables
