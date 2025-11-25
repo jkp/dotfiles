@@ -35,8 +35,8 @@ mise trust                  # Trust mise.toml (required once)
 
 **IMPORTANT:** When modifying chezmoi-managed files, use this workflow:
 
-1. Use the Edit/Write tool to modify the source file in `~/.local/share/chezmoi/dot_*`
-2. **ALWAYS** run `chezmoi apply` immediately after editing the source file
+1. Use the Edit/Write tool to modify the actual file in the home directory (e.g., `~/.config/fish/functions/my-function.fish`)
+2. **ALWAYS** run `chezmoi re-add` immediately after editing to sync changes back to the source repository
 3. Verify the changes with `chezmoi status` (should show clean state)
 
-**DON'T:** Edit files in `~/.local/share/chezmoi/dot_*` without running `chezmoi apply` - this creates a confusing state where the source is updated but the deployed file in the home directory is not.
+**WHY:** Editing the deployed file and re-adding ensures the running system and source repository stay in sync. Editing source files directly can create drift if `chezmoi apply` fails or is forgotten.
