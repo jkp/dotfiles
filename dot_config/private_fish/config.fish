@@ -5,19 +5,20 @@ if status is-interactive
     set -gx LESS '-F -g -i -M -R -S -w -X -z-4'
     set -gx CLICOLOR yes
 
+    abbr --add e $EDITOR
     abbr --add c bat
+
     abbr --add cm chezmoi
+    abbr --add cmc chezmoi-check
+
     abbr --add gst git status
     abbr --add gl git log --oneline -n 20
     abbr --add gp git push
-    abbr --add e $EDITOR
+    abbr --add gc gib commit
 end
 
 # Activate mise if available
 command -v mise &>/dev/null && mise activate fish | source
-
-# Use a fancier prompt if possible
-command -v starship &>/dev/null && starship init fish | source
 
 # Initialize zoxide if available
 command -v zoxide &>/dev/null && zoxide init fish --cmd n | source

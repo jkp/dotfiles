@@ -1,23 +1,23 @@
-function chezmoi-status
+function chezmoi-check
     # Get unmanaged files in managed directories (excludes ignored files)
     set -l managed_dirs (chezmoi managed | grep -o '^\.config/[^/]*' | sort -u)
     set -l untracked
     for dir in $managed_dirs
         set -a untracked (chezmoi unmanaged ~/$dir 2>/dev/null | sed "s|$HOME/||")
     end
-    
+
     # Git status for modifications
     set -l git_status (git -C ~/.local/share/chezmoi status --porcelain 2>/dev/null)
-    
+
     if test -n "$untracked"
         echo "⚠️  untracked dotfiles:"
         printf '    %s\n' $untracked
     end
-    
+
     if test -n "$git_status"
         echo "⚠️  uncommitted changes in chezmoi repo"
     end
-    
+
     if test -n "$untracked" -o -n "$git_status"
         echo "   run: chezmoi-commit"
     end

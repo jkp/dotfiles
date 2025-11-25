@@ -1,1 +1,1 @@
-chezmoi-status
+chezmoi-check
