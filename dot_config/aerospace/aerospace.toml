@@ -104,6 +104,9 @@ outer.right = 5
    # Launch and configure keymapp for external monitor
    alt-ctrl-shift-cmd-v = 'exec-and-forget ~/.config/aerospace/toggle-keymapp.sh'
 
+   # Cleanup phantom windows
+   alt-ctrl-shift-c = 'exec-and-forget ~/.config/aerospace/cleanup-phantom-windows.sh'
+
 # Floating navigation mode - can focus any window including tiled
 [mode.floating-nav.binding]
    alt-ctrl-shift-h = ["focus left", "mode main"]
