@@ -4,7 +4,7 @@ function chezmoi-check
     set -l untracked
     for dir in $managed_dirs
         for item in (chezmoi unmanaged ~/$dir 2>/dev/null)
-            test -f $item && set -a untracked (echo $item | sed "s|$HOME/||")
+            test -f ~/$item && set -a untracked $item
         end
     end
 
@@ -17,7 +17,8 @@ function chezmoi-check
     end
 
     if test -n "$git_status"
-        echo "⚠️  uncommitted changes in chezmoi repo"
+        echo "⚠️  uncommitted changes in chezmoi repo:"
+        printf '    %s\n' $git_status
     end
 
     if test -n "$untracked" -o -n "$git_status"
