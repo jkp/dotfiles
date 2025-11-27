@@ -19,6 +19,11 @@ config.inactive_pane_hsb = {
 -- =============================================================================
 
 config.default_prog = { "/opt/homebrew/bin/fish", "-l" }
+config.unix_domains = {
+  {
+    name = "unix",
+  },
+}
 
 -- =============================================================================
 -- BEHAVIOR
@@ -31,6 +36,45 @@ config.quick_select_alphabet = "arstqwfpzxcvneioluymdhgjbk"
 config.send_composed_key_when_left_alt_is_pressed = false
 config.send_composed_key_when_right_alt_is_pressed = false
 
+-- =============================================================================
+-- HELPERS
+-- =============================================================================
+
+local workspace_switcher = wezterm.action_callback(function(window, pane)
+  local choices = {
+    { label = "+ Create new workspace", id = "new" },
+  }
+
+  for _, name in ipairs(wezterm.mux.get_workspace_names()) do
+    table.insert(choices, { label = name, id = name })
+  end
+
+  window:perform_action(
+    wezterm.action.InputSelector({
+      title = "Switch/Create Workspace",
+      choices = choices,
+      fuzzy = true,
+      action = wezterm.action_callback(function(inner_window, inner_pane, id, label)
+        if id == "new" then
+          inner_window:perform_action(
+            wezterm.action.PromptInputLine({
+              description = "Enter new workspace name",
+              action = wezterm.action_callback(function(w, p, line)
+                if line and #line > 0 then
+                  w:perform_action(wezterm.action.SwitchToWorkspace({ name = line }), p)
+                end
+              end),
+            }),
+            inner_pane
+          )
+        elseif id then
+          inner_window:perform_action(wezterm.action.SwitchToWorkspace({ name = id }), inner_pane)
+        end
+      end),
+    }),
+    pane
+  )
+end)
 -- =============================================================================
 -- KEY BINDINGS
 -- =============================================================================
@@ -96,18 +140,21 @@ config.keys = {
 
   -- Buffer Management
   { key = "k", mods = "CMD|SHIFT", action = wezterm.action.ClearScrollback("ScrollbackAndViewport") },
+  { key = "x", mods = "CMD|SHIFT", action = wezterm.action.ActivateCopyMode },
 
   -- Workspaces
-
   {
     key = "o",
-    mods = "CMD", -- different mod to avoid conflict
-    action = wezterm.action.ShowLauncherArgs({
-      flags = "FUZZY|WORKSPACES",
-    }),
+    mods = "CMD",
+    action = workspace_switcher,
   },
 
-  { key = "x", mods = "CMD|SHIFT", action = wezterm.action.ActivateCopyMode },
+  -- Debug
+  {
+    key = "l",
+    mods = "CTRL|SHIFT",
+    action = wezterm.action.ShowDebugOverlay,
+  },
 }
 
 -- =============================================================================

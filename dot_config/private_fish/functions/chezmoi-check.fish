@@ -1,9 +1,11 @@
 function chezmoi-check
-    # Get unmanaged files in managed directories (excludes ignored files)
+    # Get unmanaged files in managed directories (excludes ignored files and directories)
     set -l managed_dirs (chezmoi managed | grep -o '^\.config/[^/]*' | sort -u)
     set -l untracked
     for dir in $managed_dirs
-        set -a untracked (chezmoi unmanaged ~/$dir 2>/dev/null | sed "s|$HOME/||")
+        for item in (chezmoi unmanaged ~/$dir 2>/dev/null)
+            test -f $item && set -a untracked (echo $item | sed "s|$HOME/||")
+        end
     end
 
     # Git status for modifications
