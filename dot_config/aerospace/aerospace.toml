@@ -87,49 +87,194 @@ outer.right = 5
 # Escape floating windows by focusing any direction
 # =============================================================================
 [mode.floating-nav.binding]
+   # Actions (bare or with meh held)
    m = "focus left"
    n = "focus down"
    e = "focus up"
    i = "focus right"
+   alt-ctrl-shift-m = "focus left"
+   alt-ctrl-shift-n = "focus down"
+   alt-ctrl-shift-e = "focus up"
+   alt-ctrl-shift-i = "focus right"
+   # Mode switching
+   r = "mode resize"
+   s = "mode swap"
+   t = "mode tidy"
+   alt-ctrl-shift-r = "mode resize"
+   alt-ctrl-shift-s = "mode swap"
+   alt-ctrl-shift-t = "mode tidy"
+   # Exit
    a = "mode main"
+   alt-ctrl-shift-a = "mode main"
    esc = "mode main"
+   # Block unused keys
+   b = []
+   c = []
+   d = []
+   f = []
+   g = []
+   h = []
+   j = []
+   k = []
+   l = []
+   o = []
+   p = []
+   q = []
+   u = []
+   v = []
+   w = []
+   x = []
+   y = []
+   z = []
+   period = []
+   comma = []
+   semicolon = []
+   slash = []
 
 # =============================================================================
 # RESIZE MODE (Meh+R) - Sticky
 # Resize windows directionally
 # =============================================================================
 [mode.resize.binding]
+   # Actions (bare or with meh held)
    m = "resize smart -50"
    n = "resize smart -50"
    e = "resize smart +50"
    i = "resize smart +50"
+   alt-ctrl-shift-m = "resize smart -50"
+   alt-ctrl-shift-n = "resize smart -50"
+   alt-ctrl-shift-e = "resize smart +50"
+   alt-ctrl-shift-i = "resize smart +50"
+   # Mode switching
+   s = "mode swap"
+   t = "mode tidy"
+   alt-ctrl-shift-s = "mode swap"
+   alt-ctrl-shift-t = "mode tidy"
+   # Exit
    a = "mode main"
+   alt-ctrl-shift-a = "mode main"
    esc = "mode main"
+   # Block unused keys
+   b = []
+   c = []
+   d = []
+   f = []
+   g = []
+   h = []
+   j = []
+   k = []
+   l = []
+   o = []
+   p = []
+   q = []
+   r = []
+   u = []
+   v = []
+   w = []
+   x = []
+   y = []
+   z = []
+   period = []
+   comma = []
+   semicolon = []
+   slash = []
 
 # =============================================================================
 # SWAP MODE (Meh+S) - Sticky
 # Move windows in direction
 # =============================================================================
 [mode.swap.binding]
+   # Actions (bare or with meh held)
    m = "move left"
    n = "move down"
    e = "move up"
    i = "move right"
+   alt-ctrl-shift-m = "move left"
+   alt-ctrl-shift-n = "move down"
+   alt-ctrl-shift-e = "move up"
+   alt-ctrl-shift-i = "move right"
+   # Mode switching
+   r = "mode resize"
+   t = "mode tidy"
+   alt-ctrl-shift-r = "mode resize"
+   alt-ctrl-shift-t = "mode tidy"
+   # Exit
    a = "mode main"
+   alt-ctrl-shift-a = "mode main"
    esc = "mode main"
+   # Block unused keys
+   b = []
+   c = []
+   d = []
+   f = []
+   g = []
+   h = []
+   j = []
+   k = []
+   l = []
+   o = []
+   p = []
+   q = []
+   s = []
+   u = []
+   v = []
+   w = []
+   x = []
+   y = []
+   z = []
+   period = []
+   comma = []
+   semicolon = []
+   slash = []
 
 # =============================================================================
 # TIDY MODE (Meh+T) - Sticky
 # Layout and housekeeping operations
 # =============================================================================
 [mode.tidy.binding]
+   # Actions (bare or with meh held)
    n = "layout horizontal vertical"
    e = "layout accordion tiles"
    i = "balance-sizes"
    o = "flatten-workspace-tree"
    m = "macos-native-fullscreen"
+   alt-ctrl-shift-n = "layout horizontal vertical"
+   alt-ctrl-shift-e = "layout accordion tiles"
+   alt-ctrl-shift-i = "balance-sizes"
+   alt-ctrl-shift-o = "flatten-workspace-tree"
+   alt-ctrl-shift-m = "macos-native-fullscreen"
+   # Mode switching
+   r = "mode resize"
+   s = "mode swap"
+   alt-ctrl-shift-r = "mode resize"
+   alt-ctrl-shift-s = "mode swap"
+   # Exit
    a = "mode main"
+   alt-ctrl-shift-a = "mode main"
    esc = "mode main"
+   # Block unused keys
+   b = []
+   c = []
+   d = []
+   f = []
+   g = []
+   h = []
+   j = []
+   k = []
+   l = []
+   p = []
+   q = []
+   t = []
+   u = []
+   v = []
+   w = []
+   x = []
+   y = []
+   z = []
+   period = []
+   comma = []
+   semicolon = []
+   slash = []
 
 # =============================================================================
 # AUTO-ASSIGNMENT RULES

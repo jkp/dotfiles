@@ -59,6 +59,21 @@ All modes are sticky (stay in mode until explicitly exiting with `A` or `Esc`). 
 - Consistent mental model across all modes
 - `A` (left pinky) is a natural "cancel/exit" gesture
 
+### Mode Features
+
+**Optional Meh holding**: Once in a mode, all keys work with or without Meh held. You can:
+- Hold Meh throughout: `Meh+R` → `Meh+E` → `Meh+E` → `Meh+A`
+- Release after entering: `Meh+R` → `E` → `E` → `A`
+- Mix and match as feels natural
+
+**Cross-mode switching**: While in any mode, you can switch directly to another mode:
+- From resize: press `S` or `T` to switch to swap or tidy
+- From swap: press `R` or `T` to switch to resize or tidy
+- From tidy: press `R` or `S` to switch to resize or swap
+- Works with or without Meh held
+
+**Key blocking**: Unused keys are bound to `[]` (empty array = no-op). This prevents accidental typing when you forget you're in a mode - only the explicitly bound keys do anything, everything else is silently captured.
+
 ---
 
 ## Base Layer (Meh only)
@@ -113,6 +128,7 @@ Same keys, but **move window** instead of focus/switch:
 | Key | Action |
 |-----|--------|
 | M/N/E/I | Focus left/down/up/right (includes floating) |
+| R/S/T | Switch to resize/swap/tidy mode |
 | A / Esc | Exit to main mode |
 
 ### Resize Mode (Meh+R)
@@ -120,12 +136,14 @@ Same keys, but **move window** instead of focus/switch:
 |-----|--------|
 | M/N | resize smart -50 |
 | E/I | resize smart +50 |
+| S/T | Switch to swap/tidy mode |
 | A / Esc | Exit to main mode |
 
 ### Swap Mode (Meh+S)
 | Key | Action |
 |-----|--------|
 | M/N/E/I | Move window left/down/up/right |
+| R/T | Switch to resize/tidy mode |
 | A / Esc | Exit to main mode |
 
 ### Tidy Mode (Meh+T)
@@ -136,6 +154,7 @@ Same keys, but **move window** instead of focus/switch:
 | I | balance-sizes |
 | O | flatten-workspace-tree |
 | M | macos-native-fullscreen |
+| R/S | Switch to resize/swap mode |
 | A / Esc | Exit to main mode |
 
 ---
