@@ -23,111 +23,145 @@ preset = 'qwerty'
 [gaps]
 inner.horizontal = 10
 inner.vertical = 10
-# Per-monitor left margin: 510px on external monitor for keymapp, 5px on laptop
 outer.left = 5
 outer.bottom = 5
 outer.top = 5
 outer.right = 5
 
-# Primary bindings
+# =============================================================================
+# BASE LAYER (Meh = alt-ctrl-shift)
+# =============================================================================
 [mode.main.binding]
-   ctrl-alt-shift-r = 'reload-config'
-
-   # --- Focus ---
-   alt-ctrl-shift-m  = "focus --ignore-floating left"
+   # --- Focus (right hand home row) ---
+   alt-ctrl-shift-m = "focus --ignore-floating left"
    alt-ctrl-shift-n = "focus --ignore-floating down"
-   alt-ctrl-shift-e  = "focus --ignore-floating up"
-   alt-ctrl-shift-i  = "focus --ignore-floating right"
+   alt-ctrl-shift-e = "focus --ignore-floating up"
+   alt-ctrl-shift-i = "focus --ignore-floating right"
 
-   alt-ctrl-shift-left  = "focus --ignore-floating left"
-   alt-ctrl-shift-down = "focus --ignore-floating down"
-   alt-ctrl-shift-up  = "focus --ignore-floating up"
-   alt-ctrl-shift-right  = "focus --ignore-floating right"
-
-   # Switch to floating-nav mode when you need to escape a floating window
-   alt-ctrl-shift-f = "mode floating-nav"
+   # --- Workspaces (right hand) ---
+   alt-ctrl-shift-l = "workspace 1-personal"
+   alt-ctrl-shift-u = "workspace 2-llm"
+   alt-ctrl-shift-y = "workspace 3-messages"
+   alt-ctrl-shift-semicolon = "workspace 4-music"
+   alt-ctrl-shift-o = "workspace 5-terminal"
+   alt-ctrl-shift-h = "workspace 6-work"
+   alt-ctrl-shift-slash = "workspace 7-notes"
+   alt-ctrl-shift-j = "workspace 8-scratch"
+   alt-ctrl-shift-k = "workspace 9-scratch"
 
    # --- Workspace navigation ---
-   alt-ctrl-shift-comma     = "workspace --wrap-around prev"
-   alt-ctrl-shift-period    = "workspace --wrap-around next"
+   alt-ctrl-shift-comma = "workspace --wrap-around prev"
+   alt-ctrl-shift-period = "workspace --wrap-around next"
    alt-ctrl-shift-backspace = "focus-back-and-forth"
 
-   # --- Workspaces ---
-   alt-ctrl-shift-1 = "workspace work-1"
-   alt-ctrl-shift-2 = "workspace work-2"
-   alt-ctrl-shift-3 = "workspace work-3"
-   alt-ctrl-shift-4 = "workspace work-4"
-   alt-ctrl-shift-5 = "workspace work-5"
-   alt-ctrl-shift-6 = "workspace music"
-   alt-ctrl-shift-7 = "workspace notes"
-   alt-ctrl-shift-8 = "workspace comms"
-   alt-ctrl-shift-9 = "workspace llm"
-   alt-ctrl-shift-0 = "workspace browsing"
+   # --- Mode entry (left hand home row) ---
+   alt-ctrl-shift-a = "mode floating-nav"
+   alt-ctrl-shift-r = "mode resize"
+   alt-ctrl-shift-s = "mode swap"
+   alt-ctrl-shift-t = "mode tidy"
 
-   # --- Move window to workspace ---
-   alt-ctrl-shift-cmd-1 = ["move-node-to-workspace work-1", "workspace work-1"]
-   alt-ctrl-shift-cmd-2 = ["move-node-to-workspace work-2", "workspace work-2"]
-   alt-ctrl-shift-cmd-3 = ["move-node-to-workspace work-3", "workspace work-3"]
-   alt-ctrl-shift-cmd-4 = ["move-node-to-workspace work-4", "workspace work-4"]
-   alt-ctrl-shift-cmd-5 = ["move-node-to-workspace work-5", "workspace work-5"]
-   alt-ctrl-shift-cmd-6 = ["move-node-to-workspace music", "workspace music"]
-   alt-ctrl-shift-cmd-7 = ["move-node-to-workspace notes", "workspace notes"]
-   alt-ctrl-shift-cmd-8 = ["move-node-to-workspace comms", "workspace comms"]
-   alt-ctrl-shift-cmd-9 = ["move-node-to-workspace llm", "workspace llm"]
-   alt-ctrl-shift-cmd-0 = ["move-node-to-workspace browsing", "workspace browsing"]
-
-   # --- Move window on workspace ---
+   # --- Move window direction (Meh+Cmd) ---
    alt-ctrl-shift-cmd-m = "move left"
    alt-ctrl-shift-cmd-n = "move down"
    alt-ctrl-shift-cmd-e = "move up"
    alt-ctrl-shift-cmd-i = "move right"
 
-   alt-ctrl-shift-cmd-left = "move left"
-   alt-ctrl-shift-cmd-down = "move down"
-   alt-ctrl-shift-cmd-up = "move up"
-   alt-ctrl-shift-cmd-right = "move right"
+   # --- Move window to workspace (Meh+Cmd) ---
+   alt-ctrl-shift-cmd-l = ["move-node-to-workspace 1-personal", "workspace 1-personal"]
+   alt-ctrl-shift-cmd-u = ["move-node-to-workspace 2-llm", "workspace 2-llm"]
+   alt-ctrl-shift-cmd-y = ["move-node-to-workspace 3-messages", "workspace 3-messages"]
+   alt-ctrl-shift-cmd-semicolon = ["move-node-to-workspace 4-music", "workspace 4-music"]
+   alt-ctrl-shift-cmd-o = ["move-node-to-workspace 5-terminal", "workspace 5-terminal"]
+   alt-ctrl-shift-cmd-h = ["move-node-to-workspace 6-work", "workspace 6-work"]
+   # TODO: This binding not working - investigate (macOS or Raycast conflict?)
+   alt-ctrl-shift-cmd-slash = ["move-node-to-workspace 7-notes", "workspace 7-notes"]
+   alt-ctrl-shift-cmd-j = ["move-node-to-workspace 8-scratch", "workspace 8-scratch"]
+   alt-ctrl-shift-cmd-k = ["move-node-to-workspace 9-scratch", "workspace 9-scratch"]
 
-   # --- Resize (smart) ---
-   alt-ctrl-shift-cmd-l = "resize smart -50"
-   alt-ctrl-shift-cmd-u = "resize smart +50"
-
-   # --- Layout toggles (Hyper) ---
-   alt-ctrl-shift-cmd-f = "layout floating tiling"
-   alt-ctrl-shift-cmd-enter = ['mode main','macos-native-fullscreen']
-   alt-ctrl-shift-cmd-quote = "layout horizontal vertical"
-   alt-ctrl-shift-cmd-tab = "layout accordion tiles"
-
-   # --- Tidy ---
-   alt-ctrl-shift-cmd-b = "balance-sizes"
-   alt-ctrl-shift-cmd-semicolon  = "flatten-workspace-tree"
-
-   # Launch and configure keymapp for external monitor
+   # --- Utilities (Meh+Cmd) ---
    alt-ctrl-shift-cmd-v = 'exec-and-forget ~/.config/aerospace/toggle-keymapp.sh'
+   alt-ctrl-shift-cmd-c = 'exec-and-forget ~/.config/aerospace/cleanup-phantom-windows.sh'
 
-   # Cleanup phantom windows
-   alt-ctrl-shift-c = 'exec-and-forget ~/.config/aerospace/cleanup-phantom-windows.sh'
-
-# Floating navigation mode - can focus any window including tiled
+# =============================================================================
+# FLOATING-NAV MODE (Meh+A) - Sticky
+# Escape floating windows by focusing any direction
+# =============================================================================
 [mode.floating-nav.binding]
-   alt-ctrl-shift-h = ["focus left", "mode main"]
-   alt-ctrl-shift-n = ["focus down", "mode main"]
-   alt-ctrl-shift-e = ["focus up", "mode main"]
-   alt-ctrl-shift-i = ["focus right", "mode main"]
+   m = "focus left"
+   n = "focus down"
+   e = "focus up"
+   i = "focus right"
+   a = "mode main"
    esc = "mode main"
 
-# Auto-float keymapp window when detected
+# =============================================================================
+# RESIZE MODE (Meh+R) - Sticky
+# Resize windows directionally
+# =============================================================================
+[mode.resize.binding]
+   m = "resize smart -50"
+   n = "resize smart -50"
+   e = "resize smart +50"
+   i = "resize smart +50"
+   a = "mode main"
+   esc = "mode main"
+
+# =============================================================================
+# SWAP MODE (Meh+S) - Sticky
+# Move windows in direction
+# =============================================================================
+[mode.swap.binding]
+   m = "move left"
+   n = "move down"
+   e = "move up"
+   i = "move right"
+   a = "mode main"
+   esc = "mode main"
+
+# =============================================================================
+# TIDY MODE (Meh+T) - Sticky
+# Layout and housekeeping operations
+# =============================================================================
+[mode.tidy.binding]
+   n = "layout horizontal vertical"
+   e = "layout accordion tiles"
+   i = "balance-sizes"
+   o = "flatten-workspace-tree"
+   m = "macos-native-fullscreen"
+   a = "mode main"
+   esc = "mode main"
+
+# =============================================================================
+# AUTO-ASSIGNMENT RULES
+# =============================================================================
 [[on-window-detected]]
    if.app-name-regex-substring = 'Keymapp'
    run = ['layout floating']
 
 [[on-window-detected]]
    if.app-name-regex-substring = 'Spotify'
-   run = ['move-node-to-workspace music']
+   run = ['move-node-to-workspace 4-music']
+
+[[on-window-detected]]
+   if.app-name-regex-substring = 'JPLAY'
+   run = ['move-node-to-workspace 4-music']
 
 [[on-window-detected]]
    if.app-name-regex-substring = 'Claude'
-   run = ['move-node-to-workspace llm']
+   run = ['move-node-to-workspace 5-terminal']
 
 [[on-window-detected]]
    if.app-name-regex-substring = 'ChatGPT'
-   run = ['move-node-to-workspace llm']
+   run = ['move-node-to-workspace 2-llm']
+
+[[on-window-detected]]
+   if.app-name-regex-substring = 'WhatsApp'
+   run = ['move-node-to-workspace 3-messages']
+
+[[on-window-detected]]
+   if.app-name-regex-substring = 'Messages'
+   run = ['move-node-to-workspace 3-messages']
+
+[[on-window-detected]]
+   if.app-name-regex-substring = 'Obsidian'
+   run = ['move-node-to-workspace 7-notes']

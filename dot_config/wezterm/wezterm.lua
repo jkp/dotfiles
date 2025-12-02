@@ -19,11 +19,6 @@ config.inactive_pane_hsb = {
 -- =============================================================================
 
 config.default_prog = { "/opt/homebrew/bin/fish", "-l" }
-config.unix_domains = {
-  {
-    name = "unix",
-  },
-}
 
 -- =============================================================================
 -- BEHAVIOR
@@ -35,6 +30,34 @@ config.quick_select_alphabet = "arstqwfpzxcvneioluymdhgjbk"
 -- Make Option act as Alt/Meta for terminal apps (not for typing special chars)
 config.send_composed_key_when_left_alt_is_pressed = false
 config.send_composed_key_when_right_alt_is_pressed = false
+
+-- =============================================================================
+-- STATUS BAR
+-- =============================================================================
+
+config.status_update_interval = 100
+
+wezterm.on("update-status", function(window, pane)
+  local key_table = window:active_key_table()
+  local workspace = window:active_workspace()
+  local mode_color = "#27AABB"  -- Blue (matches aerospace border color)
+
+  if key_table then
+    local mode_text = string.upper(key_table:gsub("_", " "))
+    window:set_left_status("")
+    window:set_right_status(wezterm.format({
+      { Background = { Color = mode_color } },
+      { Foreground = { Color = "#000000" } },
+      { Text = " " .. mode_text .. " | " .. workspace .. "   " },
+    }))
+  else
+    window:set_left_status("")
+    window:set_right_status(wezterm.format({
+      { Foreground = { Color = "#888888" } },
+      { Text = " " .. workspace .. "   " },
+    }))
+  end
+end)
 
 -- =============================================================================
 -- HELPERS
@@ -101,8 +124,8 @@ config.keys = {
   { key = "0", mods = "CMD", action = wezterm.action.ActivateTab(9) },
 
   -- Pane Splitting
-  { key = "-", mods = "CTRL|ALT|SHIFT", action = wezterm.action.SplitVertical({ domain = "CurrentPaneDomain" }) },
-  { key = "|", mods = "CTRL|ALT|SHIFT", action = wezterm.action.SplitHorizontal({ domain = "CurrentPaneDomain" }) },
+  { key = "-", mods = "CMD", action = wezterm.action.SplitVertical({ domain = "CurrentPaneDomain" }) },
+  { key = "|", mods = "CMD", action = wezterm.action.SplitHorizontal({ domain = "CurrentPaneDomain" }) },
 
   -- Pane Navigation (Arrow Keys)
   { key = "LeftArrow", mods = "CMD", action = wezterm.action.ActivatePaneDirection("Left") },
@@ -115,15 +138,33 @@ config.keys = {
   { key = "n", mods = "CMD", action = wezterm.action.ActivatePaneDirection("Down") },
   { key = "e", mods = "CMD", action = wezterm.action.ActivatePaneDirection("Up") },
   { key = "i", mods = "CMD", action = wezterm.action.ActivatePaneDirection("Right") },
-  -- Pane Resizing (enters resize mode)
+
+  -- Tab Navigation (matches aerospace prev/next workspace)
+  { key = ",", mods = "CMD", action = wezterm.action.ActivateTabRelative(-1) },
+  { key = ".", mods = "CMD", action = wezterm.action.ActivateTabRelative(1) },
+
+  -- Mode Entry (matches aerospace: R=resize, S=swap)
   {
     key = "r",
     mods = "CMD",
     action = wezterm.action.ActivateKeyTable({
       name = "resize_pane",
       one_shot = false,
+      replace_current = true,
     }),
   },
+  {
+    key = "s",
+    mods = "CMD",
+    action = wezterm.action.ActivateKeyTable({
+      name = "swap_pane",
+      one_shot = false,
+      replace_current = true,
+    }),
+  },
+
+  -- Pane Zoom
+  { key = "z", mods = "CMD", action = wezterm.action.TogglePaneZoomState },
 
   -- Clipboard
   { key = "c", mods = "CMD", action = wezterm.action.CopyTo("Clipboard") },
@@ -134,9 +175,8 @@ config.keys = {
   { key = "/", mods = "CMD", action = wezterm.action.QuickSelect },
 
   -- Font Sizing
-  { key = "=", mods = "CMD", action = wezterm.action.IncreaseFontSize },
   { key = "-", mods = "CMD", action = wezterm.action.DecreaseFontSize },
-  { key = "0", mods = "CMD", action = wezterm.action.ResetFontSize },
+  { key = "+", mods = "CMD", action = wezterm.action.IncreaseFontSize },
 
   -- Buffer Management
   { key = "k", mods = "CMD|SHIFT", action = wezterm.action.ClearScrollback("ScrollbackAndViewport") },
@@ -187,13 +227,31 @@ local resize_pane_keys = {
   { key = "UpArrow", action = wezterm.action.AdjustPaneSize({ "Up", 1 }) },
   { key = "DownArrow", action = wezterm.action.AdjustPaneSize({ "Down", 1 }) },
 
-  -- Colemak Home Row
+  -- Colemak Home Row (M/N = shrink, E/I = grow)
   { key = "m", action = wezterm.action.AdjustPaneSize({ "Left", 1 }) },
-  { key = "o", action = wezterm.action.AdjustPaneSize({ "Right", 1 }) },
-  { key = "e", action = wezterm.action.AdjustPaneSize({ "Up", 1 }) },
   { key = "n", action = wezterm.action.AdjustPaneSize({ "Down", 1 }) },
+  { key = "e", action = wezterm.action.AdjustPaneSize({ "Up", 1 }) },
+  { key = "i", action = wezterm.action.AdjustPaneSize({ "Right", 1 }) },
 
-  -- Exit resize mode
+  -- Exit (A = left pinky, matches aerospace)
+  { key = "a", action = "PopKeyTable" },
+  { key = "Escape", action = "PopKeyTable" },
+}
+
+-- Swap Pane Mode: Move panes directionally
+local swap_pane_keys = {
+  -- Arrow Keys
+  { key = "LeftArrow", action = wezterm.action.RotatePanes("CounterClockwise") },
+  { key = "RightArrow", action = wezterm.action.RotatePanes("Clockwise") },
+
+  -- Colemak Home Row
+  { key = "m", action = wezterm.action.RotatePanes("CounterClockwise") },
+  { key = "i", action = wezterm.action.RotatePanes("Clockwise") },
+  { key = "n", action = wezterm.action.RotatePanes("CounterClockwise") },
+  { key = "e", action = wezterm.action.RotatePanes("Clockwise") },
+
+  -- Exit (A = left pinky, matches aerospace)
+  { key = "a", action = "PopKeyTable" },
   { key = "Escape", action = "PopKeyTable" },
 }
 
@@ -201,6 +259,7 @@ config.key_tables = {
   copy_mode = copy_mode_keys,
   search_mode = search_mode_keys,
   resize_pane = resize_pane_keys,
+  swap_pane = swap_pane_keys,
 }
 
 return config
