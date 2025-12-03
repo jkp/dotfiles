@@ -9,9 +9,13 @@ pkl = "latest"
 [tasks.test]
 description = "Test dotfiles in a fresh Docker container using local source"
 run = """
+# Get GitHub token from gh CLI if available (avoids rate limits)
+GITHUB_TOKEN="${GITHUB_TOKEN:-$(gh auth token 2>/dev/null || echo '')}"
+
 docker run --rm \
   -v "$PWD:/dotfiles:ro" \
   -e DEBIAN_FRONTEND=noninteractive \
+  -e GITHUB_TOKEN="$GITHUB_TOKEN" \
   ubuntu:latest \
   bash -c "
     set -e
@@ -22,7 +26,7 @@ docker run --rm \
     useradd -m -s /bin/bash testuser
     echo 'testuser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
     echo
-    su - testuser -c 'bash /dotfiles/test.sh'
+    su - testuser -c 'GITHUB_TOKEN=$GITHUB_TOKEN bash /dotfiles/test.sh'
   "
 """
 
