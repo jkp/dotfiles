@@ -51,8 +51,8 @@
   esc     brdn brup @ext sls  dtn  dnd  prev pp   next mute vold volu
   nubs    1    2    3    4    5    6    7    8    9    0    -    =    bspc
   tab     q    w    f    p    b    j    l    u    y    ;    [    ]
-  bspc    @a   @r   @s   @t   g    m    @n   e    @i   @o   '    \    ret
-  lsft    z    x    c    d    v    grv  k    h    ,    .    /    rsft
+  bspc    @a   @r   @s   @t   g    m    @n   @e   @i   @o   '    \    ret
+  @lsft   @z   x    c    d    v    grv  k    h    ,    .    /    @rsft
           lctl lalt @lmet          @spc           @rmet ralt
 )
 
@@ -70,21 +70,47 @@
 (deflayer cmd-override
   _       _    _    _    _    _    _    _    _    _    _    _    _
   _       _    _    _    _    _    _    _    _    _    _    _    _    _
-  _       _    _    _    r    _    _    _    _    _    _    _    _
+  _       _    _    _    _    _    _    _    _    _    _    _    _
   _       _    _    _    _    _    _    _    _    _    _    _    _    _
   _       _    _    _    c    _    _    _    _    _    _    _    _
           _    _    lmet           _              rmet _      
 )
 
 
-;; Nav layer
-(deflayer nav 
+;; Nav layer (S hold)
+(deflayer nav
   _       _    _    _    _    _    _    _    _    _    _    _    _
   _       _    _    _    _    _    _    _    _    _    _    _    _    _
-  _       _    _    _    _    _    _    _    _    _    _    _    _   
-  _       _    _    _    _    _    ←    ↓    ↑    →    _    _    _    -
-  _       _    _    _    _    _    _    _    _    _    _    _    _ 
+  _       _    _    _    _    _    @prv pgdn pgup @nxt _    _    _
+  _       _    _    _    _    _    ←    ↓    ↑    →    _    _    _    _
+  _       _    _    _    _    _    _    _    end  home _    _    _
           _    _    _              _              _    _
+)
+
+;; Sym layer (E hold or right shift tap to toggle)
+;; Top:    &   #   ^   $   _
+;; Home:   `   !   (   )   _
+;; Bottom: %   *   [   ]   @
+;; UK keyboard: # = \ key (next to Enter), @ = S-' (shift+apostrophe)
+;; Tap either shift to return to main layer
+(deflayer sym
+  XX      XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX
+  XX      XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX
+  XX      S-7  A-3  S-6  S-4  XX   XX   XX   XX   XX   XX   XX   XX
+  bspc    grv  S-1  S-9  S-0  -    XX   lsft XX   XX   XX   XX   XX   XX
+  @sym-x  S-5  S-8  [    ]    S-2  XX   XX   XX   XX   XX   XX   @sym-x
+          XX   XX   XX             spc             XX   XX
+)
+
+;; Num layer (Z hold or left shift tap to toggle)
+;; Tap either shift to return to main layer
+(deflayer num
+  XX      XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX
+  XX      XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX
+  XX      XX   XX   XX   XX   XX   -    7    8    9    0    XX   XX
+  bspc    XX   XX   XX   XX   XX   S-=  4    5    6    S-8  XX   XX   XX
+  @num-x  XX   XX   XX   XX   XX   XX   =    1    2    3    /    @num-x
+          XX   XX   XX             spc             XX   XX
 )
 
 ;; Layer switching layer
@@ -108,20 +134,36 @@
 
 
   ;; Home row mods - Left hand (Control, Option, Command, Shift)
-  a    (tap-hold 300 200 a lctl)
-  r    (tap-hold 300 200 r lalt)
-  s    (tap-hold 300 200 s (layer-toggle nav))
-  t    (tap-hold 300 200 t lsft)
+  ;; Timings from hardware keyboard: 250, 250, 200, 170, 170, 200, 250, 250
+  a    (tap-hold 250 250 a lctl)
+  r    (tap-hold 250 250 r lalt)
+  s    (tap-hold 200 200 s (layer-toggle nav))
+  t    (tap-hold 170 170 t lsft)
 
   ;; Home row mods - Right hand (Shift, Command, Option, Control)
-  n    (tap-hold 300 200 n rsft)
-  ;;e  (tap-hold 300 200 e ???)
-  i    (tap-hold 300 200 i ralt)
-  o    (tap-hold 300 200 o rctl)
+  n    (tap-hold 170 170 n rsft)
+  e    (tap-hold 200 200 e (layer-toggle sym))
+  i    (tap-hold 250 250 i ralt)
+  o    (tap-hold 250 250 o rctl)
 
-  ;;  
+  ;;
   meh  (multi lctl lalt lsft)
   spc  (tap-hold 300 200 spc @meh)
+
+  ;; Nav layer: prev/next with double-tap for back/forward
+  prv  (tap-dance 200 (A-M-left M-[))   ;; tap: prev tab, double-tap: back
+  nxt  (tap-dance 200 (A-M-right M-]))  ;; tap: next tab, double-tap: forward
+
+  ;; Num layer toggle (bottom left key)
+  z    (tap-hold 200 200 z (layer-toggle num))
+
+  ;; Shift keys: tap to toggle layers, hold for shift
+  lsft (tap-hold 200 200 (layer-switch num) lsft)
+  rsft (tap-hold 200 200 (layer-switch sym) rsft)
+
+  ;; Layer exit aliases (tap shift on sym/num layers to return to main)
+  sym-x (tap-hold 200 200 (layer-switch colemak-dh) lsft)
+  num-x (tap-hold 200 200 (layer-switch colemak-dh) lsft)
 
   lmet (multi lmet (layer-while-held cmd-override))
   rmet (multi rmet (layer-while-held cmd-override))
