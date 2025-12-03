@@ -88,10 +88,19 @@ P.S. You can delete this when you're done too. It's your config now! :)
 -- See `:help mapleader`
 --  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
 vim.g.mapleader = ' '
-vim.g.maplocalleader = ' '
+vim.g.maplocalleader = ' ' -- Neovide settings
+vim.g.ftdetect_stdin = 1
+
+if vim.g.neovide then
+  vim.g.neovide_cursor_animation_length = 0
+  vim.g.neovide_cursor_trail_size = 0
+  vim.g.neovide_scroll_animation_length = 0
+  vim.g.neovide_floating_blur = 0
+  vim.g.neovide_floating_shadow = false
+end
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
-vim.g.have_nerd_font = false
+vim.g.have_nerd_font = true
 
 -- [[ Setting options ]]
 -- See `:help vim.o`
@@ -411,15 +420,14 @@ require('lazy').setup({
       -- [[ Configure Telescope ]]
       -- See `:help telescope` and `:help telescope.setup()`
       require('telescope').setup {
-        -- You can put your default mappings / updates / etc. in here
-        --  All the info you're looking for is in `:help telescope.setup()`
-        --
-        -- defaults = {
-        --   mappings = {
-        --     i = { ['<c-enter>'] = 'to_fuzzy_refine' },
-        --   },
-        -- },
-        -- pickers = {}
+        defaults = {
+          hidden = true, -- show dotfiles in all pickers
+        },
+        pickers = {
+          find_files = {
+            hidden = true, -- specifically ensure find_files shows dotfiles
+          },
+        },
         extensions = {
           ['ui-select'] = {
             require('telescope.themes').get_dropdown(),
@@ -884,25 +892,55 @@ require('lazy').setup({
     },
   },
 
-  { -- You can easily change to a different colorscheme.
-    -- Change the name of the colorscheme plugin below, and then
-    -- change the command in the config to whatever the name of that colorscheme is.
-    --
-    -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-    'folke/tokyonight.nvim',
-    priority = 1000, -- Make sure to load this before all the other start plugins.
+  { -- Nightfox theme family (includes dayfox for light mode)
+    'EdenEast/nightfox.nvim',
+    priority = 1000,
     config = function()
-      ---@diagnostic disable-next-line: missing-fields
-      require('tokyonight').setup {
-        styles = {
-          comments = { italic = false }, -- Disable italics in comments
+      require('nightfox').setup {
+        options = {
+          styles = {
+            comments = 'NONE', -- Disable italics in comments
+          },
         },
       }
+    end,
+  },
 
-      -- Load the colorscheme here.
-      -- Like many other themes, this one has different styles, and you could load
-      -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-      vim.cmd.colorscheme 'tokyonight-night'
+  { -- Material theme (for dark mode to match WezTerm's Material Darker)
+    'marko-cerovac/material.nvim',
+    priority = 1000,
+    config = function()
+      require('material').setup {
+        disable = {
+          colored_cursor = true,
+        },
+        styles = {
+          comments = { italic = false },
+        },
+      }
+      vim.g.material_style = 'darker'
+
+      -- Auto-switch theme based on system appearance
+      local function set_theme()
+        local handle = io.popen 'defaults read -g AppleInterfaceStyle 2>/dev/null'
+        local result = handle and handle:read '*a' or ''
+        if handle then
+          handle:close()
+        end
+
+        if result:match 'Dark' then
+          vim.cmd.colorscheme 'material'
+        else
+          vim.cmd.colorscheme 'dayfox'
+        end
+      end
+
+      set_theme()
+
+      -- Re-check on FocusGained (when switching back to nvim after system theme change)
+      vim.api.nvim_create_autocmd('FocusGained', {
+        callback = set_theme,
+      })
     end,
   },
 
