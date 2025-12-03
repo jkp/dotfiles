@@ -6,7 +6,20 @@ test.sh
 mise.toml
 hk.pkl
 .git
-**/.claude
+# .claude session data (not config)
+.claude/debug
+.claude/file-history
+.claude/history.jsonl
+.claude/plans
+.claude/plugins
+.claude/projects
+.claude/session-env
+.claude/shell-snapshots
+.claude/statsig
+.claude/todos
+.claude/ide
+.claude/commands
+.claude/*.json
 
 # Tool state files (not config)
 .config/fish/fish_variables
