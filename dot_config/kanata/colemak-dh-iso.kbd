@@ -30,10 +30,20 @@
   process-unmapped-keys   yes
   concurrent-tap-hold     yes
   allow-hardware-repeat   no
+  danger-enable-cmd       yes
   macos-dev-names-include (
       "Apple Internal Keyboard / Trackpad"
-      "Jamie’s Magic Keyboard" 
+      "Jamie's Magic Keyboard"
   )
+)
+
+;; Virtual keys for layer indicator (writes to file for Hammerspoon menu bar)
+(defvirtualkeys
+  ind-cdh (cmd sh -c "echo 'CDH' > ~/.local/state/kanata/layer")
+  ind-qw  (cmd sh -c "echo 'QW' > ~/.local/state/kanata/layer")
+  ind-nav (cmd sh -c "echo 'NAV' > ~/.local/state/kanata/layer")
+  ind-sym (cmd sh -c "echo 'SYM' > ~/.local/state/kanata/layer")
+  ind-num (cmd sh -c "echo 'NUM' > ~/.local/state/kanata/layer")
 )
 
 ;; Source layer - defines which keys are intercepted (ISO layout)
@@ -128,21 +138,29 @@
   ;; Extend layer toggle on Caps Lock (tap for , hold for Extend)
   ext  (layer-switch layers)
   
-  ;; Layer switching aliases
-  lq   (layer-switch qwerty)      ;; Switch to QWERTY ISO
-  lh   (layer-switch colemak-dh)  ;; Switch to Colemak-DH ISO
+  ;; Layer switching aliases (with indicator update)
+  lq   (multi (layer-switch qwerty) (on-press-fakekey ind-qw tap))
+  lh   (multi (layer-switch colemak-dh) (on-press-fakekey ind-cdh tap))
 
 
   ;; Home row mods - Left hand (Control, Option, Command, Shift)
   ;; Timings from hardware keyboard: 250, 250, 200, 170, 170, 200, 250, 250
   a    (tap-hold 250 250 a lctl)
   r    (tap-hold 250 250 r lalt)
-  s    (tap-hold 200 200 s (layer-toggle nav))
+  s    (tap-hold 200 200 s
+        (multi
+          (layer-toggle nav)
+          (on-press-fakekey ind-nav tap)
+          (on-release-fakekey ind-cdh tap)))
   t    (tap-hold 170 170 t lsft)
 
   ;; Home row mods - Right hand (Shift, Command, Option, Control)
   n    (tap-hold 170 170 n rsft)
-  e    (tap-hold 200 200 e (layer-toggle sym))
+  e    (tap-hold 200 200 e
+        (multi
+          (layer-toggle sym)
+          (on-press-fakekey ind-sym tap)
+          (on-release-fakekey ind-cdh tap)))
   i    (tap-hold 250 250 i ralt)
   o    (tap-hold 250 250 o rctl)
 
@@ -155,15 +173,19 @@
   nxt  (tap-dance 200 (A-M-right M-]))  ;; tap: next tab, double-tap: forward
 
   ;; Num layer toggle (bottom left key)
-  z    (tap-hold 200 200 z (layer-toggle num))
+  z    (tap-hold 200 200 z
+        (multi
+          (layer-toggle num)
+          (on-press-fakekey ind-num tap)
+          (on-release-fakekey ind-cdh tap)))
 
   ;; Shift keys: tap to toggle layers, hold for shift
-  lsft (tap-hold 200 200 (layer-switch num) lsft)
-  rsft (tap-hold 200 200 (layer-switch sym) rsft)
+  lsft (tap-hold 200 200 (multi (layer-switch num) (on-press-fakekey ind-num tap)) lsft)
+  rsft (tap-hold 200 200 (multi (layer-switch sym) (on-press-fakekey ind-sym tap)) rsft)
 
   ;; Layer exit aliases (tap shift on sym/num layers to return to main)
-  sym-x (tap-hold 200 200 (layer-switch colemak-dh) lsft)
-  num-x (tap-hold 200 200 (layer-switch colemak-dh) lsft)
+  sym-x (tap-hold 200 200 (multi (layer-switch colemak-dh) (on-press-fakekey ind-cdh tap)) lsft)
+  num-x (tap-hold 200 200 (multi (layer-switch colemak-dh) (on-press-fakekey ind-cdh tap)) lsft)
 
   lmet (multi lmet (layer-while-held cmd-override))
   rmet (multi rmet (layer-while-held cmd-override))
