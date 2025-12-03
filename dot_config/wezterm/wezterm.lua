@@ -1,4 +1,5 @@
 local wezterm = require("wezterm")
+local theme = require("theme")
 local config = {}
 
 -- =============================================================================
@@ -6,12 +7,12 @@ local config = {}
 -- =============================================================================
 
 config.window_decorations = "RESIZE"
-config.color_scheme = "Github Dark (Gogh)"
+config.color_scheme = theme()
 config.font_size = 13.0
 
 config.inactive_pane_hsb = {
-  saturation = 0.5,
-  brightness = 0.4,
+  saturation = 0.2,
+  brightness = 0.7,
 }
 
 -- =============================================================================
@@ -40,7 +41,7 @@ config.status_update_interval = 100
 wezterm.on("update-status", function(window, pane)
   local key_table = window:active_key_table()
   local workspace = window:active_workspace()
-  local mode_color = "#27AABB"  -- Blue (matches aerospace border color)
+  local mode_color = "#27AABB" -- Blue (matches aerospace border color)
 
   if key_table then
     local mode_text = string.upper(key_table:gsub("_", " "))
@@ -62,6 +63,40 @@ end)
 -- =============================================================================
 -- HELPERS
 -- =============================================================================
+
+-- Block unused keys in a key table to prevent accidental typing
+local function block_keys(key_table, keys_to_block)
+  for _, key in ipairs(keys_to_block) do
+    table.insert(key_table, { key = key, action = wezterm.action.Nop })
+  end
+end
+
+-- Keys to block in modal key tables (all unused letters + punctuation)
+local blocked_keys = {
+  "b",
+  "c",
+  "d",
+  "f",
+  "g",
+  "h",
+  "j",
+  "k",
+  "l",
+  "o",
+  "p",
+  "q",
+  "t",
+  "u",
+  "v",
+  "w",
+  "x",
+  "y",
+  "z",
+  ".",
+  ",",
+  ";",
+  "/",
+}
 
 local workspace_switcher = wezterm.action_callback(function(window, pane)
   local choices = {
@@ -123,9 +158,9 @@ config.keys = {
   { key = "9", mods = "CMD", action = wezterm.action.ActivateTab(8) },
   { key = "0", mods = "CMD", action = wezterm.action.ActivateTab(9) },
 
-  -- Pane Splitting
-  { key = "-", mods = "CMD", action = wezterm.action.SplitVertical({ domain = "CurrentPaneDomain" }) },
-  { key = "|", mods = "CMD", action = wezterm.action.SplitHorizontal({ domain = "CurrentPaneDomain" }) },
+  -- Pane Splitting (L/U = adjacent index/middle finger on top row)
+  { key = "l", mods = "CMD", action = wezterm.action.SplitHorizontal({ domain = "CurrentPaneDomain" }) },
+  { key = "u", mods = "CMD", action = wezterm.action.SplitVertical({ domain = "CurrentPaneDomain" }) },
 
   -- Pane Navigation (Arrow Keys)
   { key = "LeftArrow", mods = "CMD", action = wezterm.action.ActivatePaneDirection("Left") },
@@ -195,6 +230,9 @@ config.keys = {
     mods = "CTRL|SHIFT",
     action = wezterm.action.ShowDebugOverlay,
   },
+
+  -- Reload config (useful after appearance change)
+  { key = "r", mods = "CMD|SHIFT", action = wezterm.action.ReloadConfiguration },
 }
 
 -- =============================================================================
@@ -227,16 +265,35 @@ local resize_pane_keys = {
   { key = "UpArrow", action = wezterm.action.AdjustPaneSize({ "Up", 1 }) },
   { key = "DownArrow", action = wezterm.action.AdjustPaneSize({ "Down", 1 }) },
 
-  -- Colemak Home Row (M/N = shrink, E/I = grow)
+  -- Colemak Home Row (M/N = shrink, E/I = grow) - bare or with CMD held
   { key = "m", action = wezterm.action.AdjustPaneSize({ "Left", 1 }) },
   { key = "n", action = wezterm.action.AdjustPaneSize({ "Down", 1 }) },
   { key = "e", action = wezterm.action.AdjustPaneSize({ "Up", 1 }) },
   { key = "i", action = wezterm.action.AdjustPaneSize({ "Right", 1 }) },
+  { key = "m", mods = "CMD", action = wezterm.action.AdjustPaneSize({ "Left", 1 }) },
+  { key = "n", mods = "CMD", action = wezterm.action.AdjustPaneSize({ "Down", 1 }) },
+  { key = "e", mods = "CMD", action = wezterm.action.AdjustPaneSize({ "Up", 1 }) },
+  { key = "i", mods = "CMD", action = wezterm.action.AdjustPaneSize({ "Right", 1 }) },
 
-  -- Exit (A = left pinky, matches aerospace)
+  -- Mode switching (matches aerospace) - bare or with CMD held
+  {
+    key = "s",
+    action = wezterm.action.ActivateKeyTable({ name = "swap_pane", one_shot = false, replace_current = true }),
+  },
+  {
+    key = "s",
+    mods = "CMD",
+    action = wezterm.action.ActivateKeyTable({ name = "swap_pane", one_shot = false, replace_current = true }),
+  },
+
+  -- Exit (A = left pinky, matches aerospace) - bare or with CMD held
   { key = "a", action = "PopKeyTable" },
+  { key = "a", mods = "CMD", action = "PopKeyTable" },
   { key = "Escape", action = "PopKeyTable" },
 }
+block_keys(resize_pane_keys, blocked_keys)
+-- Also block 'r' since we're already in resize mode
+table.insert(resize_pane_keys, { key = "r", action = wezterm.action.Nop })
 
 -- Swap Pane Mode: Move panes directionally
 local swap_pane_keys = {
@@ -244,16 +301,35 @@ local swap_pane_keys = {
   { key = "LeftArrow", action = wezterm.action.RotatePanes("CounterClockwise") },
   { key = "RightArrow", action = wezterm.action.RotatePanes("Clockwise") },
 
-  -- Colemak Home Row
+  -- Colemak Home Row - bare or with CMD held
   { key = "m", action = wezterm.action.RotatePanes("CounterClockwise") },
   { key = "i", action = wezterm.action.RotatePanes("Clockwise") },
   { key = "n", action = wezterm.action.RotatePanes("CounterClockwise") },
   { key = "e", action = wezterm.action.RotatePanes("Clockwise") },
+  { key = "m", mods = "CMD", action = wezterm.action.RotatePanes("CounterClockwise") },
+  { key = "i", mods = "CMD", action = wezterm.action.RotatePanes("Clockwise") },
+  { key = "n", mods = "CMD", action = wezterm.action.RotatePanes("CounterClockwise") },
+  { key = "e", mods = "CMD", action = wezterm.action.RotatePanes("Clockwise") },
 
-  -- Exit (A = left pinky, matches aerospace)
+  -- Mode switching (matches aerospace) - bare or with CMD held
+  {
+    key = "r",
+    action = wezterm.action.ActivateKeyTable({ name = "resize_pane", one_shot = false, replace_current = true }),
+  },
+  {
+    key = "r",
+    mods = "CMD",
+    action = wezterm.action.ActivateKeyTable({ name = "resize_pane", one_shot = false, replace_current = true }),
+  },
+
+  -- Exit (A = left pinky, matches aerospace) - bare or with CMD held
   { key = "a", action = "PopKeyTable" },
+  { key = "a", mods = "CMD", action = "PopKeyTable" },
   { key = "Escape", action = "PopKeyTable" },
 }
+block_keys(swap_pane_keys, blocked_keys)
+-- Also block 's' since we're already in swap mode
+table.insert(swap_pane_keys, { key = "s", action = wezterm.action.Nop })
 
 config.key_tables = {
   copy_mode = copy_mode_keys,
