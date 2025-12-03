@@ -37,13 +37,13 @@
   )
 )
 
-;; Virtual keys for layer indicator (writes to file for Hammerspoon menu bar)
+;; Virtual keys for layer indicator (writes to /tmp for Hammerspoon menu bar)
 (defvirtualkeys
-  ind-cdh (cmd sh -c "echo 'CDH' > ~/.local/state/kanata/layer")
-  ind-qw  (cmd sh -c "echo 'QW' > ~/.local/state/kanata/layer")
-  ind-nav (cmd sh -c "echo 'NAV' > ~/.local/state/kanata/layer")
-  ind-sym (cmd sh -c "echo 'SYM' > ~/.local/state/kanata/layer")
-  ind-num (cmd sh -c "echo 'NUM' > ~/.local/state/kanata/layer")
+  ind-cdh (cmd sh -c "echo 'CDH' > /tmp/kanata-layer")
+  ind-qw  (cmd sh -c "echo 'QW' > /tmp/kanata-layer")
+  ind-nav (cmd sh -c "echo 'NAV' > /tmp/kanata-layer")
+  ind-sym (cmd sh -c "echo 'SYM' > /tmp/kanata-layer")
+  ind-num (cmd sh -c "echo 'NUM' > /tmp/kanata-layer")
 )
 
 ;; Source layer - defines which keys are intercepted (ISO layout)

@@ -7,7 +7,7 @@ hs.window.filter.new("Keymapp")
 
 -- Kanata layer indicator
 local kanataMenu = hs.menubar.new()
-local layerFile = os.getenv("HOME") .. "/.local/state/kanata/layer"
+local layerFile = "/tmp/kanata-layer"
 
 -- Style for non-default layers (white background, dark text like Aerospace)
 local function styledText(text, isDefault)
@@ -36,7 +36,7 @@ local function updateLayerIndicator()
 end
 
 -- Watch for changes (instant, no polling)
-hs.pathwatcher.new(os.getenv("HOME") .. "/.local/state/kanata/", updateLayerIndicator):start()
+hs.pathwatcher.new("/tmp/", updateLayerIndicator):start()
 
 -- Initial read
 updateLayerIndicator()
