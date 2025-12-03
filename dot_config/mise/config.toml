@@ -10,9 +10,10 @@ rg = "15.1.0"
 starship = "1.24.1"
 zoxide = "0.9.8"
 
-# Kanata keyboard remapper (cmd_allowed variant for layer indicator support)
+# Kanata keyboard remapper (macOS only, cmd_allowed variant for layer indicator support)
 [tools."ubi:jtroo/kanata"]
 version = "1.10.0"
+os = ["macos"]
 matching = "macos-binaries-arm64"
 exe = "kanata_macos_cmd_allowed_arm64"
 rename_exe = "kanata"
