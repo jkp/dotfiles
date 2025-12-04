@@ -67,25 +67,25 @@ hs.hotkey.bind(hyper, "1", function()
         return
     end
 
-    local devices = hs.json.decode(output)
-    if not devices or #devices == 0 then
+    local data = hs.json.decode(output)
+    if not data or not data.devices or #data.devices == 0 then
         hs.alert.show("No devices found", 1)
         return
     end
 
     local choices = {}
-    for _, device in ipairs(devices) do
-        local icon = device.is_active and "▶ " or "  "
+    for _, device in ipairs(data.devices) do
+        local icon = device.active and "▶ " or "  "
         table.insert(choices, {
             text = icon .. device.name,
             subText = device.type,
-            device_id = device.id
+            device_name = device.name
         })
     end
 
     local chooser = hs.chooser.new(function(choice)
         if choice then
-            hs.execute("/Users/jkp/.local/bin/spotify-ctl connect " .. choice.device_id, true)
+            hs.execute("/Users/jkp/.local/bin/spotify-ctl connect '" .. choice.device_name .. "'", true)
         end
     end)
     chooser:choices(choices)
