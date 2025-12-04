@@ -11,16 +11,17 @@ local layerFile = "/tmp/kanata-layer"
 
 -- Style for non-default layers (white background, dark text like Aerospace)
 local function styledText(text, isDefault)
+    -- Add spaces for consistent width
+    local padded = " " .. text .. " "
     if isDefault then
-        return text
-    else
-        -- Add spaces for padding since menubar doesn't support actual padding
-        local padded = " " .. text .. " "
         return hs.styledtext.new(padded, {
-            font = { name = "SF Pro", size = 12 },
+            font = { name = "SF Mono", size = 12 },
+        })
+    else
+        return hs.styledtext.new(padded, {
+            font = { name = "SF Mono", size = 12 },
             color = { white = 0.1 },
             backgroundColor = { white = 1.0, alpha = 0.9 },
-            paragraphStyle = { alignment = "center" },
         })
     end
 end
@@ -35,8 +36,22 @@ local function updateLayerIndicator()
     end
 end
 
--- Watch for changes (instant, no polling)
-hs.pathwatcher.new("/tmp/", updateLayerIndicator):start()
+-- Watch for changes (restart on wake to handle sleep/wake cycles)
+local layerWatcher = nil
 
--- Initial read
+local function startLayerWatcher()
+    if layerWatcher then layerWatcher:stop() end
+    layerWatcher = hs.pathwatcher.new(layerFile, updateLayerIndicator)
+    layerWatcher:start()
+end
+
+hs.caffeinate.watcher.new(function(event)
+    if event == hs.caffeinate.watcher.systemDidWake then
+        startLayerWatcher()
+        updateLayerIndicator()
+    end
+end):start()
+
+-- Initial setup
+startLayerWatcher()
 updateLayerIndicator()
