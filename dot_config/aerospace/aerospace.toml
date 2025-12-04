@@ -40,8 +40,8 @@ outer.right = 5
 
    # --- Workspaces (right hand) ---
    alt-ctrl-shift-l = "workspace 1-personal"
-   alt-ctrl-shift-u = "workspace 2-llm"
-   alt-ctrl-shift-y = "workspace 3-messages"
+   alt-ctrl-shift-u = "workspace 2-messages"
+   alt-ctrl-shift-y = "workspace 3-llm"
    alt-ctrl-shift-semicolon = "workspace 4-music"
    alt-ctrl-shift-o = "workspace 5-terminal"
    alt-ctrl-shift-h = "workspace 6-work"
@@ -68,8 +68,8 @@ outer.right = 5
 
    # --- Move window to workspace (Meh+Cmd) ---
    alt-ctrl-shift-cmd-l = ["move-node-to-workspace 1-personal", "workspace 1-personal"]
-   alt-ctrl-shift-cmd-u = ["move-node-to-workspace 2-llm", "workspace 2-llm"]
-   alt-ctrl-shift-cmd-y = ["move-node-to-workspace 3-messages", "workspace 3-messages"]
+   alt-ctrl-shift-cmd-u = ["move-node-to-workspace 2-messages", "workspace 2-messages"]
+   alt-ctrl-shift-cmd-y = ["move-node-to-workspace 3-llm", "workspace 3-llm"]
    alt-ctrl-shift-cmd-semicolon = ["move-node-to-workspace 4-music", "workspace 4-music"]
    alt-ctrl-shift-cmd-o = ["move-node-to-workspace 5-terminal", "workspace 5-terminal"]
    alt-ctrl-shift-cmd-h = ["move-node-to-workspace 6-work", "workspace 6-work"]
@@ -297,15 +297,15 @@ outer.right = 5
 
 [[on-window-detected]]
    if.app-name-regex-substring = 'ChatGPT'
-   run = ['move-node-to-workspace 2-llm']
+   run = ['move-node-to-workspace 3-llm']
 
 [[on-window-detected]]
    if.app-name-regex-substring = 'WhatsApp'
-   run = ['move-node-to-workspace 3-messages']
+   run = ['move-node-to-workspace 2-messages']
 
 [[on-window-detected]]
    if.app-name-regex-substring = 'Messages'
-   run = ['move-node-to-workspace 3-messages']
+   run = ['move-node-to-workspace 2-messages']
 
 [[on-window-detected]]
    if.app-name-regex-substring = 'Obsidian'
