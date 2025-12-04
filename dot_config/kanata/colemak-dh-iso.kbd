@@ -164,8 +164,8 @@
   i    (tap-hold 250 250 i ralt)
   o    (tap-hold 250 250 o rctl)
 
-  ;;
-  meh  (multi lctl lalt lsft)
+  ;; Meh key: tap to toggle num layer, hold for meh
+  meh  (tap-hold 200 200 (multi (layer-switch num) (on-press-fakekey ind-num tap)) (multi lctl lalt lsft))
   spc  (tap-hold 300 200 spc @meh)
 
   ;; Nav layer: prev/next with double-tap for back/forward
@@ -179,9 +179,11 @@
           (on-press-fakekey ind-num tap)
           (on-release-fakekey ind-cdh tap)))
 
-  ;; Shift keys: tap to toggle layers, hold for shift
-  lsft (tap-hold 200 200 (multi (layer-switch num) (on-press-fakekey ind-num tap)) lsft)
-  rsft (tap-hold 200 200 (multi (layer-switch sym) (on-press-fakekey ind-sym tap)) rsft)
+  ;; Shift keys: just shift (tap-toggle disabled for now)
+  ;; lsft (tap-hold 200 200 (multi (layer-switch num) (on-press-fakekey ind-num tap)) lsft)
+  ;; rsft (tap-hold 200 200 (multi (layer-switch sym) (on-press-fakekey ind-sym tap)) rsft)
+  lsft lsft
+  rsft rsft
 
   ;; Layer exit aliases (tap shift on sym/num layers to return to main)
   sym-x (tap-hold 200 200 (multi (layer-switch colemak-dh) (on-press-fakekey ind-cdh tap)) lsft)
