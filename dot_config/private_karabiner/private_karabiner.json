@@ -6,6 +6,7 @@
                 "rules": [
                     {
                         "description": "Meh+J to Cmd+Opt+Left, Meh+Y to Cmd+Opt+Right]",
+                        "enabled": false,
                         "manipulators": [
                             {
                                 "from": {
@@ -76,6 +77,7 @@
                         "product_id": 6519,
                         "vendor_id": 12951
                     },
+                    "ignore": true,
                     "ignore_vendor_events": true,
                     "manipulate_caps_lock_led": false
                 },
