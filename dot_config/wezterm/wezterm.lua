@@ -207,7 +207,7 @@ config.keys = {
 
   -- Search & Quick Select
   { key = "f", mods = "CMD", action = wezterm.action.Search({ CaseSensitiveString = "" }) },
-  { key = "/", mods = "CMD", action = wezterm.action.QuickSelect },
+  { key = "g", mods = "CMD", action = wezterm.action.QuickSelect },
 
   -- Font Sizing
   { key = "-", mods = "CMD", action = wezterm.action.DecreaseFontSize },

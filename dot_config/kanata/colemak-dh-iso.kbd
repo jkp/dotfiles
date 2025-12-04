@@ -92,14 +92,14 @@
   _       _    _    _    _    _    _    _    _    _    _    _    _
   _       _    _    _    _    _    _    _    _    _    _    _    _    _
   _       _    _    _    _    _    @prv pgdn pgup @nxt _    _    _
-  _       _    _    _    _    _    ←    ↓    ↑    →    _    _    _    _
+  _       _    _    _    _    _    ←    ↓    ↑    →  A-C-S-w  _    _    _
   _       _    _    _    _    _    _    _    end  home _    _    _
           _    _    _              _              _    _
 )
 
 ;; Sym layer (E hold or right shift tap to toggle)
 ;; Top:    &   #   ^   $   _
-;; Home:   `   !   (   )   _
+;; Home:   !   `   (   )   _
 ;; Bottom: %   *   [   ]   @
 ;; UK keyboard: # = \ key (next to Enter), @ = S-' (shift+apostrophe)
 ;; Tap either shift to return to main layer
@@ -107,7 +107,7 @@
   XX      XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX
   XX      XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX
   XX      S-7  A-3  S-6  S-4  XX   XX   XX   XX   XX   XX   XX   XX
-  bspc    grv  S-1  S-9  S-0  -    XX   lsft XX   XX   XX   XX   XX   XX
+  bspc    S-1  grv  S-9  S-0  -    XX   lsft XX   XX   XX   XX   XX   XX
   @sym-x  S-5  S-8  [    ]    S-2  XX   XX   XX   XX   XX   XX   @sym-x
           XX   XX   XX             spc             XX   XX
 )
