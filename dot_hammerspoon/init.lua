@@ -55,3 +55,70 @@ end):start()
 -- Initial setup
 startLayerWatcher()
 updateLayerIndicator()
+
+-- Spotify controls (Super/Hyper key = Cmd+Ctrl+Alt+Shift)
+local hyper = {"cmd", "ctrl", "alt", "shift"}
+
+-- Super+1: Spotify device chooser
+hs.hotkey.bind(hyper, "1", function()
+    local output, status = hs.execute("/Users/jkp/.local/bin/spotify-ctl devices", true)
+    if not status then
+        hs.alert.show("Spotify not available", 1)
+        return
+    end
+
+    local devices = hs.json.decode(output)
+    if not devices or #devices == 0 then
+        hs.alert.show("No devices found", 1)
+        return
+    end
+
+    local choices = {}
+    for _, device in ipairs(devices) do
+        local icon = device.is_active and "▶ " or "  "
+        table.insert(choices, {
+            text = icon .. device.name,
+            subText = device.type,
+            device_id = device.id
+        })
+    end
+
+    local chooser = hs.chooser.new(function(choice)
+        if choice then
+            hs.execute("/Users/jkp/.local/bin/spotify-ctl connect " .. choice.device_id, true)
+        end
+    end)
+    chooser:choices(choices)
+    chooser:show()
+end)
+
+-- Super+2: Toggle like with visual feedback
+hs.hotkey.bind(hyper, "2", function()
+    local output, status = hs.execute("/Users/jkp/.local/bin/spotify-ctl toggle-like", true)
+    if not status then
+        hs.alert.show("Spotify not available", 1)
+        return
+    end
+
+    local data = hs.json.decode(output)
+    if not data then
+        hs.alert.show("Failed to toggle like", 1)
+        return
+    end
+
+    if data.error then
+        hs.alert.show(data.error, 1)
+    elseif data.liked then
+        hs.alert.show("❤️ " .. data.liked, 0.8)
+    elseif data.unliked then
+        hs.alert.show("🤍 " .. data.unliked, 0.8)
+    end
+end)
+
+-- Super+3: Spotify search (activate and send Cmd+K)
+hs.hotkey.bind(hyper, "3", function()
+    hs.application.launchOrFocus("Spotify")
+    hs.timer.doAfter(0.1, function()
+        hs.eventtap.keyStroke({"cmd"}, "k")
+    end)
+end)
