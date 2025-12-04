@@ -1,0 +1,5 @@
+{{- if eq .chezmoi.os "darwin" -}}
+#!/bin/sh
+# Remove age key after apply
+rm -f "$HOME/.config/chezmoi/key.txt"
+{{- end -}}

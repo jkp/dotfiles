@@ -1,0 +1,12 @@
+{{- if eq .chezmoi.os "darwin" -}}
+#!/bin/sh
+# Fetch age key from 1Password if not present or stale
+KEY_FILE="$HOME/.config/chezmoi/key.txt"
+mkdir -p "$(dirname "$KEY_FILE")"
+
+if [ ! -f "$KEY_FILE" ] || [ "$(find "$KEY_FILE" -mmin +60 2>/dev/null)" ]; then
+    if command -v op >/dev/null 2>&1; then
+        op read "op://Private/chezmoi-age-key/notesPlain" > "$KEY_FILE" 2>/dev/null && chmod 600 "$KEY_FILE"
+    fi
+fi
+{{- end -}}
