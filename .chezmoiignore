@@ -32,5 +32,4 @@ hk.pkl
 {{ if ne .chezmoi.os "darwin" }}
 .local/bin/spotify-ctl
 run_before_00-fetch-age-key.sh
-run_after_99-cleanup-age-key.sh
 {{ end }}
