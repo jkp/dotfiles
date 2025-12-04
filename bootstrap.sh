@@ -38,24 +38,30 @@ fi
 
 # Apply dotfiles
 echo "📂 Applying dotfiles..."
+# Skip encrypted files on non-macOS (encryption requires 1Password)
+CHEZMOI_EXCLUDE=""
+if [[ "$(uname)" != "Darwin" ]]; then
+    CHEZMOI_EXCLUDE="--exclude=encrypted"
+fi
+
 if [ -d "$HOME/.local/share/chezmoi/.git" ]; then
     # Already initialized - update from wherever it was initialized from
     if [ -n "$DOTFILES_SOURCE" ]; then
         # Local source: use apply (update expects git remote)
-        chezmoi apply --source "$DOTFILES_SOURCE"
+        chezmoi apply --source "$DOTFILES_SOURCE" $CHEZMOI_EXCLUDE
     else
         # Normal case: pull from GitHub
-        chezmoi update
+        chezmoi update $CHEZMOI_EXCLUDE
     fi
 elif [ -n "$DOTFILES_SOURCE" ]; then
     # First time with local source - copy to standard location
     echo "Copying dotfiles from $DOTFILES_SOURCE..."
     mkdir -p "$HOME/.local/share"
     cp -r "$DOTFILES_SOURCE" "$HOME/.local/share/chezmoi"
-    chezmoi apply
+    chezmoi apply $CHEZMOI_EXCLUDE
 else
     # First time from GitHub
-    chezmoi init --apply jkp
+    chezmoi init --apply jkp $CHEZMOI_EXCLUDE
 fi
 
 # Install mise
