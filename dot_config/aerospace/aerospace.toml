@@ -80,7 +80,6 @@ outer.right = 5
 
    # --- Utilities (Meh+Cmd) ---
    alt-ctrl-shift-cmd-v = 'exec-and-forget ~/.config/aerospace/toggle-keymapp.sh'
-   alt-ctrl-shift-cmd-c = 'exec-and-forget ~/.config/aerospace/cleanup-phantom-windows.sh'
 
 # =============================================================================
 # FLOATING-NAV MODE (Meh+A) - Sticky
@@ -238,11 +237,13 @@ outer.right = 5
    i = "balance-sizes"
    o = "flatten-workspace-tree"
    m = "macos-native-fullscreen"
+   l = 'exec-and-forget ~/.config/aerospace/cleanup-phantom-windows.sh'
    alt-ctrl-shift-n = "layout horizontal vertical"
    alt-ctrl-shift-e = "layout accordion tiles"
    alt-ctrl-shift-i = "balance-sizes"
    alt-ctrl-shift-o = "flatten-workspace-tree"
    alt-ctrl-shift-m = "macos-native-fullscreen"
+   alt-ctrl-shift-l = 'exec-and-forget ~/.config/aerospace/cleanup-phantom-windows.sh'
    # Mode switching
    r = "mode resize"
    s = "mode swap"
@@ -261,7 +262,7 @@ outer.right = 5
    h = []
    j = []
    k = []
-   l = []
+   # l = []
    p = []
    q = []
    t = []
