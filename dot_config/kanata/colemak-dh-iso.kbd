@@ -97,29 +97,27 @@
           _    _    _              _              _    _
 )
 
-;; Sym layer (E hold or right shift tap to toggle)
+;; Sym layer (E hold)
 ;; Top:    &   #   ^   $   _
 ;; Home:   !   `   (   )   _
 ;; Bottom: %   *   [   ]   @
 ;; UK keyboard: # = \ key (next to Enter), @ = S-' (shift+apostrophe)
-;; Tap either shift to return to main layer
 (deflayer sym
   XX      XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX
   XX      XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX
   XX      S-7  A-3  S-6  S-4  XX   XX   XX   XX   XX   XX   XX   XX
   bspc    S-1  grv  S-9  S-0  -    XX   lsft XX   XX   XX   XX   XX   XX
-  @sym-x  S-5  S-8  [    ]    S-2  XX   XX   XX   XX   XX   XX   @sym-x
+  lsft    S-5  S-8  [    ]    S-2  XX   XX   XX   XX   XX   XX   rsft
           XX   XX   XX             spc             XX   XX
 )
 
-;; Num layer (Z hold or left shift tap to toggle)
-;; Tap either shift to return to main layer
+;; Num layer (B tap to toggle on/off - numlock style)
 (deflayer num
   XX      XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX
   XX      XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX
   XX      XX   XX   XX   XX   XX   -    7    8    9    0    XX   XX
   bspc    XX   XX   XX   XX   XX   S-=  4    5    6    S-8  XX   XX   XX
-  @num-x  XX   XX   XX   XX   XX   XX   =    1    2    3    /    @num-x
+  lsft    XX   XX   XX   XX   XX   @num-off =  1    2    3    /    rsft
           XX   XX   XX             spc             XX   XX
 )
 
@@ -179,15 +177,12 @@
           (on-press-fakekey ind-num tap)
           (on-release-fakekey ind-cdh tap)))
 
-  ;; Shift keys: just shift (tap-toggle disabled for now)
-  ;; lsft (tap-hold 200 200 (multi (layer-switch num) (on-press-fakekey ind-num tap)) lsft)
-  ;; rsft (tap-hold 200 200 (multi (layer-switch sym) (on-press-fakekey ind-sym tap)) rsft)
+  ;; Shift keys: just shift
   lsft lsft
   rsft rsft
 
-  ;; Layer exit aliases (tap shift on sym/num layers to return to main)
-  sym-x (tap-hold 200 200 (multi (layer-switch colemak-dh) (on-press-fakekey ind-cdh tap)) lsft)
-  num-x (tap-hold 200 200 (multi (layer-switch colemak-dh) (on-press-fakekey ind-cdh tap)) lsft)
+  ;; Num layer exit (B key toggles back to main - numlock style)
+  num-off (multi (layer-switch colemak-dh) (on-press-fakekey ind-cdh tap))
 
   lmet (multi lmet (layer-while-held cmd-override))
   rmet (multi rmet (layer-while-held cmd-override))
