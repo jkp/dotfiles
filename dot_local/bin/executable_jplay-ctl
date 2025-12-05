@@ -1,0 +1,145 @@
+#!/usr/bin/env python3
+"""
+JPlay CLI - Control JPlay (UPnP Player) via macOS accessibility APIs.
+
+Usage:
+  jplay-ctl play      Toggle play/pause
+  jplay-ctl next      Next track
+  jplay-ctl prev      Previous track
+  jplay-ctl status    Show current view/state
+"""
+import subprocess
+import sys
+
+
+def run_applescript(script: str) -> tuple[str, bool]:
+    """Run AppleScript and return (output, success)."""
+    result = subprocess.run(
+        ["osascript", "-e", script],
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout.strip(), result.returncode == 0
+
+
+def click_transport_button(button_name: str) -> bool:
+    """
+    Click a transport button in JPlay.
+
+    Navigates to the transport bar (group 2 within the deep group hierarchy),
+    collects all buttons, sorts by X position, and clicks by logical position:
+    - Position 1: shuffle
+    - Position 2: prev
+    - Position 3: play/pause
+    - Position 4: next
+    - Position 5: repeat
+    """
+    button_index = {"prev": 2, "play": 3, "next": 4}.get(button_name)
+    if not button_index:
+        print(f"Unknown button: {button_name}", file=sys.stderr)
+        return False
+
+    script = f'''
+tell application "System Events"
+    tell process "UPnP Player"
+        if not (exists window "JPLAY") then
+            return "error: JPlay window not found"
+        end if
+
+        tell window "JPLAY"
+            tell group 1's group 1's group 1's group 1's group 1's group 1's group 1's group 2's group 3
+                -- Collect all buttons with their X positions
+                set btns to every button
+                set btnData to {{}}
+                repeat with b in btns
+                    set pos to position of b
+                    set end of btnData to {{btn:b, xPos:item 1 of pos}}
+                end repeat
+
+                -- Include the play button from nested group 1
+                try
+                    set playBtn to button 1 of group 1
+                    set playPos to position of playBtn
+                    set end of btnData to {{btn:playBtn, xPos:item 1 of playPos}}
+                end try
+
+                -- Sort by X position (bubble sort)
+                repeat with i from 1 to (count of btnData) - 1
+                    repeat with j from 1 to (count of btnData) - i
+                        if xPos of item j of btnData > xPos of item (j + 1) of btnData then
+                            set temp to item j of btnData
+                            set item j of btnData to item (j + 1) of btnData
+                            set item (j + 1) of btnData to temp
+                        end if
+                    end repeat
+                end repeat
+
+                -- Click the button at the requested index
+                if (count of btnData) >= {button_index} then
+                    click btn of item {button_index} of btnData
+                    return "ok"
+                else
+                    return "error: button not found"
+                end if
+            end tell
+        end tell
+    end tell
+end tell
+'''
+    output, success = run_applescript(script)
+
+    if not success or output.startswith("error:"):
+        print(output if output else "Failed to click button", file=sys.stderr)
+        return False
+
+    return True
+
+
+def get_status() -> dict:
+    """Get current JPlay status."""
+    script = '''
+tell application "System Events"
+    if not (exists process "UPnP Player") then
+        return "not_running"
+    end if
+
+    tell process "UPnP Player"
+        if not (exists window "JPLAY") then
+            return "no_window"
+        end if
+        return "running"
+    end tell
+end tell
+'''
+    output, success = run_applescript(script)
+    return {"status": output if success else "error"}
+
+
+def main():
+    if len(sys.argv) < 2:
+        print(__doc__)
+        sys.exit(1)
+
+    command = sys.argv[1]
+
+    if command == "play":
+        success = click_transport_button("play")
+        sys.exit(0 if success else 1)
+    elif command == "next":
+        success = click_transport_button("next")
+        sys.exit(0 if success else 1)
+    elif command == "prev":
+        success = click_transport_button("prev")
+        sys.exit(0 if success else 1)
+    elif command == "status":
+        status = get_status()
+        print(status["status"])
+        sys.exit(0)
+    else:
+        print(f"Unknown command: {command}", file=sys.stderr)
+        print(__doc__)
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
