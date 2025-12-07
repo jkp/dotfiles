@@ -203,7 +203,7 @@ docker run --rm \
     useradd -m -s /bin/bash testuser
     echo 'testuser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
     echo
-    su - testuser -c 'GITHUB_TOKEN=\$GITHUB_TOKEN bash /dotfiles/test.sh'
+    su - testuser -c 'GITHUB_TOKEN=\\$GITHUB_TOKEN bash /dotfiles/test.sh'
   "
 """
 
