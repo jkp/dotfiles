@@ -11,10 +11,13 @@ function chezmoi-check
     # Run expensive commands in parallel
     chezmoi status 2>/dev/null | grep -v '^ R ' > $tmpdir/drift &
     git -C ~/.local/share/chezmoi status --porcelain 2>/dev/null > $tmpdir/git &
+    # Build list of managed directories, then single call to chezmoi-unmanaged
     set -l managed_dirs (chezmoi managed | grep -o '^\.[^/]*' | sort -u)
+    set -l dir_paths
     for dir in $managed_dirs
-        test -d ~/$dir && chezmoi-unmanaged --filter ~/$dir 2>/dev/null >> $tmpdir/unmanaged &
+        test -d ~/$dir && set -a dir_paths ~/$dir
     end
+    chezmoi-unmanaged --filter $dir_paths 2>/dev/null > $tmpdir/unmanaged &
     wait
 
     set -l drift (cat $tmpdir/drift)
