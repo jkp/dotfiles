@@ -42,7 +42,7 @@ eval "$("$HOME/.local/bin/mise" activate bash)"
 # Install chezmoi
 if ! command -v chezmoi &>/dev/null; then
     echo "📦 Installing chezmoi..."
-    curl -fsLS get.chezmoi.io | sh
+    curl -fsLS get.chezmoi.io | BINDIR="$HOME/.local/bin" sh
 fi
 
 # Get dotfiles (needed before mise tasks are available)
