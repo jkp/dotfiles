@@ -7,9 +7,7 @@
 # Development
 brew "gh"
 brew "jj"
-brew "colima"
-brew "docker"
-brew "docker-compose"
+brew "colima"  # includes docker CLI
 brew "postgresql@14"
 
 # Infrastructure
