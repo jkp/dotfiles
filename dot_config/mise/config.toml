@@ -1,6 +1,13 @@
-# Minimal global tools for all machines
-# Pinned versions for reproducibility
-# For machine-specific tools, create ~/.config/mise/config.local.toml
+# Global mise configuration (synced via chezmoi)
+#
+# Config split:
+#   config.toml       - Common tools for all machines (this file, chezmoi-managed)
+#   config.local.toml - Machine-specific tools (ignored by chezmoi, mise-managed)
+#
+# Usage:
+#   - Add universal tools here with pinned versions for reproducibility
+#   - After bootstrap, use `mise use <tool>` to add machine-specific tools
+#   - Machine-specific tools go in config.local.toml automatically
 [tools]
 bat = "0.26.0"
 fd = "10.3.0"
@@ -8,6 +15,7 @@ jq = "1.8.1"
 neovim = "0.11.5"
 rg = "15.1.0"
 starship = "1.24.1"
+uv = "latest"
 zoxide = "0.9.8"
 
 # Kanata keyboard remapper (macOS only, cmd_allowed variant for layer indicator support)
