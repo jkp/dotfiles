@@ -1,89 +1,92 @@
 #!/bin/bash
-
+# Minimal bootstrap - gets mise in place, then delegates to mise tasks
 set -e
 
 export PATH="$HOME/bin:$HOME/.local/bin:$PATH"
 export DEBIAN_FRONTEND=noninteractive
 
+FULL_BOOTSTRAP=false
+if [[ "$1" == "--full" ]]; then
+    FULL_BOOTSTRAP=true
+fi
+
 echo "🚀 Bootstrapping dotfiles..."
 echo
 
-# Install chezmoi
-if ! command -v chezmoi &> /dev/null; then
-    echo "📦 Installing chezmoi..."
-    curl -fsLS get.chezmoi.io | sh 2>&1 | grep -E "(installed|error)"
+# =============================================================================
+# Phase 0: Prerequisites (before mise tasks are available)
+# =============================================================================
+
+# Install Homebrew (macOS only - needed for everything else)
+if [[ "$(uname)" == "Darwin" ]] && ! command -v brew &>/dev/null; then
+    echo "🍺 Installing Homebrew..."
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv)"
 fi
 
-# Install fish (detect OS)
-if ! command -v fish &> /dev/null; then
+# Install fish (Linux only via apt - macOS gets it from Brewfile.core)
+if [[ "$(uname)" != "Darwin" ]] && ! command -v fish &>/dev/null; then
     echo "🐚 Installing fish shell..."
-    if [[ "$(uname)" == "Darwin" ]]; then
-        command -v brew || /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-        brew install fish
-    else
-        sudo apt-get update -qq
-        sudo apt-get install -y -qq fish > /dev/null
-    fi
+    sudo apt-get update -qq
+    sudo apt-get install -y -qq fish >/dev/null
 fi
 
-# Set fish as default shell
-if [[ "$SHELL" != *fish ]]; then
-    echo "🐚 Setting fish as default shell..."
-    fish_path=$(which fish)
-    if ! grep -q "$fish_path" /etc/shells; then
-        echo "$fish_path" | sudo tee -a /etc/shells > /dev/null
-    fi
-    sudo chsh -s "$fish_path" "$USER"
+# Install mise
+if ! command -v mise &>/dev/null; then
+    echo "🔧 Installing mise..."
+    curl -fsSL https://mise.run | sh
+fi
+# Activate mise (use explicit path in case PATH not updated yet)
+eval "$("$HOME/.local/bin/mise" activate bash)"
+
+# Install chezmoi
+if ! command -v chezmoi &>/dev/null; then
+    echo "📦 Installing chezmoi..."
+    curl -fsLS get.chezmoi.io | BINDIR="$HOME/.local/bin" sh
 fi
 
-# Apply dotfiles
-echo "📂 Applying dotfiles..."
-# Skip encrypted files on non-macOS (encryption requires 1Password)
+# Get dotfiles (needed before mise tasks are available)
+echo "📂 Getting dotfiles..."
 CHEZMOI_EXCLUDE=""
 if [[ "$(uname)" != "Darwin" ]]; then
     CHEZMOI_EXCLUDE="--exclude=encrypted"
 fi
 
 if [ -d "$HOME/.local/share/chezmoi/.git" ]; then
-    # Already initialized - update from wherever it was initialized from
     if [ -n "$DOTFILES_SOURCE" ]; then
-        # Local source: use apply (update expects git remote)
         chezmoi apply --source "$DOTFILES_SOURCE" $CHEZMOI_EXCLUDE
     else
-        # Normal case: pull from GitHub
         chezmoi update $CHEZMOI_EXCLUDE
     fi
 elif [ -n "$DOTFILES_SOURCE" ]; then
-    # First time with local source - copy to standard location
     echo "Copying dotfiles from $DOTFILES_SOURCE..."
     mkdir -p "$HOME/.local/share"
     cp -r "$DOTFILES_SOURCE" "$HOME/.local/share/chezmoi"
     chezmoi apply $CHEZMOI_EXCLUDE
 else
-    # First time from GitHub
     chezmoi init --apply jkp $CHEZMOI_EXCLUDE
 fi
 
-# Install mise
-if ! command -v mise &> /dev/null; then
-    echo "🔧 Installing mise..."
-    curl -fsSL https://mise.run | sh 2>&1 | grep -E "(installed|error)" || true
-fi
+# =============================================================================
+# Phase 1: Mise tasks (now that dotfiles/mise.toml exists)
+# =============================================================================
 
-# Install tools and setup git hooks
-echo "⚙️  Installing development tools and git hooks..."
 cd ~/.local/share/chezmoi
 mise trust 2>&1 | grep -v "^mise" || true
-mise install
 
-# Install global mise tools (from ~/.config/mise/config.toml)
-echo "⚙️  Installing global mise tools..."
-cd ~
-mise install
+echo
+echo "⚙️  Running mise bootstrap tasks..."
+if [[ "$FULL_BOOTSTRAP" == true ]]; then
+    mise run bootstrap-full
+else
+    mise run bootstrap
+fi
 
 echo
 echo "✅ Bootstrap complete!"
 echo
 
-# Launch fish
-exec fish
+# Launch fish (skip in test mode or non-interactive)
+if [[ -z "$BOOTSTRAP_TEST" ]] && [[ -t 0 ]]; then
+    exec fish
+fi

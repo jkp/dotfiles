@@ -17,19 +17,46 @@ echo
 echo "🧪 Verifying mise global tools installed..."
 # Run in fish shell where mise is activated via config
 fish -c '
-if not command -v bat &> /dev/null
-    echo "❌ ERROR: bat not found - mise global tools failed to install"
+set -l failed 0
+set -l tools bat zoxide fd rg jq starship nvim
+
+for tool in $tools
+    if command -q $tool
+        echo "  ✓ $tool"
+    else
+        echo "  ✗ $tool - NOT FOUND"
+        set failed 1
+    end
+end
+
+if test $failed -eq 1
+    echo "❌ ERROR: Some mise global tools failed to install"
     exit 1
 end
-if not command -v zoxide &> /dev/null
-    echo "❌ ERROR: zoxide not found - mise global tools failed to install"
+echo "✅ All global tools verified"
+'
+
+echo
+echo "🧪 Verifying fish functions loaded..."
+fish -c '
+set -l failed 0
+set -l funcs chezmoi-check chezmoi-commit
+
+for func in $funcs
+    if functions -q $func
+        echo "  ✓ $func"
+    else
+        echo "  ✗ $func - NOT FOUND"
+        set failed 1
+    end
+end
+
+if test $failed -eq 1
+    echo "❌ ERROR: Some fish functions not loaded"
     exit 1
 end
-echo "✅ Global tools verified (bat, zoxide)"
+echo "✅ Fish functions verified"
 '
 
 echo
 echo "✅ Bootstrap test completed successfully!"
-
-# Future: Add more validation tests here
-# e.g., nvim --headless +checkhealth +qa
