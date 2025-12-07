@@ -2,23 +2,39 @@ function chezmoi-check
     # Check for drift: managed files modified outside chezmoi
     set -l drift (chezmoi status 2>/dev/null)
 
-    # Get unmanaged files/dirs in managed directories (excludes gitignored)
+    # Collect all unmanaged items from managed directories
     set -l managed_dirs (chezmoi managed | grep -o '^\.[^/]*' | sort -u)
-    set -l untracked
+    set -l all_items
     for dir in $managed_dirs
-        # Skip if it's a file not a directory
         test -d ~/$dir || continue
-        for item in (chezmoi unmanaged ~/$dir 2>/dev/null)
-            # Skip gitignored files
-            git -C ~/.local/share/chezmoi check-ignore -q $item 2>/dev/null && continue
-            # Mark directories so user knows to investigate
-            if test -d ~/$item
-                set -a untracked "$item/ [dir]"
-            else
-                # Skip compiled binaries (installed tools like uv, ruff, mise)
-                file ~/$item 2>/dev/null | grep -q "Mach-O" && continue
-                set -a untracked $item
-            end
+        set -a all_items (chezmoi unmanaged ~/$dir 2>/dev/null)
+    end
+
+    # Batch filter: remove gitignored files
+    set -l not_ignored
+    if test -n "$all_items"
+        set -l ignored (printf '%s\n' $all_items | git -C ~/.local/share/chezmoi check-ignore --stdin 2>/dev/null)
+        for item in $all_items
+            contains -- $item $ignored || set -a not_ignored $item
+        end
+    end
+
+    # Batch check file types and build final list
+    set -l untracked
+    set -l files_to_check
+    for item in $not_ignored
+        if test -d ~/$item
+            set -a untracked "$item/ [dir]"
+        else
+            set -a files_to_check $item
+        end
+    end
+
+    # Filter out Mach-O binaries in one batch
+    if test -n "$files_to_check"
+        set -l binaries (file (printf "$HOME/%s\n" $files_to_check) 2>/dev/null | grep "Mach-O" | cut -d: -f1 | sed "s|$HOME/||")
+        for item in $files_to_check
+            contains -- $item $binaries || set -a untracked $item
         end
     end
 
