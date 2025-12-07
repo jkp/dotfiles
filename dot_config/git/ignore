@@ -16,7 +16,7 @@ Thumbs.db
 ehthumbs.db
 
 # Logs
-logs/
+**/logs/
 *.log
 
 # IDE and tools
