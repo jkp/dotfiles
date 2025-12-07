@@ -178,4 +178,5 @@ docker run --rm \
 """
 
 [hooks]
-postinstall = "mise exec -- hk install --mise"
+# Only run if hooks not already installed (avoids errors on idempotent runs)
+postinstall = "[ -f .git/hooks/pre-commit ] || mise exec -- hk install --mise"
