@@ -178,4 +178,4 @@ docker run --rm \
 """
 
 [hooks]
-postinstall = "hk install --mise"
+postinstall = "mise exec -- hk install --mise"
