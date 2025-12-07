@@ -34,9 +34,10 @@ fi
 # Install mise
 if ! command -v mise &>/dev/null; then
     echo "🔧 Installing mise..."
-    curl -fsSL https://mise.run | sh 2>&1 | grep -E "(installed|error)" || true
+    curl -fsSL https://mise.run | sh
 fi
-eval "$(~/.local/bin/mise activate bash 2>/dev/null || mise activate bash)"
+# Activate mise (use explicit path in case PATH not updated yet)
+eval "$("$HOME/.local/bin/mise" activate bash)"
 
 # Install chezmoi
 if ! command -v chezmoi &>/dev/null; then
