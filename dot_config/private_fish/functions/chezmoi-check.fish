@@ -1,13 +1,15 @@
 function chezmoi-check
     set -l verbose false
+    set -l quiet false
     for arg in $argv
         test "$arg" = "--verbose" -o "$arg" = "-v" && set verbose true
+        test "$arg" = "--quiet" -o "$arg" = "-q" && set quiet true
     end
 
     set -l tmpdir (mktemp -d)
 
     # Run expensive commands in parallel
-    chezmoi status 2>/dev/null > $tmpdir/drift &
+    chezmoi status 2>/dev/null | grep -v '^ R ' > $tmpdir/drift &
     git -C ~/.local/share/chezmoi status --porcelain 2>/dev/null > $tmpdir/git &
     set -l managed_dirs (chezmoi managed | grep -o '^\.[^/]*' | sort -u)
     for dir in $managed_dirs
@@ -56,6 +58,25 @@ function chezmoi-check
         end
     end
 
+    # Count issues
+    set -l drift_count (count $drift)
+    set -l untracked_count (count $untracked)
+    set -l git_count (count $git_status)
+    set -l has_issues (test -n "$drift" -o -n "$untracked" -o -n "$git_status" && echo true || echo false)
+
+    # Quiet mode: single line summary or nothing
+    if test "$quiet" = true
+        if test "$has_issues" = true
+            set -l parts
+            test $drift_count -gt 0 && set -a parts (set_color yellow)"$drift_count drifted"(set_color normal)
+            test $untracked_count -gt 0 && set -a parts (set_color cyan)"$untracked_count untracked"(set_color normal)
+            test $git_count -gt 0 && set -a parts (set_color red)"$git_count uncommitted"(set_color normal)
+            echo "📦 "(string join " · " $parts)" "(set_color brblack)"(cmc -v)"(set_color normal)
+        end
+        return
+    end
+
+    # Normal/verbose output
     if test -n "$drift"
         echo "⚠️  drifted from chezmoi source:"
         printf '    %s\n' $drift
@@ -106,7 +127,7 @@ function chezmoi-check
         printf '    %s\n' $git_status
     end
 
-    if test -n "$drift" -o -n "$untracked" -o -n "$git_status"
+    if test "$has_issues" = true
         echo "   run: chezmoi-commit"
     end
 end

@@ -1,1 +1,1 @@
-chezmoi-check
+chezmoi-check -q
