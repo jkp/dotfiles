@@ -2,14 +2,21 @@ function chezmoi-check
     # Check for drift: managed files modified outside chezmoi
     set -l drift (chezmoi status 2>/dev/null)
 
-    # Get unmanaged files in managed directories (excludes ignored files and directories)
+    # Get unmanaged files/dirs in managed directories (excludes gitignored)
     set -l managed_dirs (chezmoi managed | grep -o '^\.[^/]*' | sort -u)
     set -l untracked
     for dir in $managed_dirs
         # Skip if it's a file not a directory
         test -d ~/$dir || continue
         for item in (chezmoi unmanaged ~/$dir 2>/dev/null)
-            test -f ~/$item && set -a untracked $item
+            # Skip gitignored files
+            git -C ~/.local/share/chezmoi check-ignore -q $item 2>/dev/null && continue
+            # Mark directories so user knows to investigate
+            if test -d ~/$item
+                set -a untracked "$item/ [dir]"
+            else
+                set -a untracked $item
+            end
         end
     end
 
