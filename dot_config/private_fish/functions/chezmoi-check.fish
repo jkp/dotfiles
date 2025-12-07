@@ -15,6 +15,8 @@ function chezmoi-check
             if test -d ~/$item
                 set -a untracked "$item/ [dir]"
             else
+                # Skip compiled binaries (installed tools like uv, ruff, mise)
+                file ~/$item 2>/dev/null | grep -q "Mach-O" && continue
                 set -a untracked $item
             end
         end
