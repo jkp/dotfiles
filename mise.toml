@@ -21,10 +21,10 @@ depends = ["bootstrap", "brew-personal"]
 run = "echo '✅ Full bootstrap complete'"
 
 [tasks.brew-core]
-description = "Install core Homebrew packages"
-platforms = ["macos"]
-sources = ["Brewfile.core"]
+description = "Install core Homebrew packages (macOS only)"
 run = """
+#!/usr/bin/env bash
+[[ "$(uname)" != "Darwin" ]] && exit 0
 if ! command -v brew &>/dev/null; then
   echo "Installing Homebrew..."
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -34,10 +34,12 @@ brew bundle --no-lock --file=Brewfile.core
 """
 
 [tasks.brew-personal]
-description = "Install personal Homebrew packages"
-platforms = ["macos"]
-sources = ["Brewfile.personal"]
-run = "brew bundle --no-lock --file=Brewfile.personal"
+description = "Install personal Homebrew packages (macOS only)"
+run = """
+#!/usr/bin/env bash
+[[ "$(uname)" != "Darwin" ]] && exit 0
+brew bundle --no-lock --file=Brewfile.personal
+"""
 
 [tasks.chezmoi-apply]
 description = "Apply chezmoi dotfiles"
@@ -62,7 +64,6 @@ mise install
 
 [tasks.fish-default]
 description = "Set fish as default shell"
-platforms = ["macos", "linux"]
 run = """
 #!/usr/bin/env bash
 if [[ "$SHELL" != *fish* ]]; then
