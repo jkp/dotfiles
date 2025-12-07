@@ -1,29 +1,29 @@
-# explicit ignores here
+# Backup and temp files
+*~
 .#*
-.DS_Store
-.Trash/
-.authinfo
-.balena/
-.bash_history
-.bash_sessions/
-.cache
-.chpwd-recent-dirs
-.config/docker/config.json
-.emacs.d/projectile-bookmarks.eld
-.emacs.d/projectile.cache
-.emacs.d/recentf
-.history
-.pyenv
-.ssh
-.terminfo/
-.tmux/plugins
-.tmux/resurrect/
-.zcompdump
-.zinit/
-.zsh_history
+*_key_cache
+*.jj*~
 
-# Environment variables
-.env
+# macOS
+.DS_Store
+.DS_Store?
+.Spotlight-V100
+.Trashes
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+
+# Logs
+logs/
+*.log
+
+# IDE and tools
+.ipynb_checkpoints
+.tool-versions
+xcuserdata
+.aider.*
 
 # Python
 __pycache__/
@@ -35,11 +35,10 @@ __pycache__/
 venv/
 ENV/
 
-# Unit test / coverage reports
+# Testing and coverage
 .tox/
 .nox/
 .coverage.*
-.cache
 nosetests.xml
 coverage.xml
 *.cover
@@ -52,14 +51,9 @@ dmypy.json
 # Ruff
 .ruff_cache/
 
-# IDE
-.aider.*
-
-# Logs
-logs/
-*.log
+# Environment variables
+.env
 
 # LLM
 code.llm.txt
-
 **/.claude/settings.local.json
