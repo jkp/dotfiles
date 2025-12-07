@@ -22,6 +22,7 @@ run = "echo '✅ Full bootstrap complete'"
 
 [tasks.brew-core]
 description = "Install core Homebrew packages (macOS only)"
+depends = ["chezmoi-apply"]
 run = """
 #!/usr/bin/env bash
 [[ "$(uname)" != "Darwin" ]] && exit 0
@@ -30,15 +31,16 @@ if ! command -v brew &>/dev/null; then
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv)"
 fi
-brew bundle --file=Brewfile.core
+brew bundle --file=~/.Brewfile.core
 """
 
 [tasks.brew-personal]
 description = "Install personal Homebrew packages (macOS only)"
+depends = ["chezmoi-apply"]
 run = """
 #!/usr/bin/env bash
 [[ "$(uname)" != "Darwin" ]] && exit 0
-brew bundle --file=Brewfile.personal
+brew bundle --file=~/.Brewfile.personal
 """
 
 [tasks.chezmoi-apply]
@@ -94,8 +96,8 @@ echo "🔍 Verifying system state..."
 if [[ "$(uname)" == "Darwin" ]]; then
   echo
   echo "Homebrew packages:"
-  brew bundle check --file=Brewfile.core 2>/dev/null && echo "  ✓ Core packages" || echo "  ✗ Core packages missing"
-  brew bundle check --file=Brewfile.personal 2>/dev/null && echo "  ✓ Personal packages" || echo "  ⚠ Personal packages (optional)"
+  brew bundle check --file=~/.Brewfile.core 2>/dev/null && echo "  ✓ Core packages" || echo "  ✗ Core packages missing"
+  brew bundle check --file=~/.Brewfile.personal 2>/dev/null && echo "  ✓ Personal packages" || echo "  ⚠ Personal packages (optional)"
 fi
 
 echo
