@@ -1,4 +1,9 @@
 function chezmoi-check
+    set -l verbose false
+    for arg in $argv
+        test "$arg" = "--verbose" -o "$arg" = "-v" && set verbose true
+    end
+
     set -l tmpdir (mktemp -d)
 
     # Run expensive commands in parallel
@@ -58,7 +63,42 @@ function chezmoi-check
 
     if test -n "$untracked"
         echo "⚠️  untracked dotfiles:"
-        printf '    ~/%s\n' $untracked
+        if test "$verbose" = true
+            printf '    ~/%s\n' $untracked
+        else
+            # Group by parent directory and collapse large groups
+            set -l config_dirs
+            set -l other_items
+            set -l collapse_threshold 5
+
+            for item in $untracked
+                if string match -q '.config/*' (string replace -r ' \[dir\]$' '' $item)
+                    set -a config_dirs $item
+                else
+                    set -a other_items $item
+                end
+            end
+
+            # Show collapsed .config summary if many items
+            set -l config_count (count $config_dirs)
+            set -l collapsed false
+            if test $config_count -gt $collapse_threshold
+                echo "    ~/.config/ [$config_count app configs]"
+                set collapsed true
+            else if test $config_count -gt 0
+                printf '    ~/%s\n' $config_dirs
+            end
+
+            # Show other items individually
+            if test (count $other_items) -gt 0
+                printf '    ~/%s\n' $other_items
+            end
+
+            # Hint about verbose if we collapsed
+            if test "$collapsed" = true
+                echo "    (use -v to see all)"
+            end
+        end
     end
 
     if test -n "$git_status"
