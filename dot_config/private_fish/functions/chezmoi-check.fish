@@ -6,28 +6,19 @@ function chezmoi-check
     git -C ~/.local/share/chezmoi status --porcelain 2>/dev/null > $tmpdir/git &
     set -l managed_dirs (chezmoi managed | grep -o '^\.[^/]*' | sort -u)
     for dir in $managed_dirs
-        test -d ~/$dir && chezmoi unmanaged ~/$dir 2>/dev/null >> $tmpdir/unmanaged &
+        test -d ~/$dir && chezmoi-unmanaged --filter ~/$dir 2>/dev/null >> $tmpdir/unmanaged &
     end
     wait
 
     set -l drift (cat $tmpdir/drift)
     set -l git_status (cat $tmpdir/git)
-    set -l all_items (cat $tmpdir/unmanaged 2>/dev/null)
+    set -l unmanaged_items (cat $tmpdir/unmanaged 2>/dev/null)
     rm -rf $tmpdir
-
-    # Batch filter: remove gitignored files
-    set -l not_ignored
-    if test -n "$all_items"
-        set -l ignored (printf '%s\n' $all_items | git -C ~/.local/share/chezmoi check-ignore --stdin 2>/dev/null)
-        for item in $all_items
-            contains -- $item $ignored || set -a not_ignored $item
-        end
-    end
 
     # Batch check file types and build final list
     set -l untracked
     set -l files_to_check
-    for item in $not_ignored
+    for item in $unmanaged_items
         if test -d ~/$item
             set -a untracked "$item/ [dir]"
         else
