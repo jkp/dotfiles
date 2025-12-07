@@ -1,4 +1,4 @@
 [".local/bin/jplay-ctl"]
 type = "file"
-url = "https://github.com/jkp/jplay-ctl/releases/latest/download/jplay-ctl-darwin-arm64"
+url = "https://github.com/jkp/jplay-ctl/releases/download/v0.1.2/jplay-ctl-darwin-arm64"
 executable = true
