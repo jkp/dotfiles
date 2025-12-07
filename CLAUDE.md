@@ -31,6 +31,28 @@ mise install                # Install tools and setup git hooks
 mise trust                  # Trust mise.toml (required once)
 ```
 
+## Checking for Drift
+
+Before committing, check if deployed dotfiles have drifted from the source repository:
+
+```bash
+fish -c chezmoi-check       # Check for drift between ~ and source repo
+```
+
+This runs the `chezmoi-check` fish function, which compares deployed files against the chezmoi source. Output shows:
+- `MM` - Modified in both locations
+- `R` - Renamed
+- Clean output means no drift
+
+When drift exists:
+
+1. Run `chezmoi diff <file>` to inspect what changed
+2. Decide which version to keep:
+   - `chezmoi re-add <file>` → preserve local changes (sync home → source)
+   - `chezmoi apply <file>` → use source version (prompts before overwriting)
+
+**Note:** `chezmoi apply` prompts before overwriting locally modified files. Use `chezmoi merge <file>` to reconcile differences interactively.
+
 ## Editing Managed Files (Agents)
 
 **IMPORTANT:** When modifying chezmoi-managed files, use this workflow:
