@@ -48,6 +48,12 @@
   - Debugging scripts that might hang
   - Any command where you need to see initial output but don't need it to run forever
 
+## When Scripts Are Slow, Go Native
+
+If a script is slow or painful to debug, switch to a native utility immediately. With LLM assistance, writing Swift/Rust/Go costs no more than writing a script—the old tradeoffs (learning curve, memory management, boilerplate) no longer apply.
+
+Don't tolerate slow scripts. There's no reason to anymore.
+
 ## Infrastructure & Configuration Management
 
 - NEVER make adhoc fixes to production state on servers unless explicitly instructed
