@@ -11,6 +11,9 @@ if status is-interactive
     abbr --add cm chezmoi
     abbr --add cmc chezmoi-check
 
+    abbr --add mr mise run
+    abbr --add mt mise tasks
+
     abbr --add gst git status
     abbr --add gl git log --oneline -n 20
     abbr --add gp git push
