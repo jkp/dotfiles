@@ -6,10 +6,152 @@ gitleaks = "latest"
 hk = "latest"
 pkl = "latest"
 
-[tasks.test]
-description = "Test dotfiles in a fresh Docker container using local source"
+# =============================================================================
+# Bootstrap Tasks
+# =============================================================================
+
+[tasks.bootstrap]
+description = "Bootstrap core environment (safe for any Mac)"
+depends = ["brew-core", "mise-tools", "fish-default"]
+run = "echo '✅ Core bootstrap complete'"
+
+[tasks."bootstrap-full"]
+description = "Bootstrap full personal environment"
+depends = ["bootstrap", "brew-personal"]
+run = "echo '✅ Full bootstrap complete'"
+
+[tasks.brew-core]
+description = "Install core Homebrew packages"
+platforms = ["macos"]
+sources = ["Brewfile.core"]
 run = """
-# Get GitHub token from gh CLI if available (avoids rate limits)
+if ! command -v brew &>/dev/null; then
+  echo "Installing Homebrew..."
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv)"
+fi
+brew bundle --no-lock --file=Brewfile.core
+"""
+
+[tasks.brew-personal]
+description = "Install personal Homebrew packages"
+platforms = ["macos"]
+sources = ["Brewfile.personal"]
+run = "brew bundle --no-lock --file=Brewfile.personal"
+
+[tasks.chezmoi-apply]
+description = "Apply chezmoi dotfiles"
+run = """
+if ! command -v chezmoi &>/dev/null; then
+  echo "Installing chezmoi..."
+  curl -fsLS get.chezmoi.io | sh
+fi
+if [ -d "$HOME/.local/share/chezmoi/.git" ]; then
+  chezmoi apply
+else
+  chezmoi init --apply jkp
+fi
+"""
+
+[tasks.mise-tools]
+description = "Install global mise tools"
+run = """
+cd ~
+mise install
+"""
+
+[tasks.fish-default]
+description = "Set fish as default shell"
+platforms = ["macos", "linux"]
+run = """
+if [ "$SHELL" != *fish* ]; then
+  fish_path=$(command -v fish)
+  if [ -n "$fish_path" ]; then
+    if ! grep -q "$fish_path" /etc/shells 2>/dev/null; then
+      echo "$fish_path" | sudo tee -a /etc/shells > /dev/null
+    fi
+    sudo chsh -s "$fish_path" "$USER"
+    echo "Fish set as default shell"
+  fi
+fi
+"""
+
+# =============================================================================
+# Verification Tasks
+# =============================================================================
+
+[tasks.verify]
+description = "Verify system state"
+run = """
+#!/usr/bin/env bash
+set -e
+echo "🔍 Verifying system state..."
+
+if [[ "$(uname)" == "Darwin" ]]; then
+  echo
+  echo "Homebrew packages:"
+  brew bundle check --file=Brewfile.core 2>/dev/null && echo "  ✓ Core packages" || echo "  ✗ Core packages missing"
+  brew bundle check --file=Brewfile.personal 2>/dev/null && echo "  ✓ Personal packages" || echo "  ⚠ Personal packages (optional)"
+fi
+
+echo
+echo "Mise tools:"
+for tool in bat fd rg jq starship zoxide nvim; do
+  command -v $tool &>/dev/null && echo "  ✓ $tool" || echo "  ✗ $tool"
+done
+
+echo
+echo "Fish functions:"
+fish -c 'functions -q chezmoi-check && echo "  ✓ chezmoi-check" || echo "  ✗ chezmoi-check"'
+fish -c 'functions -q chezmoi-commit && echo "  ✓ chezmoi-commit" || echo "  ✗ chezmoi-commit"'
+
+echo
+echo "✅ Verification complete"
+"""
+
+[tasks.doctor]
+description = "Diagnose environment issues"
+run = """
+#!/usr/bin/env bash
+echo "🩺 Diagnosing environment..."
+echo
+
+# Core tools
+echo "Core tools:"
+command -v brew &>/dev/null && echo "  ✓ Homebrew" || echo "  ✗ Homebrew"
+command -v fish &>/dev/null && echo "  ✓ Fish" || echo "  ✗ Fish"
+command -v chezmoi &>/dev/null && echo "  ✓ Chezmoi" || echo "  ✗ Chezmoi"
+command -v mise &>/dev/null && echo "  ✓ Mise" || echo "  ✗ Mise"
+
+# Shell
+echo
+echo "Shell:"
+echo "  Current: $SHELL"
+echo "  Fish path: $(command -v fish 2>/dev/null || echo 'not found')"
+
+# Chezmoi state
+echo
+echo "Chezmoi:"
+if [ -d "$HOME/.local/share/chezmoi" ]; then
+  echo "  ✓ Initialized"
+  chezmoi status 2>/dev/null | head -5 || echo "  (no drift)"
+else
+  echo "  ✗ Not initialized"
+fi
+
+# Mise
+echo
+echo "Mise:"
+mise doctor 2>&1 | grep -E "(version|error|warning)" | head -5 || echo "  ✓ Healthy"
+"""
+
+# =============================================================================
+# Testing
+# =============================================================================
+
+[tasks.test]
+description = "Test dotfiles in a fresh Docker container"
+run = """
 GITHUB_TOKEN="${GITHUB_TOKEN:-$(gh auth token 2>/dev/null || echo '')}"
 
 docker run --rm \
@@ -26,7 +168,7 @@ docker run --rm \
     useradd -m -s /bin/bash testuser
     echo 'testuser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
     echo
-    su - testuser -c 'GITHUB_TOKEN=$GITHUB_TOKEN bash /dotfiles/test.sh'
+    su - testuser -c 'GITHUB_TOKEN=\$GITHUB_TOKEN bash /dotfiles/test.sh'
   "
 """
 

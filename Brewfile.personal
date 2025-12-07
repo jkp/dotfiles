@@ -1,0 +1,16 @@
+# Brewfile.personal - Full personal Mac setup
+# Only run on your own machines
+
+# Window management
+cask "nikitabobko/tap/aerospace"
+brew "borders"
+
+# Automation & keyboard
+cask "hammerspoon"
+cask "keymapp"
+
+# Terminal
+cask "wezterm"
+
+# Note: CLI tools (bat, fd, rg, jq, starship, zoxide, neovim) managed by mise
+# Note: kanata managed by mise (requires cmd_allowed variant)
