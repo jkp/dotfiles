@@ -3,9 +3,11 @@ function chezmoi-check
     set -l drift (chezmoi status 2>/dev/null)
 
     # Get unmanaged files in managed directories (excludes ignored files and directories)
-    set -l managed_dirs (chezmoi managed | grep -o '^\.config/[^/]*' | sort -u)
+    set -l managed_dirs (chezmoi managed | grep -o '^\.[^/]*' | sort -u)
     set -l untracked
     for dir in $managed_dirs
+        # Skip if it's a file not a directory
+        test -d ~/$dir || continue
         for item in (chezmoi unmanaged ~/$dir 2>/dev/null)
             test -f ~/$item && set -a untracked $item
         end
