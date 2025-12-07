@@ -172,9 +172,8 @@ docker run --rm \
     useradd -m -s /bin/bash testuser
     echo 'testuser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
     echo
-    # Pass GITHUB_TOKEN to testuser's environment (su - clears env)
-    export GITHUB_TOKEN
-    su -m testuser -c 'bash /dotfiles/test.sh'
+    # Pass GITHUB_TOKEN to testuser with correct HOME
+    su testuser -c \\\"HOME=/home/testuser GITHUB_TOKEN=$GITHUB_TOKEN bash /dotfiles/test.sh\\\"
   "
 """
 
