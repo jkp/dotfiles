@@ -1,0 +1,27 @@
+# Patterns for paths to exclude from `chezmoi unmanaged` output
+# Uses gitignore pattern syntax
+
+# XDG data/state directories (not config)
+.local/share/
+.local/state/
+.local/lib/
+
+# Tool environments
+.local/pipx/
+.local/uvenv/
+
+# Downloaded plugins/assets
+Spoons/
+**/assets/
+
+# Nested logs
+**/logs/
+
+# CLI tool state (credentials, cache, runtime)
+.config/chezmoi/
+.config/gcloud/
+.config/gh/
+.config/op/
+.config/uv/
+.config/direnv/
+.config/configstore/
