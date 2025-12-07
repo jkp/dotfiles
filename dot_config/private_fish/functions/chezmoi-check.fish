@@ -35,11 +35,28 @@ function chezmoi-check
         end
     end
 
-    # Filter out Mach-O binaries in one batch
+    # Filter out binaries and pipx-installed scripts in batch
     if test -n "$files_to_check"
+        # Mach-O binaries (one file command)
         set -l binaries (file (printf "$HOME/%s\n" $files_to_check) 2>/dev/null | grep "Mach-O" | cut -d: -f1 | sed "s|$HOME/||")
+
+        # Get non-binary files for shebang check
+        set -l scripts
+        for f in $files_to_check
+            contains -- $f $binaries || set -a scripts $f
+        end
+
+        # Scripts with pipx/uv/venv/system shebangs (skip installed tools)
+        set -l installed
+        if test -n "$scripts"
+            set installed (awk 'FNR==1 && /(pipx|uvenv|uv\/tools|venv|\/Applications\/)/ {print FILENAME}' (printf "$HOME/%s\n" $scripts) 2>/dev/null | sed "s|$HOME/||")
+        end
+
+        # Add non-skipped files to untracked
         for item in $files_to_check
-            contains -- $item $binaries || set -a untracked $item
+            contains -- $item $binaries && continue
+            contains -- $item $installed && continue
+            set -a untracked $item
         end
     end
 
