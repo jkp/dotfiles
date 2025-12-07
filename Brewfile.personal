@@ -16,6 +16,7 @@ brew "ansible"
 # Tools
 brew "tmux"
 brew "ollama"
+brew "terminal-notifier"
 
 # Window management
 tap "nikitabobko/tap"

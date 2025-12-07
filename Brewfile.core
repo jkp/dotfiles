@@ -5,8 +5,6 @@
 brew "fish"
 
 # Core utilities
-brew "git"
-brew "git-lfs"
 brew "coreutils"
 
 # 1Password CLI (for age key decryption in chezmoi)

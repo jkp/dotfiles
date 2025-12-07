@@ -8,6 +8,7 @@ local config = {}
 
 config.window_decorations = "RESIZE"
 config.color_scheme = theme()
+config.font = wezterm.font("JetBrains Mono")
 config.font_size = 13.0
 
 config.inactive_pane_hsb = {
