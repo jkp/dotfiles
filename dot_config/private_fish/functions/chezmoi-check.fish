@@ -1,14 +1,19 @@
 function chezmoi-check
-    # Check for drift: managed files modified outside chezmoi
-    set -l drift (chezmoi status 2>/dev/null)
+    set -l tmpdir (mktemp -d)
 
-    # Collect all unmanaged items from managed directories
+    # Run expensive commands in parallel
+    chezmoi status 2>/dev/null > $tmpdir/drift &
+    git -C ~/.local/share/chezmoi status --porcelain 2>/dev/null > $tmpdir/git &
     set -l managed_dirs (chezmoi managed | grep -o '^\.[^/]*' | sort -u)
-    set -l all_items
     for dir in $managed_dirs
-        test -d ~/$dir || continue
-        set -a all_items (chezmoi unmanaged ~/$dir 2>/dev/null)
+        test -d ~/$dir && chezmoi unmanaged ~/$dir 2>/dev/null >> $tmpdir/unmanaged &
     end
+    wait
+
+    set -l drift (cat $tmpdir/drift)
+    set -l git_status (cat $tmpdir/git)
+    set -l all_items (cat $tmpdir/unmanaged 2>/dev/null)
+    rm -rf $tmpdir
 
     # Batch filter: remove gitignored files
     set -l not_ignored
@@ -37,9 +42,6 @@ function chezmoi-check
             contains -- $item $binaries || set -a untracked $item
         end
     end
-
-    # Git status for modifications
-    set -l git_status (git -C ~/.local/share/chezmoi status --porcelain 2>/dev/null)
 
     if test -n "$drift"
         echo "⚠️  drifted from chezmoi source:"
