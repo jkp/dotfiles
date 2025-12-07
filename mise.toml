@@ -12,39 +12,8 @@ pkl = "latest"
 
 [tasks.bootstrap]
 description = "Bootstrap core environment (safe for any Mac)"
-run = """
-#!/usr/bin/env bash
-set -e
-export PATH="$HOME/.local/bin:$PATH"
-
-# brew-core (macOS only)
-if [[ "$(uname)" == "Darwin" ]]; then
-  if ! command -v brew &>/dev/null; then
-    echo "Installing Homebrew..."
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv)"
-  fi
-  brew bundle --no-lock --file=Brewfile.core
-fi
-
-# mise-tools
-cd ~
-mise install
-
-# fish-default
-if [[ "$SHELL" != *fish* ]]; then
-  fish_path=$(command -v fish)
-  if [ -n "$fish_path" ]; then
-    if ! grep -q "$fish_path" /etc/shells 2>/dev/null; then
-      echo "$fish_path" | sudo tee -a /etc/shells > /dev/null
-    fi
-    sudo chsh -s "$fish_path" "$USER"
-    echo "Fish set as default shell"
-  fi
-fi
-
-echo '✅ Core bootstrap complete'
-"""
+depends = ["brew-core", "mise-tools", "fish-default"]
+run = "echo '✅ Core bootstrap complete'"
 
 [tasks."bootstrap-full"]
 description = "Bootstrap full personal environment"
@@ -203,7 +172,9 @@ docker run --rm \
     useradd -m -s /bin/bash testuser
     echo 'testuser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
     echo
-    su - testuser -c 'GITHUB_TOKEN=\\$GITHUB_TOKEN bash /dotfiles/test.sh'
+    # Pass GITHUB_TOKEN to testuser's environment (su - clears env)
+    export GITHUB_TOKEN
+    su -m testuser -c 'bash /dotfiles/test.sh'
   "
 """
 
