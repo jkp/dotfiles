@@ -33,3 +33,11 @@ When drift exists:
 3. Verify with `chezmoi status`
 
 **Why:** Editing deployed files and re-adding keeps the running system and source in sync. Editing source directly risks drift.
+
+## Writing Documentation
+
+Keep docs minimal and evergreen:
+- No lists of configs/tools (they change)
+- No explanations of things the reader already knows
+- Focus on workflows, not inventory
+- If it can be discovered via `mise tasks` or `chezmoi managed`, don't document it
