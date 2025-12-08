@@ -1,13 +1,15 @@
 # Brewfile.personal - Full personal Mac setup
 # Only run on your own machines
 #
-# Note: CLI tools (bat, fd, rg, jq, starship, zoxide, neovim) managed by mise
+# Note: CLI tools (bat, fd, rg, jq, zoxide, neovim) managed by mise
 # Note: GUI apps that auto-update (Spotify, Signal, Zed, etc.) installed manually
 
 # Development
 brew "gh"
 brew "jj"
-brew "colima"  # includes docker CLI
+brew "colima"
+brew "docker"
+brew "docker-compose"
 brew "postgresql@14"
 
 # Infrastructure
