@@ -96,7 +96,7 @@ fi
 
 echo
 echo "Mise tools:"
-for tool in bat fd rg jq starship zoxide nvim; do
+for tool in bat fd rg jq zoxide nvim; do
   command -v $tool &>/dev/null && echo "  ✓ $tool" || echo "  ✗ $tool"
 done
 
