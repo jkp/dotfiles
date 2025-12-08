@@ -23,6 +23,7 @@ echo '✅ Bootstrap complete'
 [tasks.brew-core]
 description = "Install core Homebrew packages (macOS only)"
 depends = ["chezmoi-apply"]
+hide = true
 shell = "bash -c"
 run = """
 [[ "$(uname)" != "Darwin" ]] && exit 0
@@ -37,6 +38,7 @@ brew bundle --file=~/.Brewfile.core
 [tasks.brew-personal]
 description = "Install personal Homebrew packages (macOS only)"
 depends = ["chezmoi-apply"]
+hide = true
 shell = "bash -c"
 run = """
 [[ "$(uname)" != "Darwin" ]] && exit 0
@@ -45,6 +47,7 @@ brew bundle --file=~/.Brewfile.personal
 
 [tasks.chezmoi-apply]
 description = "Apply chezmoi dotfiles"
+hide = true
 shell = "bash -c"
 run = """
 if ! command -v chezmoi &>/dev/null; then
@@ -62,11 +65,13 @@ fi
 
 [tasks.mise-tools]
 description = "Install global mise tools"
+hide = true
 dir = "~"
 run = "$HOME/.local/bin/mise install"
 
 [tasks.fish-default]
 description = "Set fish as default shell"
+hide = true
 shell = "bash -c"
 run = """
 if [[ "$SHELL" != *fish* ]]; then
@@ -182,5 +187,6 @@ touch .test-ok
 """
 
 [hooks]
+enter = 'echo "Dotfiles repo: run mise tasks to see available commands"'
 # Only run hk install in git repos that don't already have hooks
 postinstall = "[ -d .git ] && [ ! -f .git/hooks/pre-commit ] && mise exec -- hk install --mise || true"
