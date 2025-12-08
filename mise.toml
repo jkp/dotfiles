@@ -11,14 +11,14 @@ pkl = "latest"
 # =============================================================================
 
 [tasks.bootstrap]
-description = "Bootstrap core environment (safe for any Mac)"
+description = "Bootstrap environment"
 depends = ["brew-core", "mise-tools", "fish-default"]
-run = "echo '✅ Core bootstrap complete'"
-
-[tasks."bootstrap-full"]
-description = "Bootstrap full personal environment"
-depends = ["bootstrap", "brew-personal"]
-run = "echo '✅ Full bootstrap complete'"
+usage = 'flag "--full" help="Include personal Homebrew packages"'
+shell = "bash -c"
+run = """
+[[ "$usage_full" == "true" ]] && mise run brew-personal
+echo '✅ Bootstrap complete'
+"""
 
 [tasks.brew-core]
 description = "Install core Homebrew packages (macOS only)"

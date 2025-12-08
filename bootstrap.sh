@@ -5,10 +5,8 @@ set -e
 export PATH="$HOME/bin:$HOME/.local/bin:$PATH"
 export DEBIAN_FRONTEND=noninteractive
 
-FULL_BOOTSTRAP=false
-if [[ "$1" == "--full" ]]; then
-    FULL_BOOTSTRAP=true
-fi
+# Pass through flags to mise run bootstrap
+BOOTSTRAP_FLAGS="$@"
 
 echo "🚀 Bootstrapping dotfiles..."
 echo
@@ -78,14 +76,8 @@ fi
 echo
 echo "⚙️  Running mise bootstrap tasks..."
 cd ~/.local/share/chezmoi
-if [[ "$FULL_BOOTSTRAP" == true ]]; then
-    mise run bootstrap-full
-else
-    mise run bootstrap
-fi
+mise run bootstrap $BOOTSTRAP_FLAGS
 
-echo
-echo "✅ Bootstrap complete!"
 echo
 
 # Launch fish (skip in test mode or non-interactive)
