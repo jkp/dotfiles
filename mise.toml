@@ -23,6 +23,7 @@ run = "echo '✅ Full bootstrap complete'"
 [tasks.brew-core]
 description = "Install core Homebrew packages (macOS only)"
 depends = ["chezmoi-apply"]
+shell = "bash -c"
 run = """
 [[ "$(uname)" != "Darwin" ]] && exit 0
 if ! command -v brew &>/dev/null; then
@@ -36,6 +37,7 @@ brew bundle --file=~/.Brewfile.core
 [tasks.brew-personal]
 description = "Install personal Homebrew packages (macOS only)"
 depends = ["chezmoi-apply"]
+shell = "bash -c"
 run = """
 [[ "$(uname)" != "Darwin" ]] && exit 0
 brew bundle --file=~/.Brewfile.personal
@@ -43,26 +45,29 @@ brew bundle --file=~/.Brewfile.personal
 
 [tasks.chezmoi-apply]
 description = "Apply chezmoi dotfiles"
+shell = "bash -c"
 run = """
 if ! command -v chezmoi &>/dev/null; then
   echo "Installing chezmoi..."
   curl -fsLS get.chezmoi.io | sh
 fi
+EXCLUDE=""
+[[ "$(uname)" != "Darwin" ]] && EXCLUDE="--exclude=encrypted"
 if [ -d "$HOME/.local/share/chezmoi/.git" ]; then
-  chezmoi apply
+  chezmoi apply $EXCLUDE
 else
-  chezmoi init --apply jkp
+  chezmoi init --apply jkp $EXCLUDE
 fi
 """
 
 [tasks.mise-tools]
 description = "Install global mise tools"
 dir = "~"
-env = { PATH = "$HOME/.local/bin:$PATH" }
-run = "mise install"
+run = "$HOME/.local/bin/mise install"
 
 [tasks.fish-default]
 description = "Set fish as default shell"
+shell = "bash -c"
 run = """
 if [[ "$SHELL" != *fish* ]]; then
   fish_path=$(command -v fish)

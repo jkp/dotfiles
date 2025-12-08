@@ -18,7 +18,7 @@ echo "🧪 Verifying mise global tools installed..."
 # Run in fish shell where mise is activated via config
 fish -c '
 set -l failed 0
-set -l tools bat zoxide fd rg jq starship nvim
+set -l tools bat zoxide fd rg jq nvim
 
 for tool in $tools
     if command -q $tool

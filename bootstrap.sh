@@ -67,15 +67,17 @@ else
     chezmoi init --apply jkp $CHEZMOI_EXCLUDE
 fi
 
+# Trust mise configs now that dotfiles exist
+"$HOME/.local/bin/mise" trust ~/.local/share/chezmoi/mise.toml 2>/dev/null || true
+"$HOME/.local/bin/mise" trust ~/.config/mise/config.toml 2>/dev/null || true
+
 # =============================================================================
 # Phase 1: Mise tasks (now that dotfiles/mise.toml exists)
 # =============================================================================
 
-cd ~/.local/share/chezmoi
-mise trust 2>&1 | grep -v "^mise" || true
-
 echo
 echo "⚙️  Running mise bootstrap tasks..."
+cd ~/.local/share/chezmoi
 if [[ "$FULL_BOOTSTRAP" == true ]]; then
     mise run bootstrap-full
 else
