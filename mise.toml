@@ -108,8 +108,8 @@ done
 
 echo
 echo "Fish functions:"
-fish -c 'functions -q chezmoi-check && echo "  ✓ chezmoi-check" || echo "  ✗ chezmoi-check"'
-fish -c 'functions -q chezmoi-commit && echo "  ✓ chezmoi-commit" || echo "  ✗ chezmoi-commit"'
+fish --no-config -c 'source ~/.config/fish/functions/chezmoi-check.fish 2>/dev/null && echo "  ✓ chezmoi-check" || echo "  ✗ chezmoi-check"'
+fish --no-config -c 'source ~/.config/fish/functions/chezmoi-commit.fish 2>/dev/null && echo "  ✓ chezmoi-commit" || echo "  ✗ chezmoi-commit"'
 
 echo
 echo "✅ Verification complete"

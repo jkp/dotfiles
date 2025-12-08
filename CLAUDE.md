@@ -1,64 +1,35 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code when working with this repository.
 
 ## Overview
 
-This is a **chezmoi** dotfiles repository.
-
-## Managed Configurations
-
-- **Neovim**: `dot_config/nvim/` - kickstart.nvim-based config with lazy.nvim for plugins
-- **Fish Shell**: `dot_config/private_fish/` - uses fisher for plugin management, integrates mise/zoxide/1Password
-
-## Development Tools
-
-This repo uses **mise** to manage tools and **hk** to manage git hooks:
-
-- `mise.toml` - Declares tools (gitleaks, hk) and runs postinstall hook
-- `hk.pkl` - Defines git hooks (pre-commit runs gitleaks)
-- `bootstrap.sh` - Sets up new machines, installs mise, runs `mise install` to activate hooks
-
-After `mise install`, the pre-commit hook automatically scans for secrets using gitleaks.
+A **chezmoi** dotfiles repository. Uses **mise** for tools/tasks and **hk** for git hooks.
 
 ## Key Commands
 
 ```bash
-chezmoi apply               # Apply changes to home directory
-chezmoi edit <target>       # Edit a managed file (applies on save)
-chezmoi cd                  # Enter source directory for git operations
-mise install                # Install tools and setup git hooks
-mise trust                  # Trust mise.toml (required once)
+chezmoi apply               # Apply source → home
+chezmoi re-add <file>       # Sync home → source
+mise run bootstrap          # Bootstrap core environment
+mise run verify             # Check what's installed
 ```
 
 ## Checking for Drift
 
-Before committing, check if deployed dotfiles have drifted from the source repository:
-
 ```bash
-fish -c chezmoi-check       # Check for drift between ~ and source repo
+chezmoi-check               # Runs on shell startup, or invoke manually
+chezmoi-check -v            # Verbose: show files
 ```
 
-This runs the `chezmoi-check` fish function, which compares deployed files against the chezmoi source. Output shows:
-- `MM` - Modified in both locations
-- `R` - Renamed
-- Clean output means no drift
-
 When drift exists:
-
-1. Run `chezmoi diff <file>` to inspect what changed
-2. Decide which version to keep:
-   - `chezmoi re-add <file>` → preserve local changes (sync home → source)
-   - `chezmoi apply <file>` → use source version (prompts before overwriting)
-
-**Note:** `chezmoi apply` prompts before overwriting locally modified files. Use `chezmoi merge <file>` to reconcile differences interactively.
+1. `chezmoi diff <file>` to inspect
+2. `chezmoi re-add <file>` to keep local, or `chezmoi apply <file>` to restore source
 
 ## Editing Managed Files (Agents)
 
-**IMPORTANT:** When modifying chezmoi-managed files, use this workflow:
+1. Edit the deployed file (e.g., `~/.config/fish/functions/foo.fish`)
+2. Run `chezmoi re-add <file>` immediately
+3. Verify with `chezmoi status`
 
-1. Use the Edit/Write tool to modify the actual file in the home directory (e.g., `~/.config/fish/functions/my-function.fish`)
-2. **ALWAYS** run `chezmoi re-add` immediately after editing to sync changes back to the source repository
-3. Verify the changes with `chezmoi status` (should show clean state)
-
-**WHY:** Editing the deployed file and re-adding ensures the running system and source repository stay in sync. Editing source files directly can create drift if `chezmoi apply` fails or is forgotten.
+**Why:** Editing deployed files and re-adding keeps the running system and source in sync. Editing source directly risks drift.
