@@ -24,7 +24,6 @@ run = "echo '✅ Full bootstrap complete'"
 description = "Install core Homebrew packages (macOS only)"
 depends = ["chezmoi-apply"]
 run = """
-#!/usr/bin/env bash
 [[ "$(uname)" != "Darwin" ]] && exit 0
 if ! command -v brew &>/dev/null; then
   echo "Installing Homebrew..."
@@ -38,7 +37,6 @@ brew bundle --file=~/.Brewfile.core
 description = "Install personal Homebrew packages (macOS only)"
 depends = ["chezmoi-apply"]
 run = """
-#!/usr/bin/env bash
 [[ "$(uname)" != "Darwin" ]] && exit 0
 brew bundle --file=~/.Brewfile.personal
 """
@@ -59,17 +57,13 @@ fi
 
 [tasks.mise-tools]
 description = "Install global mise tools"
-run = """
-#!/usr/bin/env bash
-export PATH="$HOME/.local/bin:$PATH"
-cd ~
-mise install
-"""
+dir = "~"
+env = { PATH = "$HOME/.local/bin:$PATH" }
+run = "mise install"
 
 [tasks.fish-default]
 description = "Set fish as default shell"
 run = """
-#!/usr/bin/env bash
 if [[ "$SHELL" != *fish* ]]; then
   fish_path=$(command -v fish)
   if [ -n "$fish_path" ]; then
@@ -88,8 +82,8 @@ fi
 
 [tasks.verify]
 description = "Verify system state"
+env = { HOMEBREW_NO_AUTO_UPDATE = "1" }
 run = """
-#!/usr/bin/env bash
 set -e
 echo "🔍 Verifying system state..."
 
@@ -118,7 +112,6 @@ echo "✅ Verification complete"
 [tasks.doctor]
 description = "Diagnose environment issues"
 run = """
-#!/usr/bin/env bash
 echo "🩺 Diagnosing environment..."
 echo
 
@@ -157,12 +150,13 @@ mise doctor 2>&1 | grep -E "(version|error|warning)" | head -5 || echo "  ✓ He
 
 [tasks.test]
 description = "Test dotfiles in a fresh Docker container"
+env = { DEBIAN_FRONTEND = "noninteractive" }
 run = """
 GITHUB_TOKEN="${GITHUB_TOKEN:-$(gh auth token 2>/dev/null || echo '')}"
 
 docker run --rm \
   -v "$PWD:/dotfiles:ro" \
-  -e DEBIAN_FRONTEND=noninteractive \
+  -e DEBIAN_FRONTEND \
   -e GITHUB_TOKEN="$GITHUB_TOKEN" \
   ubuntu:latest \
   bash -c "
