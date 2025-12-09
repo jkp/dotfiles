@@ -26,7 +26,7 @@ bindMulti(audioMods, "f12", audio.volumeUp)
 
 --[[
   HOTKEY PHILOSOPHY:
-  - Hyper (Cmd+Ctrl+Alt+Shift) = general app/macro layer
+  - Hyper (Cmd+Ctrl+Alt+Shift) = general app/macro shortcuts
   - Fill number keys 1-10 first, reconsider if we run out
   - F-keys are reserved for audio controls (Cmd or Meh modifiers)
 ]]
@@ -34,7 +34,7 @@ bindMulti(audioMods, "f12", audio.volumeUp)
 local utils = require("utils")
 
 -- Hyper + number keys
-hs.hotkey.bind(hyper, "1", audio.spotifyToggleLike) -- like/unlike
-hs.hotkey.bind(hyper, "2", audio.spotifySearch) -- Spotify search
-hs.hotkey.bind(hyper, "3", utils.newTerminal) -- new terminal
+hs.hotkey.bind(hyper, "1", utils.newTerminal) -- new terminal
+hs.hotkey.bind(hyper, "2", audio.like) -- like/unlike
+hs.hotkey.bind(hyper, "3", audio.search) -- search
 -- 4-0 available for future use

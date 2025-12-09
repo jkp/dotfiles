@@ -1,8 +1,19 @@
 -- Audio control module: Spotify and HQP (JPlay) integration
 local M = {}
 
--- State
-local mode = "spotify"
+-- State (persisted via hs.settings)
+local mode = hs.settings.get("audioMode") or "spotify"
+
+-- Debug logging for failed commands
+local function logError(context, output, status)
+    print(string.format("[audio] %s failed - status: %s, output: %s", context, tostring(status), tostring(output)))
+end
+
+-- PATH setup for commands that need mise-managed tools
+local PATH = "$HOME/.local/share/mise/shims:$HOME/.local/bin:/usr/local/bin:/usr/bin:/bin"
+local function execWithPath(cmd)
+    return hs.execute(string.format("PATH=%s %s", PATH, cmd), false)
+end
 
 local transportIcons = {
     play = "⏯",
@@ -25,7 +36,7 @@ end
 
 -- HQP transport
 local function hqpTransport(cmd)
-    local _, status = hs.execute("/Users/jkp/.local/bin/jplay-ctl " .. cmd, true)
+    local _, status = execWithPath("jplay-ctl " .. cmd)
     if status then
         hs.alert.show("🎧 " .. transportIcons[cmd], 0.5)
     else
@@ -68,7 +79,7 @@ end
 
 -- HQP volume
 local function hqpVolumeUp()
-    local _, status = hs.execute("curl -s -X POST http://orchestra.home:9100/volume/up", true)
+    local _, status = hs.execute("curl -s -X POST http://orchestra.home:9100/volume/up", false)
     if status then
         hs.alert.show("🎧 🔊", 0.5)
     else
@@ -77,7 +88,7 @@ local function hqpVolumeUp()
 end
 
 local function hqpVolumeDown()
-    local _, status = hs.execute("curl -s -X POST http://orchestra.home:9100/volume/down", true)
+    local _, status = hs.execute("curl -s -X POST http://orchestra.home:9100/volume/down", false)
     if status then
         hs.alert.show("🎧 🔉", 0.5)
     else
@@ -87,13 +98,21 @@ end
 
 -- Spotify device chooser
 local function showSpotifyDevices()
-    local output, status = hs.execute("/Users/jkp/.local/bin/spotify-ctl devices", true)
+    local output, status = execWithPath("spotify-ctl devices")
     if not status then
+        logError("spotify-ctl devices", output, status)
         hs.alert.show("Spotify not available", 1)
+        return
+    end
+    -- Check if output looks like JSON before attempting decode
+    if not output or not output:match("^%s*[{%[]") then
+        logError("spotify-ctl devices (invalid JSON)", output, status)
+        hs.alert.show("Spotify error - check console", 1)
         return
     end
     local data = hs.json.decode(output)
     if not data or not data.devices or #data.devices == 0 then
+        logError("spotify-ctl devices (no devices)", output, status)
         hs.alert.show("No devices found", 1)
         return
     end
@@ -108,7 +127,7 @@ local function showSpotifyDevices()
     end
     local chooser = hs.chooser.new(function(choice)
         if choice then
-            hs.execute("/Users/jkp/.local/bin/spotify-ctl connect '" .. choice.device_name .. "'", true)
+            execWithPath("spotify-ctl connect '" .. choice.device_name .. "'")
         end
     end)
     chooser:choices(choices)
@@ -117,14 +136,36 @@ end
 
 -- HQP profile chooser
 local function showHqpProfiles()
-    local output, status = hs.execute("curl -s http://orchestra.home:9100/profiles", true)
+    local output, status = hs.execute("curl -s http://orchestra.home:9100/profiles", false)
     if not status then
-        hs.alert.show("HQP not available", 1)
+        logError("HQP profiles", output, status)
+        local lastLine = output and output:match("[^\n]+$") or "Unknown error"
+        hs.notify.new({
+            title = "HQP Error",
+            informativeText = lastLine,
+            withdrawAfter = 10
+        }):send()
+        return
+    end
+    -- Check if output looks like JSON before attempting decode
+    if not output or not output:match("^%s*[{%[]") then
+        logError("HQP profiles (invalid JSON)", output, status)
+        local lastLine = output and output:match("[^\n]+$") or "No response"
+        hs.notify.new({
+            title = "HQP Profiles Error",
+            informativeText = lastLine,
+            withdrawAfter = 10
+        }):send()
         return
     end
     local data = hs.json.decode(output)
     if not data or not data.profiles or #data.profiles == 0 then
-        hs.alert.show("No profiles found", 1)
+        logError("HQP profiles (no profiles)", output, status)
+        hs.notify.new({
+            title = "HQP Profiles Error",
+            informativeText = "No profiles found",
+            withdrawAfter = 10
+        }):send()
         return
     end
     local choices = {}
@@ -138,7 +179,7 @@ local function showHqpProfiles()
     local chooser = hs.chooser.new(function(choice)
         if choice then
             local encoded = hs.http.encodeForQuery(choice.profile_name)
-            hs.execute("curl -s -X POST 'http://orchestra.home:9100/profiles/" .. encoded .. "?wait=false'", true)
+            hs.execute("curl -s -X POST 'http://orchestra.home:9100/profiles/" .. encoded .. "?wait=false'", false)
             hs.alert.show("🎧 " .. choice.profile_name, 1)
         end
     end)
@@ -147,14 +188,22 @@ local function showHqpProfiles()
 end
 
 -- Spotify-specific actions
-function M.spotifyToggleLike()
-    local output, status = hs.execute("/Users/jkp/.local/bin/spotify-ctl toggle-like", true)
+local function spotifyToggleLike()
+    local output, status = execWithPath("spotify-ctl toggle-like")
     if not status then
+        logError("spotify-ctl toggle-like", output, status)
         hs.alert.show("Spotify not available", 1)
+        return
+    end
+    -- Check if output looks like JSON before attempting decode
+    if not output or not output:match("^%s*[{%[]") then
+        logError("spotify-ctl toggle-like (invalid JSON)", output, status)
+        hs.alert.show("Spotify error - check console", 1)
         return
     end
     local data = hs.json.decode(output)
     if not data then
+        logError("spotify-ctl toggle-like (decode failed)", output, status)
         hs.alert.show("Failed to toggle like", 1)
         return
     end
@@ -167,11 +216,29 @@ function M.spotifyToggleLike()
     end
 end
 
-function M.spotifySearch()
+local function spotifySearch()
     hs.application.launchOrFocus("Spotify")
     hs.timer.doAfter(0.1, function()
         hs.eventtap.keyStroke({"cmd"}, "k")
     end)
+end
+
+-- HQP like
+local function hqpToggleLike()
+    local _, status = execWithPath("jplay-ctl toggle-like")
+    if status then
+        hs.alert.show("🎧 ❤️", 0.5)
+    else
+        hs.alert.show("JPlay not available", 1)
+    end
+end
+
+-- HQP search
+local function hqpSearch()
+    local _, status = execWithPath("jplay-ctl search")
+    if not status then
+        hs.alert.show("JPlay not available", 1)
+    end
 end
 
 -- Unified handlers (route based on mode)
@@ -199,8 +266,17 @@ function M.deviceChooser()
     if mode == "spotify" then showSpotifyDevices() else showHqpProfiles() end
 end
 
+function M.like()
+    if mode == "spotify" then spotifyToggleLike() else hqpToggleLike() end
+end
+
+function M.search()
+    if mode == "spotify" then spotifySearch() else hqpSearch() end
+end
+
 function M.toggleMode()
     mode = mode == "spotify" and "hqp" or "spotify"
+    hs.settings.set("audioMode", mode)
     local icon = mode == "spotify" and "🎵" or "🎧"
     local name = mode == "spotify" and "Spotify" or "HQP"
     hs.alert.show(icon .. " " .. name, 0.8)
