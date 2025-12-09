@@ -421,7 +421,7 @@ require('lazy').setup({
       -- See `:help telescope` and `:help telescope.setup()`
       require('telescope').setup {
         defaults = {
-          hidden = true, -- show dotfiles in all pickers
+          file_ignore_patterns = { '%.git/' },
         },
         pickers = {
           find_files = {
