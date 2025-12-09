@@ -28,6 +28,16 @@ This shows three things:
 2. **Untracked dotfiles** - configs on the system not managed by chezmoi
 3. **Uncommitted changes** - changes already staged in the chezmoi repo
 
+### Understanding `chezmoi status` codes
+
+- `MM` - Modified in both directions (source and home differ)
+- `M` - Modified (single column depending on position)
+- `A` - Added
+- `D` - Deleted
+- `R` - Run (script will be run on apply) - **not** "renamed"
+
+`R` entries like `run_before_*.sh` are scripts that execute during `chezmoi apply`. They always show as `R` and can be ignored when syncing file changes.
+
 ### Reviewing changes
 
 Two commands for viewing diffs - use the right one for your task:
