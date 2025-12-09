@@ -24,6 +24,12 @@ hk.pkl
 # Tool state files (not config)
 .config/fish/fish_variables
 .config/mise/config.local.toml
+.config/htop
+.config/code
+.config/github-copilot
+.config/glab-cli
+.config/simple-update-notifier
+.config/raycast
 
 # Docker runtime state (not config)
 .docker/.buildNodeID
