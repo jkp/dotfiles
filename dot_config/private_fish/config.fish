@@ -1,3 +1,8 @@
+# Use separate history file when running under Claude Code
+if set -q CLAUDECODE
+    set -g fish_history claude
+end
+
 if status is-interactive
     set -gx EDITOR ~/.bin/edit
     set -gx VISUAL $EDITOR
@@ -10,6 +15,7 @@ if status is-interactive
 
     abbr --add cm chezmoi
     abbr --add cmc chezmoi-check
+    abbr --add cmp 'chezmoi diff --reverse'  # "pending" - shows what re-add would pull in
     abbr --add dots cd ~/.local/share/chezmoi
     abbr --add mr mise run
 
