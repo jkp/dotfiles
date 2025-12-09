@@ -10,6 +10,7 @@ brew "jj"
 brew "colima"
 brew "docker"
 brew "docker-compose"
+brew "docker-buildx"
 brew "postgresql@14"
 
 # Infrastructure
