@@ -30,20 +30,17 @@
   process-unmapped-keys   yes
   concurrent-tap-hold     yes
   allow-hardware-repeat   no
-  danger-enable-cmd       yes
   macos-dev-names-include (
       "Apple Internal Keyboard / Trackpad"
       "Jamie's Magic Keyboard"
   )
 )
 
-;; Virtual keys for layer indicator (writes to /tmp for Hammerspoon menu bar)
-(defvirtualkeys
-  ind-cdh (cmd sh -c "echo 'CDH' > /tmp/kanata-layer")
-  ind-qw  (cmd sh -c "echo 'QW' > /tmp/kanata-layer")
-  ind-nav (cmd sh -c "echo 'NAV' > /tmp/kanata-layer")
-  ind-sym (cmd sh -c "echo 'SYM' > /tmp/kanata-layer")
-  ind-num (cmd sh -c "echo 'NUM' > /tmp/kanata-layer")
+;; Combos (like ZSA keyboards)
+;; QWERTY positions: f+j = caps-word, d+k = escape
+(defchordsv2
+  (f j) (caps-word 2000) 50 first-release ()
+  (d k) esc              50 first-release ()
 )
 
 ;; Source layer - defines which keys are intercepted (ISO layout)
@@ -62,7 +59,7 @@
   nubs    1    2    3    4    5    6    7    8    9    0    -    =    bspc
   tab     q    w    f    p    b    j    l    u    y    ;    [    ]
   bspc    @a   @r   @s   @t   g    m    @n   @e   @i   @o   '    \    ret
-  lsft    @z   x    c    d    v    @meh k    h    ,    .    /    rsft
+  lsft    @z   x    c    d    v    @num k    h    ,    .    /    rsft
           lctl lalt @lmet          @spc           @rmet ralt
 )
 
@@ -115,8 +112,8 @@
   XX      XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX
   XX      XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX
   XX      S-7  A-3  S-6  S-4  XX   XX   XX   XX   XX   XX   XX   XX
-  bspc    S-1  grv  S-9  S-0  -    XX   lsft XX   XX   XX   XX   XX   XX
-  lsft    S-5  S-8  [    ]    S-2  XX   XX   XX   XX   XX   XX   rsft
+  bspc    S-1  S-0  S-9  grv  -    XX   lsft XX   XX   XX   XX   XX   XX
+  lsft    S-5  ]    [    S-8  S-2  XX   XX   XX   XX   XX   XX   rsft
           XX   XX   XX             spc             XX   XX
 )
 
@@ -148,35 +145,30 @@
   ;; Extend layer toggle on Caps Lock (tap for , hold for Extend)
   ext  (layer-switch layers)
 
-  ;; Layer switching aliases (with indicator update)
-  lq   (multi (layer-switch qwerty) (on-press-fakekey ind-qw tap))
-  lh   (multi (layer-switch colemak-dh) (on-press-fakekey ind-cdh tap))
+  ;; Layer switching aliases
+  lq   (layer-switch qwerty)
+  lh   (layer-switch colemak-dh)
 
 
   ;; Home row mods - Left hand (Control, Option, Command, Shift)
   ;; Timings from hardware keyboard: 250, 250, 200, 170, 170, 200, 250, 250
   a    (tap-hold 250 250 a lctl)
   r    (tap-hold 250 250 r lalt)
-  s    (tap-hold 200 200 s
-        (multi
-          (layer-toggle nav)
-          (on-press-fakekey ind-nav tap)
-          (on-release-fakekey ind-cdh tap)))
+  s    (tap-hold 200 200 s (layer-toggle nav))
   t    (tap-hold 170 170 t lsft)
 
   ;; Home row mods - Right hand (Shift, Command, Option, Control)
   n    (tap-hold 170 170 n rsft)
-  e    (tap-hold 200 200 e
-        (multi
-          (layer-toggle sym)
-          (on-press-fakekey ind-sym tap)
-          (on-release-fakekey ind-cdh tap)))
+  e    (tap-hold 200 200 e (layer-toggle sym))
   i    (tap-hold 250 250 i ralt)
   o    (tap-hold 250 250 o rctl)
 
-  ;; Meh key: tap to toggle num layer, hold for meh (with F-key override layer)
-  meh  (tap-hold 200 200 (multi (layer-switch num) (on-press-fakekey ind-num tap)) (multi lctl lalt lsft (layer-toggle meh-override)))
+  ;; Meh key (ctrl+alt+shift) with F-key override layer
+  meh  (multi lctl lalt lsft (layer-toggle meh-override))
   spc  (tap-hold 300 200 spc @meh)
+
+  ;; Num layer (B key) - hold to activate, no delay since it's dedicated
+  num  (layer-while-held num)
 
   ;; Nav layer: prev/next with double-tap for back/forward
   prv  (tap-dance 200 (A-M-left M-[))   ;; tap: prev tab, double-tap: back
@@ -184,15 +176,11 @@
   scrl (multi @hyper s)                  ;; hyper+s for scroll mode
 
   ;; Num layer toggle (bottom left key)
-  z    (tap-hold 200 200 z
-        (multi
-          (layer-toggle num)
-          (on-press-fakekey ind-num tap)
-          (on-release-fakekey ind-cdh tap)))
+  z    (tap-hold 200 200 z (layer-toggle num))
 
 
   ;; Num layer exit (B key toggles back to main - numlock style)
-  num-off (multi (layer-switch colemak-dh) (on-press-fakekey ind-cdh tap))
+  num-off (layer-switch colemak-dh)
 
   lmet (multi lmet (layer-while-held cmd-override))
   rmet (multi rmet (layer-while-held cmd-override))

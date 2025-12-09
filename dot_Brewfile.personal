@@ -30,6 +30,7 @@ brew "borders"
 # Automation & keyboard
 cask "hammerspoon"
 cask "keymapp"
+brew "kanata"
 
 # Terminal
 cask "wezterm"
