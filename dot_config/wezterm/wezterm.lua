@@ -13,7 +13,7 @@ config.font_size = 13.0
 
 config.inactive_pane_hsb = {
   saturation = 0.2,
-  brightness = 0.7,
+  brightness = 0.6,
 }
 
 -- =============================================================================
