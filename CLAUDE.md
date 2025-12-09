@@ -15,16 +15,37 @@ mise run bootstrap          # Bootstrap core environment
 mise run verify             # Check what's installed
 ```
 
-## Checking for Drift
+## Syncing Changes (Agents: Start Here)
+
+When asked to sync/commit changes from the system to this repo:
 
 ```bash
-chezmoi-check               # Runs on shell startup, or invoke manually
-chezmoi-check -v            # Verbose: show files
+chezmoi-check -v            # ALWAYS run this first to see full picture
 ```
 
-When drift exists:
-1. `chezmoi diff <file>` to inspect
-2. `chezmoi re-add <file>` to keep local, or `chezmoi apply <file>` to restore source
+This shows three things:
+1. **Drifted files** (`MM`) - files that differ between home and source
+2. **Untracked dotfiles** - configs on the system not managed by chezmoi
+3. **Uncommitted changes** - changes already staged in the chezmoi repo
+
+### Reviewing changes
+
+Two commands for viewing diffs - use the right one for your task:
+
+```bash
+chezmoi diff --reverse <file>  # What local changes would re-add pull in? (home → source)
+chezmoi diff <file>            # What would apply do? (source → home)
+```
+
+**When syncing local changes to the repo, use `--reverse`** (aliased as `cmp` for "pending"). This shows the diff in the intuitive direction: `+` lines are additions you made locally, `-` lines are things you removed.
+
+### Workflow for syncing changes
+
+1. `chezmoi-check -v` to see what's drifted
+2. `chezmoi diff --reverse <file>` (or `cmp`) to review local changes
+3. `chezmoi re-add <file>` to pull local changes into source, OR
+4. `chezmoi apply <file>` to discard local and restore from source
+5. Group related changes into atomic commits
 
 ## Editing Managed Files (Agents)
 
