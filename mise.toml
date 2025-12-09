@@ -160,7 +160,7 @@ mise doctor 2>&1 | grep -E "(version|error|warning)" | head -5 || echo "  ✓ He
 
 [tasks.test]
 description = "Test dotfiles in a fresh Docker container"
-sources = ["dot_*/**", "bootstrap.sh", "test.sh", "mise.toml", "hk.pkl"]
+sources = ["dot_*/**/*", "bootstrap.sh", "test.sh", "mise.toml", "hk.pkl"]
 outputs = [".test-ok"]
 env = { DEBIAN_FRONTEND = "noninteractive" }
 run = """
