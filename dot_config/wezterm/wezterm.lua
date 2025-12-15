@@ -31,7 +31,7 @@ config.quick_select_alphabet = "arstqwfpzxcvneioluymdhgjbk"
 
 -- Make Option act as Alt/Meta for terminal apps (not for typing special chars)
 config.send_composed_key_when_left_alt_is_pressed = false
-config.send_composed_key_when_right_alt_is_pressed = false
+config.send_composed_key_when_right_alt_is_pressed = true
 
 -- =============================================================================
 -- STATUS BAR
