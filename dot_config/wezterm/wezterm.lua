@@ -216,7 +216,7 @@ config.keys = {
 
   -- Buffer Management
   { key = "k", mods = "CMD|SHIFT", action = wezterm.action.ClearScrollback("ScrollbackAndViewport") },
-  { key = "x", mods = "CMD|SHIFT", action = wezterm.action.ActivateCopyMode },
+  { key = "Space", mods = "CTRL", action = wezterm.action.ActivateCopyMode },
 
   -- Workspaces
   {
