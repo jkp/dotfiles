@@ -89,7 +89,7 @@
   _       _    _    _    _    _    _    _    _    _    _    _    _    _
   _       _    _    _    _    _    _    _    _    _    _    _    _
   _       _    _    _    _    _    _    _    _    _    _    _    _    _
-  _       _    _    _    _    _    _    _    _    _    _    _    _
+  _       _    _    _    _    _    _    _    _    @prv @nxt _    _
           _    _    _              _              _    _
 )
 
@@ -155,10 +155,10 @@
   a    (tap-hold 250 250 a lctl)
   r    (tap-hold 250 250 r lalt)
   s    (tap-hold 200 200 s (layer-toggle nav))
-  t    (tap-hold 170 170 t lsft)
+  t    (tap-hold 170 150 t lsft)
 
   ;; Home row mods - Right hand (Shift, Command, Option, Control)
-  n    (tap-hold 170 170 n rsft)
+  n    (tap-hold 170 150 n rsft)
   e    (tap-hold 200 200 e (layer-toggle sym))
   i    (tap-hold 250 250 i ralt)
   o    (tap-hold 250 250 o rctl)
