@@ -18,10 +18,17 @@ Spoons/
 **/logs/
 
 # CLI tool state (credentials, cache, runtime)
+.claude/
 .config/chezmoi/
 .config/gcloud/
 .config/gh/
+.config/imap-mcp/
 .config/op/
 .config/uv/
+.config/zed/
 .config/direnv/
 .config/configstore/
+
+# Secrets (never track)
+.config/fish/conf.d/api_keys.fish
+.config/fish/functions/load_api_key.fish
