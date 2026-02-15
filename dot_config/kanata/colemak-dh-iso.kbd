@@ -41,6 +41,7 @@
 (defchordsv2
   (f j) (caps-word 2000) 50 first-release ()
   (d k) esc              50 first-release ()
+  (d f) bspc              50 first-release ()
 )
 
 ;; Source layer - defines which keys are intercepted (ISO layout)
@@ -56,10 +57,10 @@
 ;; Colemak Mod-DH main layer (ISO)
 (deflayer colemak-dh
   esc     brdn brup @ext sls  dtn  dnd  prev pp   next mute vold volu
-  nubs    1    2    3    4    5    6    7    8    9    0    -    =    bspc
+  @nubs   1    2    3    4    5    6    7    8    9    0    -    =    bspc
   tab     q    w    f    p    b    j    l    u    y    ;    [    ]
-  bspc    @a   @r   @s   @t   g    m    @n   @e   @i   @o   '    \    ret
-  lsft    @z   x    c    d    v    @num k    h    ,    .    /    rsft
+  lmet    @a   @r   @s   @t   g    m    @n   @e   @i   @o   '    \    @myret
+  @lsft-os @z  x    c    d    v    @num k    h    ,    .    /    rsft
           lctl lalt @lmet          @spc           @rmet ralt
 )
 
@@ -89,7 +90,7 @@
   _       _    _    _    _    _    _    _    _    _    _    _    _    _
   _       _    _    _    _    _    _    _    _    _    _    _    _
   _       _    _    _    _    _    _    _    _    _    _    _    _    _
-  _       _    _    _    _    _    _    _    _    @prv @nxt _    _
+  _       _    _    _    _    _    _    _    _    _    _    _    _
           _    _    _              _              _    _
 )
 
@@ -99,7 +100,7 @@
   _       _    _    _    _    _    _    _    _    _    _    _    _    _
   _       _    _    _    _    _    @prv pgdn pgup @nxt _    _    _
   _       _    _    _    _    _    ←    ↓    ↑    →    @scrl _    _    _
-  _       _    _    _    _    _    _    end  home _    _    _    _
+  _       _    _    _    _    _    _    _    end  home _    _    _
           _    _    _              _              _    _
 )
 
@@ -112,7 +113,7 @@
   XX      XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX
   XX      XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX
   XX      S-7  A-3  S-6  S-4  XX   XX   XX   XX   XX   XX   XX   XX
-  bspc    S-1  S-0  S-9  grv  -    XX   lsft XX   XX   XX   XX   XX   XX
+  XX      S-1  S-0  S-9  -    grv  XX   lsft XX   XX   XX   XX   XX   XX
   lsft    S-5  ]    [    S-8  S-2  XX   XX   XX   XX   XX   XX   rsft
           XX   XX   XX             spc             XX   XX
 )
@@ -121,8 +122,8 @@
 (deflayer num
   XX      XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX
   XX      XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX   XX
-  XX      XX   XX   XX   XX   XX   -    7    8    9    0    XX   XX
-  bspc    XX   XX   XX   XX   XX   S-=  4    5    6    S-8  XX   XX   XX
+  XX      XX   XX   XX   XX   XX   S-=  7    8    9    0    XX   XX
+  bspc    XX   XX   XX   XX   XX   -    4    5    6    S-8  XX   XX   XX
   lsft    XX   XX   XX   XX   XX   @num-off =  1    2    3    /    rsft
           XX   XX   XX             spc             XX   XX
 )
@@ -173,11 +174,30 @@
   ;; Nav layer: prev/next with double-tap for back/forward
   prv  (tap-dance 200 (A-M-left M-[))   ;; tap: prev tab, double-tap: back
   nxt  (tap-dance 200 (A-M-right M-]))  ;; tap: next tab, double-tap: forward
+
+  ;; Meh layer: prev/next with meh modifiers released first
+  meh-prv (tap-dance 200 (
+    (multi (release-key lctl) (release-key lsft) lalt lmet left)
+    (multi (release-key lctl) (release-key lalt) (release-key lsft) lmet [)
+  ))
+  meh-nxt (tap-dance 200 (
+    (multi (release-key lctl) (release-key lsft) lalt lmet right)
+    (multi (release-key lctl) (release-key lalt) (release-key lsft) lmet ])
+  ))
   scrl (multi @hyper s)                  ;; hyper+s for scroll mode
+
+  ;; § key: tap for §, hold for Command+§
+  nubs (tap-hold 200 200 nubs M-nubs)
+
+  ;; Return: tap = return, shift+tap = backspace, hold = repeating backspace
+  myret (tap-hold 200 200 (fork ret (unmod bspc) (lsft rsft)) bspc)
 
   ;; Num layer toggle (bottom left key)
   z    (tap-hold 200 200 z (layer-toggle num))
 
+
+  ;; Left shift: tap for one-shot command, hold for shift
+  lsft-os (tap-hold 200 200 (one-shot 2000 lmet) lsft)
 
   ;; Num layer exit (B key toggles back to main - numlock style)
   num-off (layer-switch colemak-dh)
