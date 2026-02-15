@@ -147,6 +147,14 @@ def main():
         tool_name = input_data.get('tool_name', '')
         tool_input = input_data.get('tool_input', {})
         
+        # Block Claude from touching the opt-out marker (human-only)
+        marker = '.claude-allow-main-push'
+        file_path = tool_input.get('file_path', '')
+        command = tool_input.get('command', '') if tool_name == 'Bash' else ''
+        if marker in file_path or marker in command:
+            print(f"BLOCKED: {marker} is a human-only file. Ask the user to create it.", file=sys.stderr)
+            sys.exit(2)
+
         # Check for .env file access (blocks access to sensitive environment files)
         if is_env_file_access(tool_name, tool_input):
             print("BLOCKED: Access to .env files containing sensitive data is prohibited", file=sys.stderr)
@@ -162,10 +170,13 @@ def main():
                 print("BLOCKED: commiting with --no-verify is not allowed! Fix the real issue", file=sys.stderr)
                 sys.exit(2)  # Exit code 2 blocks tool call and shows error to Claude
 
-            # Block pushing to main/master branch
-            if is_push_to_protected_branch(command):
-                print("BLOCKED: Pushing to main/master is not allowed! Create a feature branch and PR instead", file=sys.stderr)
-                sys.exit(2)
+            # Block pushing to main/master branch (unless repo opts out)
+            git_root = find_git_root()
+            if not (git_root / '.claude-allow-main-push').exists():
+                if is_push_to_protected_branch(command):
+                    print("BLOCKED: Pushing to main/master is not allowed! Create a feature branch and PR instead", file=sys.stderr)
+                    print("To opt out, create .claude-allow-main-push in the repo root", file=sys.stderr)
+                    sys.exit(2)
 
             # Block manipulation of git hooks
             git_hook_patterns = [
