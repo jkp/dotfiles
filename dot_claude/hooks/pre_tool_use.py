@@ -48,6 +48,67 @@ def has_no_verify_flag(command):
     
     return False
 
+def get_current_branch():
+    """Get the current git branch name, or None if not in a repo / detached HEAD."""
+    try:
+        result = subprocess.run(
+            ['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
+            capture_output=True, text=True, check=True
+        )
+        return result.stdout.strip()
+    except (subprocess.SubprocessError, subprocess.CalledProcessError):
+        return None
+
+
+def is_push_to_protected_branch(command):
+    """
+    Block any git push that would write to main or master.
+
+    Two-layer check:
+    1. Pattern match: explicit "git push ... main/master" in the command
+    2. Branch check: if on main/master and no explicit non-protected branch
+       target is given (catches bare push, push origin HEAD, etc.)
+    """
+    # Match "git push" with optional flags/args between git and push (e.g. git -C /path push)
+    if not re.search(r'\bgit\b.*\bpush\b', command):
+        return False
+
+    # Layer 1: explicit target branch in command
+    if re.search(r'\bgit\b.*\bpush\b.*\b(main|master)\b', command):
+        return True
+
+    # Layer 2: on a protected branch with no explicit safe target
+    branch = get_current_branch()
+    if branch in ('main', 'master'):
+        # Check if command explicitly names a non-protected branch target.
+        # After "git push [flags] <remote>", the next non-flag arg is the refspec/branch.
+        # If it looks like a branch name and isn't main/master, allow it.
+        parts = command.split('&&')[0].split('||')[0].split(';')[0]  # first command only
+        tokens = parts.split()
+        # Walk past "git", "push", flags (--*), and remote name
+        past_push = False
+        remote_seen = False
+        for token in tokens:
+            if token == 'push':
+                past_push = True
+                continue
+            if not past_push:
+                continue
+            if token.startswith('-'):
+                continue  # skip flags
+            if not remote_seen:
+                remote_seen = True
+                continue  # skip remote name (origin, etc.)
+            # This token is the branch/refspec target
+            if token not in ('main', 'master', 'HEAD'):
+                return False  # explicit non-protected target, allow it
+            break
+        # No explicit safe target found — block
+        return True
+
+    return False
+
+
 def is_env_file_access(tool_name, tool_input):
     """
     Check if any tool is trying to access .env files containing sensitive data.
@@ -100,6 +161,11 @@ def main():
             if has_no_verify_flag(command):
                 print("BLOCKED: commiting with --no-verify is not allowed! Fix the real issue", file=sys.stderr)
                 sys.exit(2)  # Exit code 2 blocks tool call and shows error to Claude
+
+            # Block pushing to main/master branch
+            if is_push_to_protected_branch(command):
+                print("BLOCKED: Pushing to main/master is not allowed! Create a feature branch and PR instead", file=sys.stderr)
+                sys.exit(2)
 
             # Block manipulation of git hooks
             git_hook_patterns = [
