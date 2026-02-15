@@ -32,6 +32,10 @@ bindMulti(audioMods, "f12", audio.volumeUp)
 ]]
 
 local utils = require("utils")
+local switcher = require("workspace-switcher")
+
+-- Workspace-scoped window cycling (replaces native Cmd+Tab)
+-- Cmd+Tab workspace cycling is handled via eventtap in workspace-switcher.lua
 
 -- Hyper + number keys
 hs.hotkey.bind(hyper, "1", utils.newTerminal) -- new terminal
