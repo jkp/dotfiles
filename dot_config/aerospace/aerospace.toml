@@ -4,11 +4,13 @@
 start-at-login = true
 after-login-command = []
 
-# Automatically move keymapp to focused workspace
-exec-on-workspace-change = ['/Users/jkp/.config/aerospace/sticky-keymapp.sh']
+# Sticky keymapp + self-healing WezTerm instances
+exec-on-workspace-change = ['/Users/jkp/.config/aerospace/on-workspace-change.sh']
 
 after-startup-command = [
-    'exec-and-forget /opt/homebrew/bin/borders active_color=0xff27AABB width=7 hidpi=on'
+    'exec-and-forget /opt/homebrew/bin/borders active_color=0xff27AABB width=7 hidpi=on',
+    'exec-and-forget ~/.config/aerospace/ensure-wezterm.sh personal 1-personal',
+    'exec-and-forget sleep 3 && ~/.config/aerospace/ensure-wezterm.sh work 2-work',
 ]
 
 # Mouse focus behavior
@@ -42,17 +44,17 @@ outer.right = 5
    alt-ctrl-shift-l = "workspace 1-personal"
    alt-ctrl-shift-u = "workspace 2-work"
    alt-ctrl-shift-y = "workspace 3-music"
-   alt-ctrl-shift-semicolon = "workspace 4-llm"
-   alt-ctrl-shift-o = "workspace 5-terminal"
-   alt-ctrl-shift-h = "workspace 6-messages"
-   alt-ctrl-shift-slash = "workspace 7-notes"
-   alt-ctrl-shift-j = "workspace 8-scratch"
-   alt-ctrl-shift-k = "workspace 9-scratch"
+   alt-ctrl-shift-semicolon = "workspace 4-notes"
+   alt-ctrl-shift-o = "workspace 5-scratch"
+
+   # --- Focus by role (bottom row right hand) ---
+   alt-ctrl-shift-h = 'exec-and-forget ~/.config/aerospace/focus-role.sh Safari Chrome Helium'
+   alt-ctrl-shift-comma = 'exec-and-forget ~/.config/aerospace/focus-role.sh WezTerm'
+   alt-ctrl-shift-period = 'exec-and-forget ~/.config/aerospace/focus-role.sh Claude ChatGPT'
+   alt-ctrl-shift-slash = 'exec-and-forget ~/.config/aerospace/focus-role.sh WhatsApp Messages'
 
    # --- Workspace navigation ---
-   alt-ctrl-shift-comma = "workspace --wrap-around prev"
-   alt-ctrl-shift-period = "workspace --wrap-around next"
-   alt-ctrl-shift-backspace = "focus-back-and-forth"
+   alt-ctrl-shift-backspace = 'exec-and-forget ~/.config/aerospace/toggle-context.sh'
 
    # --- Mode entry (left hand home row) ---
    alt-ctrl-shift-a = "mode floating-nav"
@@ -70,13 +72,8 @@ outer.right = 5
    alt-ctrl-shift-cmd-l = ["move-node-to-workspace 1-personal", "workspace 1-personal"]
    alt-ctrl-shift-cmd-u = ["move-node-to-workspace 2-work", "workspace 2-work"]
    alt-ctrl-shift-cmd-y = ["move-node-to-workspace 3-music", "workspace 3-music"]
-   alt-ctrl-shift-cmd-semicolon = ["move-node-to-workspace 4-llm", "workspace 4-llm"]
-   alt-ctrl-shift-cmd-o = ["move-node-to-workspace 5-terminal", "workspace 5-terminal"]
-   alt-ctrl-shift-cmd-h = ["move-node-to-workspace 6-messages", "workspace 6-messages"]
-   # TODO: This binding not working - investigate (macOS or Raycast conflict?)
-   alt-ctrl-shift-cmd-slash = ["move-node-to-workspace 7-notes", "workspace 7-notes"]
-   alt-ctrl-shift-cmd-j = ["move-node-to-workspace 8-scratch", "workspace 8-scratch"]
-   alt-ctrl-shift-cmd-k = ["move-node-to-workspace 9-scratch", "workspace 9-scratch"]
+   alt-ctrl-shift-cmd-semicolon = ["move-node-to-workspace 4-notes", "workspace 4-notes"]
+   alt-ctrl-shift-cmd-o = ["layout floating", "move-node-to-workspace 5-scratch", "workspace 5-scratch"]
 
    # --- Utilities (Meh+Cmd) ---
    alt-ctrl-shift-cmd-v = 'exec-and-forget ~/.config/aerospace/toggle-keymapp.sh'
@@ -259,7 +256,6 @@ outer.right = 5
    d = []
    f = []
    g = []
-   h = []
    j = []
    k = []
    # l = []
@@ -302,24 +298,37 @@ outer.right = 5
 
 [[on-window-detected]]
    if.app-name-regex-substring = 'Claude'
-   run = ['move-node-to-workspace 4-llm']
+   run = ['move-node-to-workspace 1-personal']
 
 [[on-window-detected]]
    if.app-name-regex-substring = 'ChatGPT'
-   run = ['move-node-to-workspace 4-llm']
-
-[[on-window-detected]]
-   if.app-name-regex-substring = 'WhatsApp'
-   run = ['move-node-to-workspace 6-messages']
-
-[[on-window-detected]]
-   if.app-name-regex-substring = 'Messages'
-   run = ['move-node-to-workspace 6-messages']
-
-[[on-window-detected]]
-   if.app-name-regex-substring = 'Safari Technology Preview'
    run = ['move-node-to-workspace 2-work']
 
 [[on-window-detected]]
+   if.app-name-regex-substring = 'WhatsApp'
+   run = ['move-node-to-workspace 2-work']
+
+[[on-window-detected]]
+   if.app-name-regex-substring = 'Messages'
+   run = ['move-node-to-workspace 1-personal']
+
+[[on-window-detected]]
+   if.app-name-regex-substring = 'Google Chrome'
+   run = ['move-node-to-workspace 2-work']
+
+[[on-window-detected]]
+   if.app-name-regex-substring = 'Helium'
+   run = ['move-node-to-workspace 2-work']
+
+[[on-window-detected]]
+   if.app-name-regex-substring = 'Safari'
+   run = ['move-node-to-workspace 1-personal']
+
+[[on-window-detected]]
    if.app-name-regex-substring = 'Obsidian'
-   run = ['move-node-to-workspace 7-notes']
+   run = ['move-node-to-workspace 4-notes']
+
+# Auto-float windows opening on scratch
+[[on-window-detected]]
+   if.workspace = '5-scratch'
+   run = ['layout floating']
