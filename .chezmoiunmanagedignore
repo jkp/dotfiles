@@ -28,6 +28,7 @@ Spoons/
 .config/zed/
 .config/direnv/
 .config/configstore/
+.config/rift/
 
 # Secrets (never track)
 .config/fish/conf.d/api_keys.fish
