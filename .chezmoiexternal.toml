@@ -2,3 +2,9 @@
 type = "file"
 url = "https://github.com/jkp/jplay-ctl/releases/download/v0.1.2/jplay-ctl-darwin-arm64"
 executable = true
+
+[".hammerspoon/Spoons/Codex.spoon"]
+type = "archive"
+url = "https://github.com/jkp/Codex.spoon/archive/refs/heads/main.tar.gz"
+stripComponents = 1
+exact = true
