@@ -1,59 +1,59 @@
 -- Codex: tiling + virtual workspaces + scratch floating WM
+local show_hud = false -- set true to show overlay on workspace switch
+local _t0 = hs.timer.absoluteTime()
+local function _ms(since) return math.floor((hs.timer.absoluteTime() - since) / 1e6) end
+
 local Codex = hs.loadSpoon("Codex")
+print(string.format("[wm] loadSpoon: %dms", _ms(_t0)))
+
 Codex.window_gap = 10
-Codex.window_ratios = { 1/3, 1/2, 2/3, 1.0 }
+Codex.window_ratios = { 1/3, 1/2, 2/3, 4/5, 1.0 }
+
+local _t1 = hs.timer.absoluteTime()
 Codex:start()
+print(string.format("[wm] Codex:start(): %dms", _ms(_t1)))
 
-Codex.workspaces.setup({"personal", "work", "global", "scratch"}, {
-    Safari   = "personal",
-    Claude   = "personal",
-    Messages = "personal",
+local _t2 = hs.timer.absoluteTime()
+Codex.workspaces.setup({
+    workspaces = {"personal", "work", "utility", "scratch"},
+    toggleBack = true,
+    focusFollows = { "Safari" },
 
-    ["Google Chrome"] = "work",
-    ChatGPT  = "work",
-    WhatsApp = "work",
-    Helium   = "work",
+    appRules = {
+        Safari   = "personal",
+        Claude   = "personal",
+        Messages = "personal",
 
-    Spotify  = "global",
-    JPLAY    = "global",
-    Obsidian = "global",
+        ["Google Chrome"] = "work",
+        ChatGPT  = "work",
+        WhatsApp = "work",
+        Helium   = "work",
+
+        Spotify  = "utility",
+        JPLAY    = "utility",
+        Obsidian = "utility",
+    },
+
+    titleRules = {
+        { pattern = "^%[personal%]", workspace = "personal" },
+        { pattern = "^%[work%]",     workspace = "work" },
+    },
+
+    jumpTargets = {
+        browser  = { personal = "Safari",   work = "Helium" },
+        terminal = {
+            personal = { app = "WezTerm", title = "^%[personal%]",
+                         launch = { "/Applications/WezTerm.app/Contents/MacOS/wezterm", "connect", "personal" } },
+            work     = { app = "WezTerm", title = "^%[work%]",
+                         launch = { "/Applications/WezTerm.app/Contents/MacOS/wezterm", "connect", "work" } },
+        },
+        llm      = { personal = "Claude",   work = "ChatGPT" },
+        comms    = { personal = "Messages", work = "WhatsApp" },
+    },
 })
+print(string.format("[wm] workspaces.setup(): %dms", _ms(_t2)))
+
 Codex.scratch.setup("scratch")
-
----------------------------------------------------------------------------
--- Jump-to-app: workspace-aware app focusing
----------------------------------------------------------------------------
-
-local jump_targets = {
-    browser  = { personal = "Safari",        work = "Helium" },
-    terminal = { personal = "WezTerm",       work = "WezTerm" },
-    llm      = { personal = "Claude",        work = "ChatGPT" },
-    comms    = { personal = "Messages",      work = "WhatsApp" },
-}
-
-local function jumpTo(category)
-    local current_ws = Codex.workspaces.currentSpace()
-    local targets = jump_targets[category]
-    if not targets then return end
-    local appName = targets[current_ws]
-    if not appName then return end
-
-    -- First: try to focus an existing window of this app on the current workspace
-    local ws_ids = Codex.workspaces.windowIds()
-    for id in pairs(ws_ids) do
-        local win = hs.window.get(id)
-        if win then
-            local app = win:application()
-            if app and app:title() == appName then
-                win:focus()
-                return
-            end
-        end
-    end
-
-    -- No window on this workspace: launch or focus the app
-    hs.application.launchOrFocus(appName)
-end
 
 ---------------------------------------------------------------------------
 -- Custom actions
@@ -108,48 +108,59 @@ local meh = { "ctrl", "alt", "shift" }
 local hyper = { "ctrl", "alt", "shift", "cmd" }
 local actions = Codex.actions.actions()
 local scratch = Codex.scratch
+print(string.format("[wm] hotkey setup start: %dms", _ms(_t0)))
 
--- Navigate (Meh + home row) — dispatched
+---------------------------------------------------------------------------
+-- RIGHT HAND — Meh = navigate, Hyper = mutate
+---------------------------------------------------------------------------
+
+-- Meh home row: scroll + app jumps
+-- m=scroll left, n=browser, e=comms, i=scroll right, o=terminal, '=LLM
 hs.hotkey.bind(meh, "m", Codex:dispatch(function() scratch.focus("left") end, actions.focus_left))
-hs.hotkey.bind(meh, "n", Codex:dispatch(function() scratch.focus("down") end, actions.focus_down))
-hs.hotkey.bind(meh, "e", Codex:dispatch(function() scratch.focus("up") end, actions.focus_up))
+hs.hotkey.bind(meh, "n", function() Codex.workspaces.jumpToApp("browser") end)
+hs.hotkey.bind(meh, "e", function() Codex.workspaces.jumpToApp("comms") end)
 hs.hotkey.bind(meh, "i", Codex:dispatch(function() scratch.focus("right") end, actions.focus_right))
+hs.hotkey.bind(meh, "o", function() Codex.workspaces.jumpToApp("terminal") end)
+hs.hotkey.bind(meh, "'", function() Codex.workspaces.jumpToApp("llm") end)
 
--- Swap/Snap (Hyper + home row) — dispatched
+-- Meh top row: workspace switch
+-- l=personal, u=work, y=utility, ;=toggle scratch
+hs.hotkey.bind(meh, "l", function() Codex.workspaces.switchTo("personal") end)
+hs.hotkey.bind(meh, "u", function() Codex.workspaces.switchTo("work") end)
+hs.hotkey.bind(meh, "y", function() Codex.workspaces.switchTo("utility") end)
+hs.hotkey.bind(meh, ";", function() Codex.workspaces.switchTo("scratch") end)
+
+-- Meh misc
+hs.hotkey.bind(meh, "tab", function() Codex.workspaces.toggleJump() end)
+
+-- Hyper home row: resize/structure — dispatched for tiled/scratch
+-- m=swap left, n=slurp, e=barf, i=swap right, o=cycle width, '=cycle height
 hs.hotkey.bind(hyper, "m", Codex:dispatch(function() scratch.snap("left") end, actions.swap_left))
-hs.hotkey.bind(hyper, "n", Codex:dispatch(function() scratch.snap("bottom") end, actions.swap_down))
-hs.hotkey.bind(hyper, "e", Codex:dispatch(function() scratch.snap("top") end, actions.swap_up))
+hs.hotkey.bind(hyper, "n", actions.slurp_in)
+hs.hotkey.bind(hyper, "e", Codex:dispatch(function() scratch.cycle_center() end, actions.barf_out))
 hs.hotkey.bind(hyper, "i", Codex:dispatch(function() scratch.snap("right") end, actions.swap_right))
+hs.hotkey.bind(hyper, "o", Codex:dispatch(function() scratch.cycle_width() end, actions.cycle_width))
+hs.hotkey.bind(hyper, "'", Codex:dispatch(function() scratch.cycle_height() end, cycle_stack_height))
 
--- Jump to app (Meh + top row)
-hs.hotkey.bind(meh, "l", function() jumpTo("terminal") end)
-hs.hotkey.bind(meh, "u", function() jumpTo("browser") end)
-hs.hotkey.bind(meh, "y", function() jumpTo("llm") end)
-hs.hotkey.bind(meh, ";", function() jumpTo("comms") end)
+-- Hyper top row: move window to workspace
+-- l=personal, u=work, y=utility, ;=scratch
+hs.hotkey.bind(hyper, "l", function() Codex.workspaces.moveWindowTo("personal") end)
+hs.hotkey.bind(hyper, "u", function() Codex.workspaces.moveWindowTo("work") end)
+hs.hotkey.bind(hyper, "y", function() Codex.workspaces.moveWindowTo("utility") end)
+hs.hotkey.bind(hyper, ";", function() Codex.workspaces.moveWindowTo("scratch") end)
 
--- Slurp/barf + resize (Hyper + top row) — dispatched where applicable
-hs.hotkey.bind(hyper, "j", actions.slurp_in)
-hs.hotkey.bind(hyper, "l", Codex:dispatch(function() scratch.cycle_width() end, actions.cycle_width))
-hs.hotkey.bind(hyper, "u", Codex:dispatch(function() scratch.cycle_height() end, cycle_stack_height))
-hs.hotkey.bind(hyper, "y", Codex:dispatch(function() scratch.cycle_center() end, actions.barf_out))
+-- Hyper bottom row: layout mutations
+hs.hotkey.bind(hyper, "k", actions.toggle_floating)
+hs.hotkey.bind(hyper, "h", Codex:dispatch(function() scratch.center() end, actions.center_window))
 
--- Workspace switch (Meh + bottom row)
-hs.hotkey.bind(meh, "h", function() Codex.workspaces.switchTo("personal") end)
-hs.hotkey.bind(meh, ",", function() Codex.workspaces.switchTo("work") end)
-hs.hotkey.bind(meh, ".", function() Codex.workspaces.switchTo("global") end)
-hs.hotkey.bind(meh, "o", function() Codex.workspaces.toggleScratch() end)
+-- Hyper misc
+hs.hotkey.bind(hyper, "j", reflow_workspace)
 
--- Move window to workspace (Hyper + bottom row)
-hs.hotkey.bind(hyper, "h", function() Codex.workspaces.moveWindowTo("personal") end)
-hs.hotkey.bind(hyper, ",", function() Codex.workspaces.moveWindowTo("work") end)
-hs.hotkey.bind(hyper, ".", function() Codex.workspaces.moveWindowTo("global") end)
-hs.hotkey.bind(hyper, "o", function() Codex.workspaces.moveWindowTo("scratch") end)
+---------------------------------------------------------------------------
+-- LEFT HAND
+---------------------------------------------------------------------------
 
--- Layout — dispatched where applicable
-hs.hotkey.bind(meh, "escape", actions.toggle_floating)
-hs.hotkey.bind(meh, "c", Codex:dispatch(function() scratch.center() end, actions.center_window))
-hs.hotkey.bind(meh, "f", Codex:dispatch(function() scratch.maximize() end, actions.full_width))
-hs.hotkey.bind(meh, "r", reflow_workspace)
+-- Debug (Meh + left bottom row)
 hs.hotkey.bind(meh, "d", function() Codex.workspaces.dump(); Codex.state.dump() end)
 
 ---------------------------------------------------------------------------
@@ -161,7 +172,7 @@ local function updateMenubar(name)
     if not menubar then return end
     menubar:setTitle(name)
     local items = {}
-    for _, wsName in ipairs({"personal", "work", "global", "scratch"}) do
+    for _, wsName in ipairs({"personal", "work", "utility", "scratch"}) do
         items[#items + 1] = {
             title = wsName,
             checked = (wsName == name),
@@ -185,8 +196,11 @@ local indicator_style = {
     atScreenEdge = 0,
 }
 Codex.workspaces.onSwitch = function(name)
-    hs.alert.closeAll(0)
-    hs.alert.show(name, indicator_style, hs.screen.mainScreen(), 0.6)
+    if show_hud then
+        hs.alert.closeAll(0)
+        hs.alert.show(name, indicator_style, hs.screen.mainScreen(), 0.6)
+    end
     updateMenubar(name)
 end
+print(string.format("[wm] total sync: %dms", _ms(_t0)))
 hs.timer.doAfter(1.5, function() Codex.workspaces.onSwitch(Codex.workspaces.currentSpace()) end)
