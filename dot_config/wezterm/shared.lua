@@ -45,7 +45,7 @@ function M.apply(config)
   config.window_decorations = "RESIZE"
   config.color_scheme = theme()
   config.font = wezterm.font("JetBrains Mono")
-  config.font_size = 13.0
+  config.font_size = 15.0
 
   config.inactive_pane_hsb = {
     saturation = 0.2,
