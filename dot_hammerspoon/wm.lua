@@ -15,45 +15,37 @@ print(string.format("[wm] Codex:start(): %dms", _ms(_t1)))
 
 local _t2 = hs.timer.absoluteTime()
 Codex.workspaces.setup({
-    workspaces = {"personal", "work", "utility", "scratch"},
-    toggleBack = true,
-    focusFollows = { "Safari" },
-
-    appRules = {
-        Safari   = "personal",
-        Claude   = "personal",
-        Messages = "personal",
-
-        ["Google Chrome"] = "work",
-        ChatGPT  = "work",
-        WhatsApp = "work",
-        Helium   = "work",
-
-        Spotify  = "utility",
-        JPLAY    = "utility",
-        Obsidian = "utility",
+    workspaces = {
+        "personal",
+        "work",
+        "utility",
+        { name = "scratch", layout = "unmanaged" },
     },
+    toggleBack = false,
 
-    titleRules = {
-        { pattern = "^%[personal%]", workspace = "personal" },
-        { pattern = "^%[work%]",     workspace = "work" },
-    },
+    apps = {
+        Safari   = { workspace = "personal", jump = "browser", focusFollows = true },
+        Claude   = { workspace = "personal", jump = "llm" },
+        Messages = { workspace = "personal", jump = "comms" },
 
-    jumpTargets = {
-        browser  = { personal = "Safari",   work = "Helium" },
-        terminal = {
-            personal = { app = "WezTerm", title = "^%[personal%]",
-                         launch = { "/Applications/WezTerm.app/Contents/MacOS/wezterm", "connect", "personal" } },
-            work     = { app = "WezTerm", title = "^%[work%]",
-                         launch = { "/Applications/WezTerm.app/Contents/MacOS/wezterm", "connect", "work" } },
+        Helium            = { workspace = "work", jump = "browser" },
+        ChatGPT           = { workspace = "work", jump = "llm" },
+        WhatsApp          = { workspace = "work", jump = "comms" },
+        ["Google Chrome"] = { workspace = "work" },
+
+        Spotify  = { workspace = "utility" },
+        JPLAY    = { workspace = "utility" },
+        Obsidian = { workspace = "utility" },
+
+        WezTerm = {
+            { workspace = "personal", jump = "terminal", title = "^%[personal%]",
+              launch = { "/Applications/WezTerm.app/Contents/MacOS/wezterm", "connect", "personal" } },
+            { workspace = "work", jump = "terminal", title = "^%[work%]",
+              launch = { "/Applications/WezTerm.app/Contents/MacOS/wezterm", "connect", "work" } },
         },
-        llm      = { personal = "Claude",   work = "ChatGPT" },
-        comms    = { personal = "Messages", work = "WhatsApp" },
     },
 })
 print(string.format("[wm] workspaces.setup(): %dms", _ms(_t2)))
-
-Codex.scratch.setup("scratch")
 
 ---------------------------------------------------------------------------
 -- Custom actions
@@ -115,12 +107,12 @@ print(string.format("[wm] hotkey setup start: %dms", _ms(_t0)))
 ---------------------------------------------------------------------------
 
 -- Meh home row: scroll + app jumps
--- m=scroll left, n=browser, e=comms, i=scroll right, o=terminal, '=LLM
+-- m=scroll left, n=browser, e=terminal, i=scroll right, o=comms, '=LLM
 hs.hotkey.bind(meh, "m", Codex:dispatch(function() scratch.focus("left") end, actions.focus_left))
 hs.hotkey.bind(meh, "n", function() Codex.workspaces.jumpToApp("browser") end)
-hs.hotkey.bind(meh, "e", function() Codex.workspaces.jumpToApp("comms") end)
+hs.hotkey.bind(meh, "e", function() Codex.workspaces.jumpToApp("terminal") end)
 hs.hotkey.bind(meh, "i", Codex:dispatch(function() scratch.focus("right") end, actions.focus_right))
-hs.hotkey.bind(meh, "o", function() Codex.workspaces.jumpToApp("terminal") end)
+hs.hotkey.bind(meh, "o", function() Codex.workspaces.jumpToApp("comms") end)
 hs.hotkey.bind(meh, "'", function() Codex.workspaces.jumpToApp("llm") end)
 
 -- Meh top row: workspace switch
