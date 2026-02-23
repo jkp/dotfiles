@@ -9,6 +9,7 @@
 		"europe-west2-docker.pkg.dev": "gcloud",
 		"europe-west4-docker.pkg.dev": "gcloud"
 	},
+	"currentContext": "colima",
 	"cliPluginsExtraDirs": [
 		"/opt/homebrew/lib/docker/cli-plugins"
 	],
