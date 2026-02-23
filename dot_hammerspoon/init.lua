@@ -1,3 +1,4 @@
+require("hs.ipc")
 hs.pathwatcher.new(hs.configdir, hs.reload):start()
 
 -- Codex: tiling + virtual workspaces + scratch WM
