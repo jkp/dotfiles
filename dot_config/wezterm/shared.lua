@@ -100,6 +100,16 @@ function M.apply(config)
   wezterm.on("update-status", function(window, pane)
     local key_table = window:active_key_table()
     local workspace = window:active_workspace()
+
+    -- Track workspace changes for toggle
+    local tracked = wezterm.GLOBAL.current_workspace or ""
+    if workspace ~= tracked then
+      if tracked ~= "" then
+        wezterm.GLOBAL.previous_workspace = tracked
+      end
+      wezterm.GLOBAL.current_workspace = workspace
+    end
+
     local mode_color = "#27AABB" -- Blue (matches aerospace border color)
 
     if key_table then
@@ -243,6 +253,16 @@ function M.apply(config)
     {
       key = "o",
       mods = "CMD",
+      action = wezterm.action_callback(function(window, pane)
+        local prev = wezterm.GLOBAL.previous_workspace
+        if prev and prev ~= "" then
+          window:perform_action(wezterm.action.SwitchToWorkspace({ name = prev }), pane)
+        end
+      end),
+    },
+    {
+      key = "o",
+      mods = "CMD|SHIFT",
       action = workspace_switcher,
     },
 
