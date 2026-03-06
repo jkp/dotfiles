@@ -83,21 +83,31 @@
           _    _    lmet           _              rmet _
 )
 
-;; Meh held: F-keys pass through as real F-keys for Hammerspoon bindings
-(deflayer meh-override
-  _       f1   f2   f3   f4   f5   f6   f7   f8   f9   f10  f11  f12
-  _       _    _    _    _    _    _    _    _    _    _    _    _    _
-  _       _    _    _    _    _    _    _    _    _    _    _    _
-  _       _    _    _    _    _    _    _    _    _    _    _    _    _
-  _       _    _    _    _    _    _    _    _    _    _    _    _
-          _    _    _              _              _    _
+;; Meh layer (space hold) - explicit meh modifiers per key
+;; Mirrors ZSA Voyager Global layer
+(deflayer global
+  _       @meh-f1  @meh-f2  @meh-f3  @meh-f4  @meh-f5
+          @meh-f6  @meh-f7  @meh-f8  @meh-f9  @meh-f10 @meh-f11 @meh-f12
+  _       @meh-1   @meh-2   @meh-3   @meh-4   @meh-5
+          @meh-6   @meh-7   @meh-8   @meh-9   @meh-0
+          @meh-min @meh-eq  _
+  @meh-tab @meh-q  @meh-w   @meh-f   @meh-p   @meh-b
+          @meh-j   @meh-l   @meh-u   @meh-y
+          @meh-scln @meh-lbrc @meh-rbrc
+  _       @meh-a   @meh-r   @meh-s   @meh-t   @meh-g
+          @meh-m   @meh-n   @meh-e   @meh-i  @meh-o
+          @meh-qt  @meh-bsls _
+  _       @meh-z   @meh-x   @meh-c   @meh-d   @meh-v
+          XX       @meh-k   @meh-h   @meh-cm  @meh-dot
+          @meh-sl  _
+          _        _        _              _              _        _
 )
 
 ;; Nav layer (S hold) - mirrors ZSA Voyager nav layer
 (deflayer nav
   _       _    _    _    _    _    _    _    _    _    _    _    _
   _       _    _    _    _    _    _    _    _    _    _    _    _    _
-  _       _    _    _    _    _    @prv pgdn pgup @nxt _    _    _
+  _       _    _    _    _    _    _    pgdn pgup _    _    _    _
   _       _    _    _    bspc _    ←    ↓    ↑    →    @scrl _    _    _
   _       _    _    _    _    _    _    _    end  home _    _    _
           _    _    _              _              _    _
@@ -163,8 +173,8 @@
   i    (tap-hold 250 250 i ralt)
   o    (tap-hold 250 250 o rctl)
 
-  ;; Meh key (ctrl+alt+shift) with F-key override layer
-  meh  (multi lctl lalt lsft (layer-toggle meh-override))
+  ;; Meh key - space hold activates explicit global layer
+  meh  (layer-toggle global)
   spc  (tap-hold 300 200 spc @meh)
 
   ;; Num layer (B key) - hold to activate, no delay since it's dedicated
@@ -174,26 +184,78 @@
   prv  (tap-dance 200 (A-M-left M-[))   ;; tap: prev tab, double-tap: back
   nxt  (tap-dance 200 (A-M-right M-]))  ;; tap: next tab, double-tap: forward
 
-  ;; Meh layer: prev/next with meh modifiers released first
-  meh-prv (tap-dance 200 (
-    (multi (release-key lctl) (release-key lsft) lalt lmet left)
-    (multi (release-key lctl) (release-key lalt) (release-key lsft) lmet [)
-  ))
-  meh-nxt (tap-dance 200 (
-    (multi (release-key lctl) (release-key lsft) lalt lmet right)
-    (multi (release-key lctl) (release-key lalt) (release-key lsft) lmet ])
-  ))
   scrl (multi @hyper s)                  ;; hyper+s for scroll mode
+
+  ;; Global (meh) layer key aliases (meh = ctrl+alt+shift)
+  ;; Letters
+  meh-a    C-A-S-a
+  meh-b    C-A-S-b
+  meh-c    C-A-S-c
+  meh-d    C-A-S-d
+  meh-f    C-A-S-f
+  meh-g    C-A-S-g
+  meh-h    C-A-S-h
+  meh-i    (tap-dance 200 (C-A-S-i A-M-right))  ;; tap: meh+i, double-tap: next tab
+  meh-j    C-A-S-j
+  meh-k    C-A-S-k
+  meh-l    C-A-S-l
+  meh-m    (tap-dance 200 (C-A-S-m A-M-left))   ;; tap: meh+m, double-tap: prev tab
+  meh-n    (tap-dance 200 (C-A-S-n M-[))        ;; tap: meh+n, double-tap: back
+  meh-e    (tap-dance 200 (C-A-S-e M-]))        ;; tap: meh+e, double-tap: forward
+  meh-o    (tap-dance 200 (C-A-S-o M-o))         ;; tap: meh+o, double-tap: cmd+o
+  meh-p    C-A-S-p
+  meh-q    C-A-S-q
+  meh-r    C-A-S-r
+  meh-s    C-A-S-s
+  meh-t    C-A-S-t
+  meh-u    C-A-S-u
+  meh-v    C-A-S-v
+  meh-w    C-A-S-w
+  meh-x    C-A-S-x
+  meh-y    C-A-S-y
+  meh-z    C-A-S-z
+  ;; Numbers
+  meh-0    C-A-S-0
+  meh-1    C-A-S-1
+  meh-2    C-A-S-2
+  meh-3    C-A-S-3
+  meh-4    C-A-S-4
+  meh-5    C-A-S-5
+  meh-6    C-A-S-6
+  meh-7    C-A-S-7
+  meh-8    C-A-S-8
+  meh-9    C-A-S-9
+  ;; F-keys
+  meh-f1   C-A-S-f1
+  meh-f2   C-A-S-f2
+  meh-f3   C-A-S-f3
+  meh-f4   C-A-S-f4
+  meh-f5   C-A-S-f5
+  meh-f6   C-A-S-f6
+  meh-f7   C-A-S-f7
+  meh-f8   C-A-S-f8
+  meh-f9   C-A-S-f9
+  meh-f10  C-A-S-f10
+  meh-f11  C-A-S-f11
+  meh-f12  C-A-S-f12
+  ;; Special keys
+  meh-tab  C-A-S-tab
+  meh-eq   C-A-S-=
+  meh-min  (multi lctl lalt lsft -)
+  meh-scln C-A-S-;
+  meh-lbrc C-A-S-[
+  meh-rbrc C-A-S-]
+  meh-qt   C-A-S-'
+  meh-bsls C-A-S-\
+  meh-cm   C-A-S-,
+  meh-dot  C-A-S-.
+  meh-sl   C-A-S-/
 
   ;; § key: tap for §, hold for Command+§
   nubs (tap-hold 200 200 nubs M-nubs)
 
-  ;; Return: tap = return, shift+tap = backspace, hold = repeating backspace
-  myret (tap-hold 200 200 (fork ret (unmod bspc) (lsft rsft)) bspc)
-
   ;; Num layer toggle (bottom left key)
   z    (tap-hold 200 200 z (layer-toggle num))
-
 
   ;; Left shift: tap for one-shot command, hold for shift
   lsft-os (tap-hold 200 200 (one-shot 2000 lmet) lsft)
