@@ -16,32 +16,38 @@ print(string.format("[wm] Codex:start(): %dms", _ms(_t1)))
 local _t2 = hs.timer.absoluteTime()
 Codex.workspaces.setup({
     workspaces = {
-        "personal",
-        "work",
+        { name = "personal", columns = { "browser", "terminal", "llm" } },
+        { name = "work", columns = { "browser", "terminal", "llm" } },
+        "comms",
         "utility",
         { name = "scratch", layout = "unmanaged" },
     },
-    toggleBack = false,
+    toggleBack = true,
 
     apps = {
         Safari   = { workspace = "personal", jump = "browser", focusFollows = true },
         Claude   = { workspace = "personal", jump = "llm" },
-        Messages = { workspace = "personal", jump = "comms" },
+        ChatGPT  = { workspace = "personal" },
 
-        Helium            = { workspace = "work", jump = "browser" },
-        ChatGPT           = { workspace = "work", jump = "llm" },
-        WhatsApp          = { workspace = "work", jump = "comms" },
+        Helium            = { workspace = "work", jump = "browser", focusFollows = true },
+        Codex             = { workspace = "work", jump = "llm" },
         ["Google Chrome"] = { workspace = "work" },
 
-        Spotify  = { workspace = "utility" },
-        JPLAY    = { workspace = "utility" },
+        Messages = { workspace = "comms" },
+        WhatsApp = { workspace = "comms" },
+        Discord  = { workspace = "comms" },
+
+        Spotify  = { workspace = "utility", focusFollows = true },
+        JPLAY    = { workspace = "utility", focusFollows = true },
         Obsidian = { workspace = "utility" },
 
         WezTerm = {
             { workspace = "personal", jump = "terminal", title = "^%[personal%]",
-              launch = { "/Applications/WezTerm.app/Contents/MacOS/wezterm", "connect", "personal" } },
+              launch = { "/Applications/WezTerm.app/Contents/MacOS/wezterm", "connect", "personal" },
+              autoLaunch = true },
             { workspace = "work", jump = "terminal", title = "^%[work%]",
-              launch = { "/Applications/WezTerm.app/Contents/MacOS/wezterm", "connect", "work" } },
+              launch = { "/Applications/WezTerm.app/Contents/MacOS/wezterm", "connect", "work" },
+              autoLaunch = true },
         },
     },
 })
@@ -76,7 +82,7 @@ local function cycle_stack_height()
     Codex:tileSpace(space)
 end
 
--- Reflow current workspace: retile + raise all windows
+-- Reflow current workspace: reorder columns + retile + raise all windows
 local function reflow_workspace()
     local screen = hs.screen.mainScreen()
     if not screen then return end
@@ -87,6 +93,7 @@ local function reflow_workspace()
         if win then win:raise() end
     end
     Codex.windows.refreshWindows()
+    Codex.workspaces.reflowLayout()
     Codex:tileSpace(space)
     local focused = hs.window.focusedWindow()
     if focused then focused:focus() end
@@ -107,46 +114,49 @@ print(string.format("[wm] hotkey setup start: %dms", _ms(_t0)))
 ---------------------------------------------------------------------------
 
 -- Meh home row: scroll + app jumps
--- m=scroll left, n=browser, e=terminal, i=scroll right, o=comms, '=LLM
+-- m=scroll left, i=scroll right, o=jump to mark, '=LLM
+-- n/e free (used by Kanata for tab switching)
 hs.hotkey.bind(meh, "m", Codex:dispatch(function() scratch.focus("left") end, actions.focus_left))
-hs.hotkey.bind(meh, "n", function() Codex.workspaces.jumpToApp("browser") end)
-hs.hotkey.bind(meh, "e", function() Codex.workspaces.jumpToApp("terminal") end)
+hs.hotkey.bind(meh, "left", Codex:dispatch(function() scratch.focus("left") end, actions.focus_left))
 hs.hotkey.bind(meh, "i", Codex:dispatch(function() scratch.focus("right") end, actions.focus_right))
-hs.hotkey.bind(meh, "o", function() Codex.workspaces.jumpToApp("comms") end)
+hs.hotkey.bind(meh, "right", Codex:dispatch(function() scratch.focus("right") end, actions.focus_right))
+hs.hotkey.bind(meh, "o", function() Codex.workspaces.jumpToMark() end)
 hs.hotkey.bind(meh, "'", function() Codex.workspaces.jumpToApp("llm") end)
 
 -- Meh top row: workspace switch
--- l=personal, u=work, y=utility, ;=toggle scratch
+-- l=personal, u=work, y=comms, ;=utility, j=scratch
 hs.hotkey.bind(meh, "l", function() Codex.workspaces.switchTo("personal") end)
 hs.hotkey.bind(meh, "u", function() Codex.workspaces.switchTo("work") end)
-hs.hotkey.bind(meh, "y", function() Codex.workspaces.switchTo("utility") end)
-hs.hotkey.bind(meh, ";", function() Codex.workspaces.switchTo("scratch") end)
+hs.hotkey.bind(meh, "y", function() Codex.workspaces.switchTo("comms") end)
+hs.hotkey.bind(meh, ";", function() Codex.workspaces.switchTo("utility") end)
+hs.hotkey.bind(meh, "j", function() Codex.workspaces.switchTo("scratch") end)
 
 -- Meh misc
+hs.hotkey.bind(meh, "h", actions.cycle_width)
 hs.hotkey.bind(meh, "tab", function() Codex.workspaces.toggleJump() end)
 
 -- Hyper home row: resize/structure — dispatched for tiled/scratch
--- m=swap left, n=slurp, e=barf, i=swap right, o=cycle width, '=cycle height
+-- m=swap left, n=slurp, e=barf, i=swap right, o=set mark, '=cycle height
 hs.hotkey.bind(hyper, "m", Codex:dispatch(function() scratch.snap("left") end, actions.swap_left))
+hs.hotkey.bind(hyper, "left", Codex:dispatch(function() scratch.snap("left") end, actions.swap_left))
 hs.hotkey.bind(hyper, "n", actions.slurp_in)
 hs.hotkey.bind(hyper, "e", Codex:dispatch(function() scratch.cycle_center() end, actions.barf_out))
 hs.hotkey.bind(hyper, "i", Codex:dispatch(function() scratch.snap("right") end, actions.swap_right))
-hs.hotkey.bind(hyper, "o", Codex:dispatch(function() scratch.cycle_width() end, actions.cycle_width))
+hs.hotkey.bind(hyper, "right", Codex:dispatch(function() scratch.snap("right") end, actions.swap_right))
+hs.hotkey.bind(hyper, "o", function() Codex.workspaces.setMark() end)
 hs.hotkey.bind(hyper, "'", Codex:dispatch(function() scratch.cycle_height() end, cycle_stack_height))
 
 -- Hyper top row: move window to workspace
--- l=personal, u=work, y=utility, ;=scratch
+-- l=personal, u=work, y=comms, ;=utility, j=scratch
 hs.hotkey.bind(hyper, "l", function() Codex.workspaces.moveWindowTo("personal") end)
 hs.hotkey.bind(hyper, "u", function() Codex.workspaces.moveWindowTo("work") end)
-hs.hotkey.bind(hyper, "y", function() Codex.workspaces.moveWindowTo("utility") end)
-hs.hotkey.bind(hyper, ";", function() Codex.workspaces.moveWindowTo("scratch") end)
+hs.hotkey.bind(hyper, "y", function() Codex.workspaces.moveWindowTo("comms") end)
+hs.hotkey.bind(hyper, ";", function() Codex.workspaces.moveWindowTo("utility") end)
+hs.hotkey.bind(hyper, "j", function() Codex.workspaces.moveWindowTo("scratch") end)
 
 -- Hyper bottom row: layout mutations
 hs.hotkey.bind(hyper, "k", actions.toggle_floating)
-hs.hotkey.bind(hyper, "h", Codex:dispatch(function() scratch.center() end, actions.center_window))
-
--- Hyper misc
-hs.hotkey.bind(hyper, "j", reflow_workspace)
+hs.hotkey.bind(hyper, "h", reflow_workspace)
 
 ---------------------------------------------------------------------------
 -- LEFT HAND
@@ -164,7 +174,7 @@ local function updateMenubar(name)
     if not menubar then return end
     menubar:setTitle(name)
     local items = {}
-    for _, wsName in ipairs({"personal", "work", "utility", "scratch"}) do
+    for _, wsName in ipairs({"personal", "work", "comms", "utility", "scratch"}) do
         items[#items + 1] = {
             title = wsName,
             checked = (wsName == name),
