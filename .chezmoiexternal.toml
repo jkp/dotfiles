@@ -1,6 +1,6 @@
 [".local/bin/jplay-ctl"]
 type = "file"
-url = "https://github.com/jkp/jplay-ctl/releases/download/v0.1.2/jplay-ctl-darwin-arm64"
+url = "https://github.com/jkp/jplay-ctl/releases/download/v0.1.3/jplay-ctl-darwin-arm64"
 executable = true
 
 [".hammerspoon/Spoons/Codex.spoon"]
