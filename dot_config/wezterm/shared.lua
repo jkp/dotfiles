@@ -207,8 +207,8 @@ function M.apply(config)
     { key = "i", mods = "CMD", action = wezterm.action.ActivatePaneDirection("Right") },
 
     -- Tab Navigation (matches aerospace prev/next workspace)
-    { key = ",", mods = "CMD", action = wezterm.action.ActivateTabRelative(-1) },
-    { key = ".", mods = "CMD", action = wezterm.action.ActivateTabRelative(1) },
+    { key = "LeftArrow", mods = "CMD|ALT", action = wezterm.action.ActivateTabRelative(-1) },
+    { key = "RightArrow", mods = "CMD|ALT", action = wezterm.action.ActivateTabRelative(1) },
 
     -- Mode Entry (matches aerospace: R=resize, S=swap)
     {
