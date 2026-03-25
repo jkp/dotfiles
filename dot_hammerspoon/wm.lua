@@ -1,19 +1,25 @@
 -- Codex: tiling + virtual workspaces + scratch floating WM
 local show_hud = false -- set true to show overlay on workspace switch
-local _t0 = hs.timer.absoluteTime()
-local function _ms(since) return math.floor((hs.timer.absoluteTime() - since) / 1e6) end
+local debug_timing = false -- set true to log startup timing to console
+local _t0 = debug_timing and hs.timer.absoluteTime() or 0
+local function _ms(since)
+    if not debug_timing then return 0 end
+    return math.floor((hs.timer.absoluteTime() - since) / 1e6)
+end
+local function _log(msg) if debug_timing then print(msg) end end
 
 local Codex = hs.loadSpoon("Codex")
-print(string.format("[wm] loadSpoon: %dms", _ms(_t0)))
+_log(string.format("[wm] loadSpoon: %dms", _ms(_t0)))
 
 Codex.window_gap = 10
 Codex.window_ratios = { 1/3, 1/2, 2/3, 4/5, 1.0 }
+Codex.disable_app_hide = true
 
-local _t1 = hs.timer.absoluteTime()
+local _t1 = debug_timing and hs.timer.absoluteTime() or 0
 Codex:start()
-print(string.format("[wm] Codex:start(): %dms", _ms(_t1)))
+_log(string.format("[wm] Codex:start(): %dms", _ms(_t1)))
 
-local _t2 = hs.timer.absoluteTime()
+local _t2 = debug_timing and hs.timer.absoluteTime() or 0
 Codex.workspaces.setup({
     workspaces = {
         { name = "personal", columns = { "browser", "terminal", "llm" } },
@@ -22,7 +28,7 @@ Codex.workspaces.setup({
         "utility",
         { name = "scratch", layout = "unmanaged" },
     },
-    toggleBack = true,
+    toggleBack = false,
 
     apps = {
         Safari   = { workspace = "personal", jump = "browser", focusFollows = true },
@@ -40,18 +46,17 @@ Codex.workspaces.setup({
         Spotify  = { workspace = "utility", focusFollows = true },
         JPLAY    = { workspace = "utility", focusFollows = true },
         Obsidian = { workspace = "utility" },
+        cmux     = { focusFollows = true },
 
         WezTerm = {
             { workspace = "personal", jump = "terminal", title = "^%[personal%]",
-              launch = { "/Applications/WezTerm.app/Contents/MacOS/wezterm", "connect", "personal" },
-              autoLaunch = true },
+              launch = { "/Applications/WezTerm.app/Contents/MacOS/wezterm", "connect", "personal" } },
             { workspace = "work", jump = "terminal", title = "^%[work%]",
-              launch = { "/Applications/WezTerm.app/Contents/MacOS/wezterm", "connect", "work" },
-              autoLaunch = true },
+              launch = { "/Applications/WezTerm.app/Contents/MacOS/wezterm", "connect", "work" } },
         },
     },
 })
-print(string.format("[wm] workspaces.setup(): %dms", _ms(_t2)))
+_log(string.format("[wm] workspaces.setup(): %dms", _ms(_t2)))
 
 ---------------------------------------------------------------------------
 -- Custom actions
@@ -107,7 +112,7 @@ local meh = { "ctrl", "alt", "shift" }
 local hyper = { "ctrl", "alt", "shift", "cmd" }
 local actions = Codex.actions.actions()
 local scratch = Codex.scratch
-print(string.format("[wm] hotkey setup start: %dms", _ms(_t0)))
+_log(string.format("[wm] hotkey setup start: %dms", _ms(_t0)))
 
 ---------------------------------------------------------------------------
 -- RIGHT HAND — Meh = navigate, Hyper = mutate
@@ -121,7 +126,7 @@ hs.hotkey.bind(meh, "left", Codex:dispatch(function() scratch.focus("left") end,
 hs.hotkey.bind(meh, "i", Codex:dispatch(function() scratch.focus("right") end, actions.focus_right))
 hs.hotkey.bind(meh, "right", Codex:dispatch(function() scratch.focus("right") end, actions.focus_right))
 hs.hotkey.bind(meh, "o", function() Codex.workspaces.jumpToMark() end)
-hs.hotkey.bind(meh, "'", function() Codex.workspaces.jumpToApp("llm") end)
+
 
 -- Meh top row: workspace switch
 -- l=personal, u=work, y=comms, ;=utility, j=scratch
@@ -162,8 +167,13 @@ hs.hotkey.bind(hyper, "h", reflow_workspace)
 -- LEFT HAND
 ---------------------------------------------------------------------------
 
--- Debug (Meh + left bottom row)
+-- Debug / rescue (Meh + left bottom row)
 hs.hotkey.bind(meh, "d", function() Codex.workspaces.dump(); Codex.state.dump() end)
+hs.hotkey.bind(meh, "r", function() Codex.workspaces.rescueWindow() end)
+hs.hotkey.bind(hyper, "d", function()
+    -- Rescue: reload config from scratch (reassigns all windows, retiles)
+    hs.reload()
+end)
 
 ---------------------------------------------------------------------------
 -- Workspace indicator
@@ -204,5 +214,5 @@ Codex.workspaces.onSwitch = function(name)
     end
     updateMenubar(name)
 end
-print(string.format("[wm] total sync: %dms", _ms(_t0)))
+_log(string.format("[wm] total sync: %dms", _ms(_t0)))
 hs.timer.doAfter(1.5, function() Codex.workspaces.onSwitch(Codex.workspaces.currentSpace()) end)
