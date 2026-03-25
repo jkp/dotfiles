@@ -4,6 +4,9 @@ local M = {}
 -- State (persisted via hs.settings)
 local mode = hs.settings.get("audioMode") or "spotify"
 
+-- HQP endpoint
+local HQP_BASE = "http://orchestra.home:9100"
+
 -- Debug logging for failed commands
 local function logError(context, output, status)
     print(string.format("[audio] %s failed - status: %s, output: %s", context, tostring(status), tostring(output)))
@@ -79,7 +82,7 @@ end
 
 -- HQP volume
 local function hqpVolumeUp()
-    local _, status = hs.execute("curl -s -X POST http://orchestra.home:9100/volume/up", false)
+    local _, status = hs.execute("curl -s -X POST " .. HQP_BASE .. "/volume/up", false)
     if status then
         hs.alert.show("🎧 🔊", 0.5)
     else
@@ -88,7 +91,7 @@ local function hqpVolumeUp()
 end
 
 local function hqpVolumeDown()
-    local _, status = hs.execute("curl -s -X POST http://orchestra.home:9100/volume/down", false)
+    local _, status = hs.execute("curl -s -X POST " .. HQP_BASE .. "/volume/down", false)
     if status then
         hs.alert.show("🎧 🔉", 0.5)
     else
@@ -136,7 +139,7 @@ end
 
 -- HQP profile chooser
 local function showHqpProfiles()
-    local output, status = hs.execute("curl -s http://orchestra.home:9100/profiles", false)
+    local output, status = hs.execute("curl -s " .. HQP_BASE .. "/profiles", false)
     if not status then
         logError("HQP profiles", output, status)
         local lastLine = output and output:match("[^\n]+$") or "Unknown error"
@@ -179,7 +182,7 @@ local function showHqpProfiles()
     local chooser = hs.chooser.new(function(choice)
         if choice then
             local encoded = hs.http.encodeForQuery(choice.profile_name)
-            hs.execute("curl -s -X POST 'http://orchestra.home:9100/profiles/" .. encoded .. "?wait=false'", false)
+            hs.execute("curl -s -X POST '" .. HQP_BASE .. "/profiles/" .. encoded .. "?wait=false'", false)
             hs.alert.show("🎧 " .. choice.profile_name, 1)
         end
     end)
