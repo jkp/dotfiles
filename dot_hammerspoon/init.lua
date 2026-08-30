@@ -1,5 +1,20 @@
 require("hs.ipc")
-hs.pathwatcher.new(hs.configdir, hs.reload):start()
+
+-- Count hotkey presses; must load before anything binds. `hotkeys.report()`
+require("hotkeys")
+
+-- Auto-reload on .lua changes, debounced to avoid spurious reloads
+-- from git operations, log writes, etc.
+local reload_timer = nil
+hs.pathwatcher.new(hs.configdir, function(files)
+    for _, file in ipairs(files) do
+        if file:match("%.lua$") then
+            if reload_timer then reload_timer:stop() end
+            reload_timer = hs.timer.doAfter(1, hs.reload)
+            return
+        end
+    end
+end):start()
 
 -- Codex: tiling + virtual workspaces + scratch WM
 require("wm")
