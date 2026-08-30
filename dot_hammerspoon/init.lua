@@ -1,5 +1,8 @@
 require("hs.ipc")
 
+-- Count hotkey presses; must load before anything binds. `hotkeys.report()`
+require("hotkeys")
+
 -- Auto-reload on .lua changes, debounced to avoid spurious reloads
 -- from git operations, log writes, etc.
 local reload_timer = nil
