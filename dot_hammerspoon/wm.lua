@@ -31,12 +31,11 @@ Codex.workspaces.setup({
     toggleBack = false,
 
     apps = {
-        Safari   = { workspace = "personal", jump = "browser", focusFollows = true },
-        Claude   = { workspace = "personal", jump = "llm" },
-        ChatGPT  = { workspace = "personal" },
+        Safari            = { workspace = "personal", jump = "browser", focusFollows = true },
 
         Helium            = { workspace = "work", jump = "browser", focusFollows = true },
-        Codex             = { workspace = "work", jump = "llm" },
+        Claude            = { workspace = "work" },
+        ChatGPT           = { workspace = "work" },
         ["Google Chrome"] = { workspace = "work" },
 
         Messages = { workspace = "comms" },
