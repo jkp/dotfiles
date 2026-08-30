@@ -57,3 +57,4 @@ dmypy.json
 # LLM
 code.llm.txt
 **/.claude/settings.local.json
+.claude-allow-main-push
