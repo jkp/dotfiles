@@ -5,16 +5,14 @@
 set -euo pipefail
 
 USERNAME=$(whoami)
-KANATA_BIN="$HOME/.local/share/mise/installs/ubi-jtroo-kanata/1.10.0/kanata"
+KANATA_BIN="/opt/homebrew/bin/kanata"
 KANATA_CFG="$HOME/.config/kanata/colemak-dh-iso.kbd"
 PLIST_PATH="/Library/LaunchDaemons/com.kanata.plist"
 
 echo "Setting up Kanata daemon for user: $USERNAME"
 
-# Check if kanata is installed via mise
 if [[ ! -x "$KANATA_BIN" ]]; then
-    echo "Error: Kanata not found at $KANATA_BIN"
-    echo "Run 'mise install' first to install kanata via mise"
+    echo "Error: Kanata not found at $KANATA_BIN (brew install kanata)"
     exit 1
 fi
 
@@ -24,9 +22,42 @@ if [[ ! -f "$KANATA_CFG" ]]; then
     exit 1
 fi
 
-# Verify it's the cmd_allowed variant
-if ! "$KANATA_BIN" --help 2>&1 | grep -q "danger-enable-cmd"; then
-    echo "Warning: This kanata binary may not support the cmd action"
+# Kanata needs the Karabiner VirtualHIDDevice driver + its daemon (no Karabiner-Elements).
+# kanata < 1.13 pairs with driver v6.x: https://github.com/pqrs-org/Karabiner-DriverKit-VirtualHIDDevice/releases
+VHID_DAEMON="/Library/Application Support/org.pqrs/Karabiner-DriverKit-VirtualHIDDevice/Applications/Karabiner-VirtualHIDDevice-Daemon.app/Contents/MacOS/Karabiner-VirtualHIDDevice-Daemon"
+VHID_PLIST="/Library/LaunchDaemons/org.pqrs.Karabiner-VirtualHIDDevice-Daemon.plist"
+if [[ ! -x "$VHID_DAEMON" ]]; then
+    echo "Error: Karabiner VirtualHIDDevice driver not installed. Install the .pkg, then:"
+    echo "  sudo /Applications/.Karabiner-VirtualHIDDevice-Manager.app/Contents/MacOS/Karabiner-VirtualHIDDevice-Manager forceActivate"
+    exit 1
+fi
+if [[ ! -f "$VHID_PLIST" ]]; then
+    echo "Installing VirtualHIDDevice daemon at $VHID_PLIST..."
+    sudo tee "$VHID_PLIST" > /dev/null << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>org.pqrs.Karabiner-VirtualHIDDevice-Daemon</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>$VHID_DAEMON</string>
+    </array>
+    <key>UserName</key>
+    <string>root</string>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/var/log/karabiner-vhid-daemon.log</string>
+    <key>StandardErrorPath</key>
+    <string>/var/log/karabiner-vhid-daemon.log</string>
+</dict>
+</plist>
+EOF
+    sudo launchctl bootstrap system "$VHID_PLIST"
 fi
 
 # Create the plist
