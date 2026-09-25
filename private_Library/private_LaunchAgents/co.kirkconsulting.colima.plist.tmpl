@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Colima at login. Replaces `brew services start colima`, whose plist only
+     restarts on a *successful* exit, so one failed VM boot left Colima down.
+     Here launchd retries failures every 30s; a clean `colima stop` stays stopped.
+     Managed by chezmoi. -->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>co.kirkconsulting.colima</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>{{ lookPath "colima" }}</string>
+    <string>start</string>
+    <string>-f</string>
+  </array>
+  <key>WorkingDirectory</key><string>{{ .chezmoi.homeDir }}</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key><string>/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key>
+  <dict><key>SuccessfulExit</key><false/></dict>
+  <key>ThrottleInterval</key><integer>30</integer>
+  <key>StandardOutPath</key><string>{{ .chezmoi.homeDir }}/Library/Logs/colima.log</string>
+  <key>StandardErrorPath</key><string>{{ .chezmoi.homeDir }}/Library/Logs/colima.log</string>
+</dict>
+</plist>

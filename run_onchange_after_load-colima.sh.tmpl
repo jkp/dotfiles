@@ -1,0 +1,12 @@
+{{- if eq .chezmoi.os "darwin" -}}
+#!/bin/bash
+# (Re)load the Colima LaunchAgent whenever its plist changes, retiring the
+# brew-services agent it replaces. Restarts the Colima VM.
+# plist: {{ include "private_Library/private_LaunchAgents/co.kirkconsulting.colima.plist.tmpl" | sha256sum }}
+label=co.kirkconsulting.colima
+if [[ -f "$HOME/Library/LaunchAgents/homebrew.mxcl.colima.plist" ]]; then
+  brew services stop colima
+fi
+launchctl bootout "gui/$(id -u)/$label" 2>/dev/null || true
+launchctl bootstrap "gui/$(id -u)" "$HOME/Library/LaunchAgents/$label.plist"
+{{ end -}}
