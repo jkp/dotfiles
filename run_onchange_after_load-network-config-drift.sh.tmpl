@@ -1,0 +1,8 @@
+{{- if eq .chezmoi.os "darwin" -}}
+#!/bin/bash
+# (Re)load the drift-check LaunchAgent whenever its plist changes.
+# plist: {{ include "private_Library/private_LaunchAgents/co.kirkconsulting.network-config-drift.plist.tmpl" | sha256sum }}
+label=co.kirkconsulting.network-config-drift
+launchctl bootout "gui/$(id -u)/$label" 2>/dev/null || true
+launchctl bootstrap "gui/$(id -u)" "$HOME/Library/LaunchAgents/$label.plist"
+{{ end -}}
