@@ -65,3 +65,8 @@ hk.pkl
 .local/bin/spotify-ctl
 run_before_00-fetch-age-key.sh
 {{ end }}
+
+# macOS-only: LaunchAgents
+{{ if ne .chezmoi.os "darwin" }}
+Library
+{{ end }}
