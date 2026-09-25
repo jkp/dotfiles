@@ -72,5 +72,11 @@ Library
 .local/share/safari-tabs-export
 {{ end }}
 
+# Colima agent only where colima is installed (not on control-surface Macs)
+{{ if not (lookPath "colima") }}
+Library/LaunchAgents/co.kirkconsulting.colima.plist
+load-colima.sh
+{{ end }}
+
 # Repo tests, not dotfiles
 tests
