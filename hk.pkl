@@ -13,6 +13,12 @@ hooks {
                 check = "command -v docker >/dev/null 2>&1 && mise run test || echo 'Skipping test (Docker not available)'"
                 exclusive = true
             }
+            // macOS-only tests (Swift, Safari): CI's Linux container can't run them.
+            ["test-macos"] {
+                glob = List("tests/**", "dot_local/share/safari-tabs-export/**")
+                check = "mise run test-macos"
+                exclusive = true
+            }
         }
     }
 }

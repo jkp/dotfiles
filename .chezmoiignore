@@ -66,7 +66,11 @@ hk.pkl
 run_before_00-fetch-age-key.sh
 {{ end }}
 
-# macOS-only: LaunchAgents
+# macOS-only: LaunchAgents, and what they run
 {{ if ne .chezmoi.os "darwin" }}
 Library
+.local/share/safari-tabs-export
 {{ end }}
+
+# Repo tests, not dotfiles
+tests

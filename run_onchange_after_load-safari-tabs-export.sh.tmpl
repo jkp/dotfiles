@@ -1,0 +1,15 @@
+{{- if eq .chezmoi.os "darwin" -}}
+#!/bin/bash
+# Build safari-tabs-export and (re)load its LaunchAgent when either changes.
+# A rebuilt binary is a new identity to macOS, so grant it Full Disk Access
+# again: System Settings → Privacy & Security → Full Disk Access → + →
+# ~/.local/bin/safari-tabs-export (⌘⇧G to type the path).
+# source: {{ include "dot_local/share/safari-tabs-export/main.swift" | sha256sum }}
+# plist: {{ include "private_Library/private_LaunchAgents/co.kirkconsulting.safari-tabs-export.plist.tmpl" | sha256sum }}
+set -euo pipefail
+swiftc -O -o "$HOME/.local/bin/safari-tabs-export" "$HOME/.local/share/safari-tabs-export/main.swift"
+mkdir -p "$HOME/.local/share/safari-tabs"
+label=co.kirkconsulting.safari-tabs-export
+launchctl bootout "gui/$(id -u)/$label" 2>/dev/null || true
+launchctl bootstrap "gui/$(id -u)" "$HOME/Library/LaunchAgents/$label.plist"
+{{ end -}}
