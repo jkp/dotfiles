@@ -70,6 +70,7 @@ run_before_00-fetch-age-key.sh
 {{ if ne .chezmoi.os "darwin" }}
 Library
 .local/share/safari-tabs-export
+.config/safari-tabs-export
 {{ end }}
 
 # Repo tests, not dotfiles
