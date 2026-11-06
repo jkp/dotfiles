@@ -19,3 +19,17 @@ jobs:
         run: mise run test
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  test-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install chezmoi
+        run: brew install chezmoi
+
+      - name: Install mise
+        uses: jdx/mise-action@v2
+
+      - name: Run macOS tests
+        run: mise run test-macos
