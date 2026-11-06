@@ -43,6 +43,25 @@ if ! command -v chezmoi &>/dev/null; then
     curl -fsLS get.chezmoi.io | BINDIR="$HOME/.local/bin" sh
 fi
 
+# 1Password CLI (macOS only): run_before_00-fetch-age-key reads the age key
+# with it, and chezmoi can't decrypt the encrypted dotfiles without that key.
+# Without a terminal there's no one to sign in, so fail rather than hang.
+if [[ "$(uname)" == "Darwin" ]] && [[ ! -s "$HOME/.config/chezmoi/key.txt" ]]; then
+    if ! command -v op &>/dev/null; then
+        echo "🔑 Installing 1Password CLI..."
+        brew install --cask 1password-cli
+    fi
+    if ! op whoami &>/dev/null && [[ -z "$BOOTSTRAP_TEST" ]] && [[ -t 0 ]]; then
+        echo "🔑 Signing in to 1Password (needed for the age key)..."
+        eval "$(op signin)"
+    fi
+    if ! op whoami &>/dev/null; then
+        echo "❌ The 1Password CLI isn't signed in, so the age key for encrypted dotfiles can't be fetched." >&2
+        echo "   Open 1Password, enable Settings → Developer → Integrate with 1Password CLI, then rerun." >&2
+        exit 1
+    fi
+fi
+
 # Get dotfiles (needed before mise tasks are available)
 echo "📂 Getting dotfiles..."
 CHEZMOI_EXCLUDE=""
