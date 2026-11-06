@@ -7,3 +7,6 @@
   - "Let me explain"
   - any other introduction or transition
 - Immediately get to the point
+- NEVER suggest wrapping up, ending the session, or "picking this up later". Sessions run for days. I will tell you when I'm done. When a task completes, present what's next or ask what I want to do — don't frame it as a stopping point.
+- My shell is fish. Any command or script you give me to run in my own terminal must be fish syntax (`set X y`, not `X=y`; `set -x X y`, not `export`; `(cmd)` substitution; no bash heredocs or `[[ ]]`). If something genuinely needs bash, wrap it in `bash -c '…'`.
+- When proposing solutions, don't default to "the simplest approach." Present the correct solution. If simplicity and correctness diverge, explain both and let me choose. If the correct solution is clearly better, just do it — don't offer a shortcut that creates tech debt.
