@@ -79,7 +79,7 @@ elif [ -n "$DOTFILES_SOURCE" ]; then
     echo "Copying dotfiles from $DOTFILES_SOURCE..."
     mkdir -p "$HOME/.local/share"
     cp -r "$DOTFILES_SOURCE" "$HOME/.local/share/chezmoi"
-    chezmoi apply $CHEZMOI_EXCLUDE
+    chezmoi init --apply $CHEZMOI_EXCLUDE
 else
     chezmoi init --apply jkp $CHEZMOI_EXCLUDE
 fi
