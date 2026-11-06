@@ -43,6 +43,12 @@ if ! command -v chezmoi &>/dev/null; then
     curl -fsLS get.chezmoi.io | BINDIR="$HOME/.local/bin" sh
 fi
 
+# GitHub CLI (macOS only): its login supplies the GitHub token for mise below.
+if [[ "$(uname)" == "Darwin" ]] && ! command -v gh &>/dev/null; then
+    echo "🐙 Installing GitHub CLI..."
+    brew install gh
+fi
+
 # 1Password CLI (macOS only): run_before_00-fetch-age-key reads the age key
 # with it, and chezmoi can't decrypt the encrypted dotfiles without that key.
 # With the app integration, op signin needs no terminal: it asks for approval
@@ -98,6 +104,27 @@ fi
 "$HOME/.local/bin/mise" trust ~/.local/share/chezmoi/mise.toml 2>/dev/null || true
 "$HOME/.local/bin/mise" trust ~/.config/mise/config.toml 2>/dev/null || true
 
+# GitHub token for mise: vfox plugins fetch releases from the GitHub API, and
+# unauthenticated that's 60 requests an hour. Use gh's login, else 1Password.
+# It's passed only to mise below: never printed, exported or written to disk.
+GITHUB_TOKEN_REF="op://Private/github-token/credential"
+github_token="${MISE_GITHUB_TOKEN:-${GITHUB_TOKEN:-}}"
+if [[ -z "$github_token" ]] && command -v gh &>/dev/null && ! gh auth status &>/dev/null &&
+    [[ -z "$BOOTSTRAP_TEST" ]] && [[ -t 0 ]]; then
+    read -r -p "🐙 Log in to GitHub with gh, so installs don't hit GitHub rate limits? [Y/n] " answer || answer=n
+    [[ "$answer" == [Nn]* ]] || gh auth login || true
+fi
+if [[ -z "$github_token" ]] && command -v gh &>/dev/null && gh auth status &>/dev/null; then
+    github_token="$(gh auth token 2>/dev/null)" || github_token=""
+fi
+if [[ -z "$github_token" ]] && command -v op &>/dev/null && op whoami &>/dev/null; then
+    github_token="$(op read "$GITHUB_TOKEN_REF" 2>/dev/null)" || github_token=""
+fi
+if [[ -z "$github_token" ]]; then
+    echo "⚠️  No GitHub token (gh isn't logged in and 1Password has none at $GITHUB_TOKEN_REF)." >&2
+    echo "⚠️  mise may hit GitHub rate limits (HTTP 403). If it does: gh auth login, then rerun." >&2
+fi
+
 # =============================================================================
 # Phase 1: Mise tasks (now that dotfiles/mise.toml exists)
 # =============================================================================
@@ -105,7 +132,7 @@ fi
 echo
 echo "⚙️  Running mise bootstrap tasks..."
 cd ~/.local/share/chezmoi
-mise run bootstrap $BOOTSTRAP_FLAGS
+MISE_GITHUB_TOKEN="$github_token" mise run bootstrap $BOOTSTRAP_FLAGS
 
 echo
 
