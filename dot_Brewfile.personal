@@ -23,7 +23,6 @@ brew "terminal-notifier"
 
 # Window management
 tap "nikitabobko/tap"
-cask "aerospace"
 tap "felixkratz/formulae"
 brew "borders"
 
@@ -33,4 +32,3 @@ cask "keymapp"
 brew "kanata"
 
 # Terminal
-cask "wezterm"
