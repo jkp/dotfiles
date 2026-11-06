@@ -45,19 +45,27 @@ fi
 
 # 1Password CLI (macOS only): run_before_00-fetch-age-key reads the age key
 # with it, and chezmoi can't decrypt the encrypted dotfiles without that key.
-# Without a terminal there's no one to sign in, so fail rather than hang.
+# With the app integration, op signin needs no terminal: it asks for approval
+# in the 1Password app, and the approval covers this process tree (so chezmoi's
+# run_before script too). Without the integration it prints a session export to
+# eval. Without a terminal, stdin is /dev/null so a password prompt can't hang.
 if [[ "$(uname)" == "Darwin" ]] && [[ ! -s "$HOME/.config/chezmoi/key.txt" ]]; then
     if ! command -v op &>/dev/null; then
         echo "🔑 Installing 1Password CLI..."
         brew install --cask 1password-cli
     fi
-    if ! op whoami &>/dev/null && [[ -z "$BOOTSTRAP_TEST" ]] && [[ -t 0 ]]; then
+    if ! op whoami &>/dev/null && [[ -z "$BOOTSTRAP_TEST" ]]; then
         echo "🔑 Signing in to 1Password (needed for the age key)..."
-        eval "$(op signin)"
+        if [[ -t 0 ]]; then
+            eval "$(op signin)"
+        else
+            eval "$(op signin </dev/null)"
+        fi
     fi
     if ! op whoami &>/dev/null; then
         echo "❌ The 1Password CLI isn't signed in, so the age key for encrypted dotfiles can't be fetched." >&2
-        echo "   Open 1Password, enable Settings → Developer → Integrate with 1Password CLI, then rerun." >&2
+        echo "   Unlock 1Password and approve the sign-in prompt (it may have been declined or timed out)," >&2
+        echo "   check Settings → Developer → Integrate with 1Password CLI is on, then rerun." >&2
         exit 1
     fi
 fi
