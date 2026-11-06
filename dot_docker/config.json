@@ -1,6 +1,5 @@
 {
 	"auths": {
-		"europe-west1-docker.pkg.dev": {},
 		"gcr.io": {},
 		"https://index.docker.io/v1/": {}
 	},
