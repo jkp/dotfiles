@@ -181,8 +181,8 @@
   num  (layer-while-held num)
 
   ;; Nav layer: prev/next with double-tap for back/forward
-  prv  (tap-dance 200 (A-M-left M-[))   ;; tap: prev tab, double-tap: back
-  nxt  (tap-dance 200 (A-M-right M-]))  ;; tap: next tab, double-tap: forward
+  prv  (tap-dance 200 (S-M-[ M-[))        ;; tap: prev tab, double-tap: back
+  nxt  (tap-dance 200 (S-M-] M-]))       ;; tap: next tab, double-tap: forward
 
   scrl (multi @hyper s)                  ;; hyper+s for scroll mode
 
@@ -195,13 +195,13 @@
   meh-f    C-A-S-f
   meh-g    C-A-S-g
   meh-h    C-A-S-h
-  meh-i    (tap-dance 200 (C-A-S-i A-M-right))  ;; tap: meh+i, double-tap: next tab
+  meh-i    C-A-S-i
   meh-j    C-A-S-j
   meh-k    C-A-S-k
   meh-l    C-A-S-l
-  meh-m    (tap-dance 200 (C-A-S-m A-M-left))   ;; tap: meh+m, double-tap: prev tab
-  meh-n    (tap-dance 200 (C-A-S-n M-[))        ;; tap: meh+n, double-tap: back
-  meh-e    (tap-dance 200 (C-A-S-e M-]))        ;; tap: meh+e, double-tap: forward
+  meh-m    C-A-S-m
+  meh-n    (tap-dance 200 (S-M-[ M-[))           ;; tap: prev tab, double-tap: back
+  meh-e    (tap-dance 200 (S-M-] M-]))          ;; tap: next tab, double-tap: forward
   meh-o    (tap-dance 200 (C-A-S-o M-o))         ;; tap: meh+o, double-tap: cmd+o
   meh-p    C-A-S-p
   meh-q    C-A-S-q
@@ -251,8 +251,8 @@
   meh-dot  C-A-S-.
   meh-sl   C-A-S-/
 
-  ;; § key: tap for §, hold for Command+§
-  nubs (tap-hold 200 200 nubs M-nubs)
+  ;; § key: always send Command+§
+  nubs M-nubs
 
   ;; Num layer toggle (bottom left key)
   z    (tap-hold 200 200 z (layer-toggle num))
