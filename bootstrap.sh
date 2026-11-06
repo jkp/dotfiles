@@ -77,11 +77,13 @@ if [[ "$(uname)" != "Darwin" ]]; then
     CHEZMOI_EXCLUDE="--exclude=encrypted"
 fi
 
+# --init regenerates chezmoi.toml from .chezmoi.toml.tmpl, which a source repo
+# left by an earlier failed run may not have (no config = no age decryption).
 if [ -d "$HOME/.local/share/chezmoi/.git" ]; then
     if [ -n "$DOTFILES_SOURCE" ]; then
-        chezmoi apply --source "$DOTFILES_SOURCE" $CHEZMOI_EXCLUDE
+        chezmoi apply --init --source "$DOTFILES_SOURCE" $CHEZMOI_EXCLUDE
     else
-        chezmoi update $CHEZMOI_EXCLUDE
+        chezmoi update --init $CHEZMOI_EXCLUDE
     fi
 elif [ -n "$DOTFILES_SOURCE" ]; then
     echo "Copying dotfiles from $DOTFILES_SOURCE..."

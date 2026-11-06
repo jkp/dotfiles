@@ -57,7 +57,7 @@ fi
 EXCLUDE=""
 [[ "$(uname)" != "Darwin" ]] && EXCLUDE="--exclude=encrypted"
 if [ -d "$HOME/.local/share/chezmoi/.git" ]; then
-  chezmoi apply $EXCLUDE
+  chezmoi apply --init $EXCLUDE  # --init: regenerate chezmoi.toml from its template
 else
   chezmoi init --apply jkp $EXCLUDE
 fi
