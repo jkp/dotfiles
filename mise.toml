@@ -16,7 +16,9 @@ depends = ["brew-core", "mise-tools", "fish-default"]
 usage = 'flag "--full" help="Include personal Homebrew packages"'
 shell = "bash -c"
 run = """
-[[ "$usage_full" == "true" ]] && mise run brew-personal
+if [[ "$usage_full" == "true" ]]; then
+  mise run brew-personal || { echo '❌ Bootstrap failed: personal packages did not install (errors above)' >&2; exit 1; }
+fi
 echo '✅ Bootstrap complete'
 """
 

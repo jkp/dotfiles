@@ -132,7 +132,10 @@ fi
 echo
 echo "⚙️  Running mise bootstrap tasks..."
 cd ~/.local/share/chezmoi
-MISE_GITHUB_TOKEN="$github_token" mise run bootstrap $BOOTSTRAP_FLAGS
+if ! MISE_GITHUB_TOKEN="$github_token" mise run bootstrap $BOOTSTRAP_FLAGS; then
+    echo "❌ Bootstrap failed: fix the errors above, then rerun." >&2
+    exit 1
+fi
 
 echo
 
