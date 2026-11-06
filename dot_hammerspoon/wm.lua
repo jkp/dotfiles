@@ -47,11 +47,13 @@ Codex.workspaces.setup({
         Obsidian = { workspace = "utility" },
         cmux     = { focusFollows = true },
 
-        WezTerm = {
-            { workspace = "personal", jump = "terminal", title = "^%[personal%]",
-              launch = { "/Applications/WezTerm.app/Contents/MacOS/wezterm", "connect", "personal" } },
-            { workspace = "work", jump = "terminal", title = "^%[work%]",
-              launch = { "/Applications/WezTerm.app/Contents/MacOS/wezterm", "connect", "work" } },
+        -- Jump-launched terminals get a fixed [personal]/[work] title to pin them;
+        -- any other Ghostty window stays on the workspace it opened on.
+        Ghostty = {
+            { workspace = "personal", jump = "terminal", title = "^%[personal%]$",
+              launch = { "/usr/bin/open", "-na", "Ghostty", "--args", "--title=[personal]" } },
+            { workspace = "work", jump = "terminal", title = "^%[work%]$",
+              launch = { "/usr/bin/open", "-na", "Ghostty", "--args", "--title=[work]" } },
         },
     },
 })
