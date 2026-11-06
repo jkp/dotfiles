@@ -1,7 +1,6 @@
 [user]
     name = {{ .name }}
     email = {{ .email }}
-    signingkey = {{ .signingkey }}
 
 [branch]
     autosetuprebase = always
@@ -41,6 +40,39 @@
 
 [filter "lfs"]
     clean = git-lfs clean -- %f
-    smudge = git-lfs smudge -- %f
-    process = git-lfs filter-process
+    smudge = git-lfs smudge --skip -- %f
+    process = git-lfs filter-process --skip
     required = true
+
+[safe]
+    directory = /workspace
+
+[supertest]
+    agentHandle = jamie
+{{- if lookPath "gh" }}
+
+[credential "https://github.com"]
+    helper =
+    helper = !gh auth git-credential
+
+[credential "https://gist.github.com"]
+    helper =
+    helper = !gh auth git-credential
+{{- end }}
+{{- $key := joinPath .chezmoi.homeDir ".ssh/git_signing_ed25519" }}
+{{- if stat $key }}
+
+# Sign with the on-disk key, never the 1Password agent (see git-sign-with-file.sh).
+[user]
+    signingkey = {{ $key }}
+
+[gpg]
+    format = ssh
+
+[gpg "ssh"]
+    allowedSignersFile = {{ joinPath .chezmoi.homeDir ".ssh/allowed_signers" }}
+    program = {{ joinPath .chezmoi.homeDir ".ssh/git-sign-with-file.sh" }}
+
+[commit]
+    gpgsign = true
+{{- end }}
