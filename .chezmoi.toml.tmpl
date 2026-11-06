@@ -1,0 +1,8 @@
+{{- /* Only macOS manages encrypted files; Linux applies with --exclude=encrypted. */ -}}
+{{- if eq .chezmoi.os "darwin" -}}
+encryption = "age"
+
+[age]
+    recipient = "age1d2vlx4j2n8lfg589vtacxltl2z5u8s0tg9xvrrcjmvxdsatuvsvqt0wjxq"
+    identity = "~/.config/chezmoi/key.txt"
+{{ end -}}

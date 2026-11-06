@@ -160,7 +160,7 @@ mise doctor 2>&1 | grep -E "(version|error|warning)" | head -5 || echo "  ✓ He
 
 [tasks.test]
 description = "Test dotfiles in a fresh Docker container"
-sources = ["dot_*/**/*", "bootstrap.sh", "test.sh", "mise.toml", "hk.pkl"]
+sources = ["dot_*/**/*", ".chezmoi*", "run_*", "bootstrap.sh", "test.sh", "mise.toml", "hk.pkl"]
 outputs = [".test-ok"]
 env = { DEBIAN_FRONTEND = "noninteractive" }
 run = """
@@ -187,7 +187,7 @@ touch .test-ok
 """
 
 [tasks.test-macos]
-description = "Run the macOS-only tests in tests/ (each skips elsewhere)"
+description = "Run the tests in tests/ (macOS-only ones skip elsewhere)"
 run = "set -e; for t in tests/*.sh; do bash \"$t\"; done"
 
 [hooks]
