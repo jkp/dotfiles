@@ -17,11 +17,6 @@ brew "tmux"
 cask "ollama-app"
 brew "terminal-notifier"
 
-# Window management
-tap "nikitabobko/tap"
-tap "felixkratz/formulae"
-brew "borders"
-
 # Automation & keyboard
 cask "hammerspoon"
 cask "keymapp"
