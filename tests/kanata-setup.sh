@@ -18,10 +18,13 @@ SUDOERS="$R/etc/sudoers.d/kanata-$(whoami)"
 STAGE="$WORK/home/.cache/kanata-setup"
 mkdir -p "$WORK/bin" "$WORK/home/.config/kanata" "$(dirname "$VHID")" "$R/Library/LaunchDaemons"
 touch "$WORK/home/.config/kanata/colemak-dh-iso.kbd" "$VHID"
+driver() { plutil -create xml1 "$1" 2>/dev/null || true; plutil -replace CFBundleShortVersionString -string "$2" "$1"; }
+VHID_INFO="${VHID%/MacOS/*}/Info.plist"
+driver "$VHID_INFO" 6.5.0
 cp "$HERE/dot_config/kanata/executable_kanata-active-user" "$WORK/home/.config/kanata/kanata-active-user"
 chmod +x "$VHID"
 printf '#!/bin/bash\nexit 1\n' > "$WORK/bin/sudo"            # no cached sudo: print mode
-printf '#!/bin/bash\n[[ -e %q ]]\n' "$WORK/loaded" > "$WORK/bin/launchctl"
+printf '#!/bin/bash\n[[ -e "%s/loaded-${2#system/}" ]]\n' "$WORK" > "$WORK/bin/launchctl"  # print system/<label>
 printf '#!/bin/bash\n' > "$WORK/bin/kanata"
 chmod +x "$WORK/bin/"*
 KANATA="$WORK/bin/kanata"
@@ -68,7 +71,7 @@ cp "$STAGE/com.kanata.plist" "$PLIST"; cp "$STAGE/kanata-active-user" "$R/usr/lo
     { mkdir -p "$R/usr/local/libexec"; cp "$STAGE/kanata-active-user" "$R/usr/local/libexec/"; }
 mkdir -p "$(dirname "$SUDOERS")"; cp "$STAGE/sudoers" "$SUDOERS"
 cp "$STAGE/org.pqrs.Karabiner-VirtualHIDDevice-Daemon.plist" "$VHID_PLIST"
-touch "$WORK/loaded"
+touch "$WORK/loaded-com.kanata"
 out="$(setup active-user)"
 hasnt "$out" "sudo"
 echo "PASS: a second run changes nothing"
@@ -81,15 +84,25 @@ echo "PASS: switching to always removes the active-user parts and reloads"
 out="$(setup off)"
 has "$out" "sudo launchctl bootout system/com.kanata"
 has "$out" "sudo rm -f $PLIST $SUDOERS $R/usr/local/libexec/kanata-active-user"
-rm -f "$PLIST" "$SUDOERS" "$R/usr/local/libexec/kanata-active-user" "$WORK/loaded"
+rm -f "$PLIST" "$SUDOERS" "$R/usr/local/libexec/kanata-active-user" "$WORK/loaded-com.kanata"
 out="$(setup off)"
 hasnt "$out" "sudo"
 echo "PASS: off removes kanata's daemon and does nothing once it's gone"
 
 rm -f "$VHID_PLIST"; mkdir -p "$R/Applications/Karabiner-Elements.app"
 out="$(setup always)"
+has "$out" "sudo launchctl bootstrap system $VHID_PLIST"
+echo "PASS: an installed Karabiner-Elements whose driver daemon isn't running gets ours"
+rm -f "$VHID_PLIST"; touch "$WORK/loaded-org.pqrs.service.daemon.Karabiner-VirtualHIDDevice-Daemon"
+out="$(setup always)"
 hasnt "$out" "org.pqrs.Karabiner-VirtualHIDDevice-Daemon.plist"
-echo "PASS: Karabiner-Elements' own driver daemon is used when it's installed"
+echo "PASS: Karabiner-Elements' own driver daemon is used while it's running"
+
+driver "$VHID_INFO" 5.0.0
+out="$(setup always)" && fail "succeeded with VirtualHIDDevice driver 5.0.0"
+has "$out" "driver 5.0.0"
+driver "$VHID_INFO" 6.5.0
+echo "PASS: fails when the VirtualHIDDevice driver isn't v6"
 
 rm -f "$VHID"
 out="$(setup always)" && fail "succeeded without the VirtualHIDDevice driver"

@@ -18,10 +18,10 @@ LABEL=com.kanata
 PLIST="$R/Library/LaunchDaemons/$LABEL.plist"
 WRAPPER="$R/usr/local/libexec/kanata-active-user"
 SUDOERS="$R/etc/sudoers.d/kanata-$USERNAME"
-# Karabiner-Elements ships the same driver and runs its own daemon for it.
+# Karabiner-Elements ships the same driver and, while it works, its own daemon for it.
 VHID_DAEMON="$R/Library/Application Support/org.pqrs/Karabiner-DriverKit-VirtualHIDDevice/Applications/Karabiner-VirtualHIDDevice-Daemon.app/Contents/MacOS/Karabiner-VirtualHIDDevice-Daemon"
 VHID_PLIST="$R/Library/LaunchDaemons/org.pqrs.Karabiner-VirtualHIDDevice-Daemon.plist"
-KARABINER_ELEMENTS="$R/Applications/Karabiner-Elements.app"
+KARABINER_VHID=org.pqrs.service.daemon.Karabiner-VirtualHIDDevice-Daemon
 STAGE="$HOME/.cache/kanata-setup"
 
 case "$MODE" in always|active-user|off) ;; *) echo "Unknown kanata mode: $MODE" >&2; exit 1 ;; esac
@@ -63,6 +63,12 @@ if [[ ! -x "$VHID_DAEMON" ]]; then
     echo "  sudo /Applications/.Karabiner-VirtualHIDDevice-Manager.app/Contents/MacOS/Karabiner-VirtualHIDDevice-Manager forceActivate" >&2
     exit 1
 fi
+VHID_VERSION="$(plutil -extract CFBundleShortVersionString raw -o - "${VHID_DAEMON%/MacOS/*}/Info.plist" 2>/dev/null || echo unknown)"
+# ponytail: pinned to v6 for kanata < 1.13; bump with kanata.
+if [[ "$VHID_VERSION" != 6.* ]]; then
+    echo "Error: Karabiner VirtualHIDDevice driver $VHID_VERSION, but kanata < 1.13 needs v6.x. Install the v6 .pkg, then forceActivate as above." >&2
+    exit 1
+fi
 
 mkdir -p "$STAGE"
 daemon_plist() { # daemon_plist <label> <extra keys> <log> <program args...>
@@ -94,7 +100,7 @@ ALWAYS='    <key>RunAtLoad</key>
     <true/>
 '
 
-if [[ ! -d "$KARABINER_ELEMENTS" && ! -f "$VHID_PLIST" ]]; then
+if ! loaded "$KARABINER_VHID" && [[ ! -f "$VHID_PLIST" ]]; then
     daemon_plist org.pqrs.Karabiner-VirtualHIDDevice-Daemon "$ALWAYS" /var/log/karabiner-vhid-daemon "$VHID_DAEMON" \
         > "$STAGE/org.pqrs.Karabiner-VirtualHIDDevice-Daemon.plist"
     put 0644 "$STAGE/org.pqrs.Karabiner-VirtualHIDDevice-Daemon.plist" "$VHID_PLIST"
