@@ -29,7 +29,8 @@ grep -qE 'encryption|age' <<<"$linux" && fail "linux config mentions encryption:
 echo "PASS: linux config has no encryption"
 
 # kanata.mode: explicit KANATA_MODE wins, then stored data, then "always" for a
-# machine that already has the always-on daemon (tkol), else prompt (TTY) or "always".
+# machine that already has the always-on daemon (tkol), else prompt (TTY, default always) or,
+# with no terminal to choose in, the safe "active-user".
 mode() { # mode <expected> [env...] -- [execute-template args...]
     local want="$1" got; shift
     local envs=(); while [[ "$1" != -- ]]; do envs+=("$1"); shift; done; shift
@@ -38,14 +39,18 @@ mode() { # mode <expected> [env...] -- [execute-template args...]
         < "$HERE/.chezmoi.toml.tmpl")" || fail "render failed for $want: $got"
     grep -qx "[[:space:]]*mode = \"$want\"" <<<"$got" || fail "expected kanata mode $want, got: $got"
 }
-mode always -- --config "$WORK/none.toml" --stdinisatty=false
-echo "PASS: kanata mode defaults to always without a TTY"
+mode active-user -- --config "$WORK/none.toml" --stdinisatty=false
+echo "PASS: kanata mode defaults to active-user without a TTY"
+mode always -- --config "$WORK/none.toml"
+echo "PASS: the kanata mode prompt defaults to always"
 mode active-user -- --config "$WORK/none.toml" --promptChoice "Kanata mode=active-user"
 echo "PASS: kanata mode is prompted for with a TTY"
 mode active-user KANATA_MODE=active-user -- --config "$WORK/none.toml" --stdinisatty=false
 echo "PASS: KANATA_MODE sets the mode without a TTY"
 printf '[data.kanata]\n    mode = "off"\n' > "$WORK/off.toml"
 mode off -- --config "$WORK/off.toml"
+printf '[data.kanata]\n    mode = "always"\n' > "$WORK/always.toml"
+mode always -- --config "$WORK/always.toml" --stdinisatty=false
 echo "PASS: a stored kanata mode is kept without prompting"
 mode active-user KANATA_MODE=active-user -- --config "$WORK/off.toml"
 echo "PASS: KANATA_MODE overrides a stored mode"
