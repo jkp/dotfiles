@@ -1,8 +1,28 @@
 {{- /* Only macOS manages encrypted files; Linux applies with --exclude=encrypted. */ -}}
 {{- if eq .chezmoi.os "darwin" -}}
+{{- /* kanata.mode: always (root daemon at boot), active-user (only while this
+       user owns the console; shared Macs) or off. KANATA_MODE wins, then the
+       stored value; a machine with the always-on daemon predates modes. */ -}}
+{{- $kanataMode := env "KANATA_MODE" -}}
+{{- if not $kanataMode -}}
+{{-   $kanataMode = dig "kanata" "mode" "" . -}}
+{{- end -}}
+{{- if not $kanataMode -}}
+{{-   if or (stat (dig "kanataPlist" "/Library/LaunchDaemons/com.kanata.plist" .)) (not stdinIsATTY) -}}
+{{-     $kanataMode = "always" -}}
+{{-   else -}}
+{{-     $kanataMode = promptChoiceOnce . "kanata.mode" "Kanata mode" (list "always" "active-user" "off") "always" -}}
+{{-   end -}}
+{{- end -}}
+{{- if not (has $kanataMode (list "always" "active-user" "off")) -}}
+{{-   fail (printf "kanata mode %q: want always, active-user or off" $kanataMode) -}}
+{{- end -}}
 encryption = "age"
 
 [age]
     recipient = "age1d2vlx4j2n8lfg589vtacxltl2z5u8s0tg9xvrrcjmvxdsatuvsvqt0wjxq"
     identity = "~/.config/chezmoi/key.txt"
+
+[data.kanata]
+    mode = {{ $kanataMode | quote }}
 {{ end -}}
