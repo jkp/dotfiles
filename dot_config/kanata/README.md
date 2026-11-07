@@ -10,7 +10,7 @@ brew install kanata
 
 ## Driver
 
-Kanata needs the Karabiner VirtualHIDDevice driver plus its daemon running as root. kanata < 1.13 pairs with driver v6.x (`.pkg` from [Karabiner-DriverKit-VirtualHIDDevice releases](https://github.com/pqrs-org/Karabiner-DriverKit-VirtualHIDDevice/releases)). `setup-daemon.sh` installs the daemon at `/Library/LaunchDaemons/org.pqrs.Karabiner-VirtualHIDDevice-Daemon.plist`, unless Karabiner-Elements is installed and runs its own. Karabiner-Elements bundles the driver at whatever version it shipped with, and uninstalling it removes the driver, so reinstall the `.pkg` afterwards.
+Kanata needs the Karabiner VirtualHIDDevice driver plus its daemon running as root. kanata < 1.13 pairs with driver v6.x (`.pkg` from [Karabiner-DriverKit-VirtualHIDDevice releases](https://github.com/pqrs-org/Karabiner-DriverKit-VirtualHIDDevice/releases)). `setup-daemon.sh` checks the driver is v6 and installs the daemon at `/Library/LaunchDaemons/org.pqrs.Karabiner-VirtualHIDDevice-Daemon.plist`, unless Karabiner-Elements' own driver daemon is running. Karabiner-Elements bundles the driver at whatever version it shipped with (15.3.0 ships 5.0.0), and uninstalling it removes the driver, so reinstall the `.pkg` afterwards. Rerun `setup-daemon.sh` after installing, removing or repairing Karabiner-Elements.
 
 ## Modes
 
@@ -20,7 +20,7 @@ Kanata needs root to seize the keyboard, so it runs as the root LaunchDaemon `co
 - **active-user** (shared Macs): only remaps while you own the console. Hammerspoon starts it when your session loads or becomes active, and stops it on fast user switch, the login window or logout. The daemon runs kanata through `kanata-active-user`, which also exits within a second of anyone else owning the console. A sudoers drop-in lets only you start and stop that one label.
 - **off**: no daemon.
 
-`chezmoi init` asks once (default **always**, no prompt if the always-on daemon is already installed). To set or change it without a prompt, run `KANATA_MODE=active-user chezmoi init`. Then install the root parts for the mode:
+`chezmoi init` asks once (default **always**, no prompt if the always-on daemon is already installed). Without a terminal the mode can't be chosen, so it's **active-user**: on a single-user Mac that behaves like always, since you're always the console user, and on a shared Mac it's the only safe mode. To set or change it without a prompt, run `KANATA_MODE=active-user chezmoi init`. Then install the root parts for the mode:
 
 ```bash
 bash ~/.config/kanata/setup-daemon.sh
