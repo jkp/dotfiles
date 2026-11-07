@@ -2,14 +2,20 @@
 {{- if eq .chezmoi.os "darwin" -}}
 {{- /* kanata.mode: always (root daemon at boot), active-user (only while this
        user owns the console; shared Macs) or off. KANATA_MODE wins, then the
-       stored value; a machine with the always-on daemon predates modes. */ -}}
+       stored value; a Mac with the always-on daemon but no stored mode predates
+       modes and stays always. */ -}}
 {{- $kanataMode := env "KANATA_MODE" -}}
 {{- if not $kanataMode -}}
 {{-   $kanataMode = dig "kanata" "mode" "" . -}}
 {{- end -}}
+{{- /* Without a terminal the mode can't be chosen, so take the safe one:
+       active-user acts like always on a single-user Mac (you're always the
+       console user) and is the only safe mode on a shared one. */ -}}
 {{- if not $kanataMode -}}
-{{-   if or (stat (dig "kanataPlist" "/Library/LaunchDaemons/com.kanata.plist" .)) (not stdinIsATTY) -}}
+{{-   if stat (dig "kanataPlist" "/Library/LaunchDaemons/com.kanata.plist" .) -}}
 {{-     $kanataMode = "always" -}}
+{{-   else if not stdinIsATTY -}}
+{{-     $kanataMode = "active-user" -}}
 {{-   else -}}
 {{-     $kanataMode = promptChoiceOnce . "kanata.mode" "Kanata mode" (list "always" "active-user" "off") "always" -}}
 {{-   end -}}
