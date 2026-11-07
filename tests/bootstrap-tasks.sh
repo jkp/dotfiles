@@ -74,18 +74,20 @@ bootstrap
 grep -q '❌' "$WORK/out" || fail "no clear failure message"
 grep -q '✅ Bootstrap complete' "$WORK/out" && fail "reported success though brew-core failed"
 
-# --- --full installs personal packages
+# --- --full installs personal packages and ansible
 setup
 bootstrap --full
 [[ "$status" -eq 0 ]] || fail "bootstrap --full failed"
 grep -q 'Brewfile.personal' "$WORK/log" || fail "brew-personal didn't run"
+grep -q '^uv tool install.* ansible' "$WORK/log" || fail "ansible wasn't installed with uv"
 grep -q '✅ Bootstrap complete' "$WORK/out" || fail "no success message"
 
-# --- without --full: succeeds, skips personal packages
+# --- without --full: succeeds, skips personal packages and ansible
 setup
 bootstrap
 [[ "$status" -eq 0 ]] || fail "bootstrap (no --full) failed"
 grep -q 'Brewfile.personal' "$WORK/log" && fail "brew-personal ran without --full"
+grep -q '^uv ' "$WORK/log" && fail "ansible was installed without --full"
 grep -q '✅ Bootstrap complete' "$WORK/out" || fail "no success message"
 
 # --- fish-default waits for brew-core's fish; no terminal but sudo cached: chsh
