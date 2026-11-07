@@ -1,0 +1,23 @@
+{{- if eq .chezmoi.os "darwin" -}}
+#!/bin/bash
+# Window and Spaces settings, as on tkol. Codex.spoon hides workspaces by
+# parking windows off-screen, so macOS mustn't reorder Spaces or jump between
+# them on its own. Reruns whenever this file changes.
+set -euo pipefail
+
+# Spaces: keep their order, don't jump to an app's Space, one set per display
+defaults write com.apple.dock mru-spaces -bool false
+defaults write com.apple.dock workspaces-auto-swoosh -bool false
+defaults write com.apple.dock expose-group-apps -bool false
+defaults write com.apple.spaces spans-displays -bool false
+
+# Stage Manager off; no margins around macOS's own tiling
+defaults write com.apple.WindowManager GloballyEnabled -bool false
+defaults write com.apple.WindowManager EnableTiledWindowMargins -bool false
+# Desktop items hidden, Stage Manager recents hidden, all app windows at once
+defaults write com.apple.WindowManager HideDesktop -bool true
+defaults write com.apple.WindowManager AutoHide -bool true
+defaults write com.apple.WindowManager AppWindowGroupingBehavior -int 0
+
+killall Dock || true # Dock owns Spaces and WindowManager; it relaunches with these
+{{ end -}}
