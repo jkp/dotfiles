@@ -6,6 +6,10 @@ export DEBIAN_FRONTEND=noninteractive
 export DOTFILES_SOURCE=/dotfiles
 export BOOTSTRAP_TEST=1
 
+# Leftovers from configs main no longer manages; .chezmoiremove should delete them.
+dropped=(aerospace wezterm karabiner)
+for d in "${dropped[@]}"; do mkdir -p "$HOME/.config/$d" && touch "$HOME/.config/$d/leftover"; done
+
 echo "🚀 Running bootstrap..."
 bash /dotfiles/bootstrap.sh
 
@@ -57,6 +61,16 @@ if test $failed -eq 1
 end
 echo "✅ Fish functions verified"
 '
+
+echo
+echo "🧪 Verifying dropped configs were removed..."
+for d in "${dropped[@]}"; do
+    if [ -e "$HOME/.config/$d" ]; then
+        echo "❌ ERROR: ~/.config/$d survived bootstrap"
+        exit 1
+    fi
+    echo "  ✓ ~/.config/$d removed"
+done
 
 echo
 echo "✅ Bootstrap test completed successfully!"
