@@ -1,10 +1,11 @@
 ---@diagnostic disable
 
-local executed, handler
+local executed, handler, autolaunch
 
 local function init_mocks()
-    executed, handler = {}, nil
+    executed, handler, autolaunch = {}, nil, nil
     _G.hs = {
+        autoLaunch = function(state) autolaunch = state; return state end,
         execute = function(cmd) executed[#executed + 1] = cmd; return "", true end,
         caffeinate = {
             watcher = {
@@ -28,6 +29,11 @@ describe("kanata", function()
     it("starts kanata when Hammerspoon loads in this session", function()
         init_mocks().init()
         assert.same({ START }, executed)
+    end)
+
+    it("launches Hammerspoon at login, since nothing else restarts kanata", function()
+        init_mocks().init()
+        assert.is_true(autolaunch)
     end)
 
     it("stops when the session resigns and starts when it's back", function()
