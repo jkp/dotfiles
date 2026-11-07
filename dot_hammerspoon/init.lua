@@ -19,6 +19,9 @@ end):start()
 -- Codex: tiling + virtual workspaces + scratch WM
 require("wm")
 
+-- Kanata on shared Macs: start/stop it with this session
+if require("kanata_mode") == "active-user" then require("kanata").init() end
+
 -- Audio controls
 local audio = require("audio")
 
