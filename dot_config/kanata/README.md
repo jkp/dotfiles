@@ -10,7 +10,7 @@ brew install kanata
 
 ## Driver
 
-Kanata needs the Karabiner VirtualHIDDevice driver plus its daemon running as root. kanata < 1.13 pairs with driver v6.x (`.pkg` from [Karabiner-DriverKit-VirtualHIDDevice releases](https://github.com/pqrs-org/Karabiner-DriverKit-VirtualHIDDevice/releases)). `setup-daemon.sh` checks the driver is v6 and installs the daemon at `/Library/LaunchDaemons/org.pqrs.Karabiner-VirtualHIDDevice-Daemon.plist`, unless Karabiner-Elements' own driver daemon is running. Karabiner-Elements bundles the driver at whatever version it shipped with (15.3.0 ships 5.0.0), and uninstalling it removes the driver, so reinstall the `.pkg` afterwards. Rerun `setup-daemon.sh` after installing, removing or repairing Karabiner-Elements.
+Kanata needs the Karabiner VirtualHIDDevice driver plus its daemon running as root. kanata < 1.13 pairs with driver v6.x. `setup-daemon.sh` installs the pinned v6 `.pkg` (checksummed) and activates it when the driver is missing or older. If macOS asks, approve the system extension in **System Settings → General → Login Items & Extensions** and rerun. It won't replace the driver while Karabiner-Elements is installed with an older one (15.3.0 ships 5.0.0), since that would break Karabiner-Elements: uninstall Karabiner-Elements first (Settings → Misc → Uninstall). It also installs the driver daemon at `/Library/LaunchDaemons/org.pqrs.Karabiner-VirtualHIDDevice-Daemon.plist`, unless Karabiner-Elements' own driver daemon is running. Rerun `setup-daemon.sh` after installing, removing or repairing Karabiner-Elements.
 
 ## Modes
 
@@ -26,7 +26,12 @@ Kanata needs root to seize the keyboard, so it runs as the root LaunchDaemon `co
 bash ~/.config/kanata/setup-daemon.sh
 ```
 
-It's idempotent, and without sudo or a terminal it prints the commands instead. Then grant Input Monitoring to the kanata binary it names (**System Settings → Privacy & Security → Input Monitoring**, **+**, **Cmd+Shift+G**) and restart the daemon.
+It's idempotent. In a terminal it then restarts kanata and checks it runs. If kanata lacks a permission, it opens that Privacy pane with the kanata binary's real path (under `/opt/homebrew/Cellar`, which is what macOS pins) copied, and waits while you add it with **+**, **Cmd+Shift+G**, paste. kanata needs two:
+
+- **Input Monitoring**
+- **Accessibility**, which macOS 27 lists as **"Allow assistive applications to control the computer"**
+
+In active-user mode it also opens Hammerspoon if it isn't running (allow it Accessibility when asked); Hammerspoon then sets itself to launch at login, since it's the only thing that starts kanata. Without sudo or a terminal it prints the commands instead.
 
 ### Managing the Service
 
@@ -59,8 +64,7 @@ tail -f /tmp/kanata.log /tmp/kanata.err
 ## Updating Kanata
 
 1. `brew upgrade kanata`
-2. Re-grant Input Monitoring if macOS drops it for the new binary
-3. Restart: `sudo launchctl kickstart -k system/com.kanata`
+2. `bash ~/.config/kanata/setup-daemon.sh`: the grants are pinned to the old Cellar path, so it walks you through both again (remove the stale entries with **−**)
 
 kanata 1.13+ needs a newer VirtualHIDDevice driver; check the kanata release notes before crossing that version.
 
@@ -74,7 +78,7 @@ cat /tmp/kanata.err
 ```
 
 Common issues:
-- **"IOHIDDeviceOpen error: not permitted"**: Missing Input Monitoring permission
+- **"needs macOS Input Monitoring permission"** or **"Accessibility permission"** / **"IOHIDDeviceOpen error: not permitted"**: rerun `setup-daemon.sh`, which opens the pane to fix it
 - **"failed to parse file"**: Syntax error in config
 - **VirtualHIDDevice connection errors**: the driver daemon isn't running (`sudo launchctl list | grep VirtualHIDDevice`)
 - **active-user mode never starts**: look for `[kanata] launchctl ... failed` in the Hammerspoon console; a missing sudoers drop-in means `setup-daemon.sh` hasn't been run for this mode
