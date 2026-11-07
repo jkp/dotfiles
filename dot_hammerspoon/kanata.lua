@@ -12,6 +12,8 @@ function M.start() launchctl("kickstart system/com.kanata") end
 function M.stop() launchctl("kill TERM system/com.kanata") end
 
 function M.init()
+    -- Only Hammerspoon starts kanata here, so it must come back after a reboot.
+    hs.autoLaunch(true)
     local w = hs.caffeinate.watcher
     M.watcher = w.new(function(event)
         if event == w.sessionDidBecomeActive then
