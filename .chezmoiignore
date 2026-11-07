@@ -67,6 +67,7 @@ run_before_00-fetch-age-key.sh
 {{ if ne .chezmoi.os "darwin" }}
 Library
 .local/share/safari-tabs-export
+.config/safari-tabs-export
 {{ end }}
 
 # Colima agent only where colima is installed (not on control-surface Macs)
