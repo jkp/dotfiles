@@ -9,7 +9,7 @@
 #   bash ~/.config/kanata/setup-daemon.sh [always|active-user|off]
 set -euo pipefail
 
-MODE="${1:-{{ dig "kanata" "mode" "off" . }}}"
+MODE="${1:-{{ dig "kanata" "mode" "always" . }}}"
 USERNAME=$(whoami)
 R="${KANATA_SETUP_ROOT:-}" # tests point this at a fake root
 KANATA_BIN="$(command -v kanata || true)"

@@ -95,3 +95,8 @@ rm -f "$VHID"
 out="$(setup always)" && fail "succeeded without the VirtualHIDDevice driver"
 has "$out" "VirtualHIDDevice driver not installed"
 echo "PASS: fails when the VirtualHIDDevice driver is missing"
+
+chezmoi --source "$HERE" --config "$WORK/none.toml" execute-template \
+    < "$HERE/dot_config/kanata/setup-daemon.sh.tmpl" | grep -qF 'MODE="${1:-always}"' ||
+    fail "without kanata.mode data (a config from before modes) the script doesn't default to always"
+echo "PASS: no kanata.mode data means always"
