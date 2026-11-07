@@ -13,6 +13,11 @@ hooks {
                 check = "command -v docker >/dev/null 2>&1 && mise run test || echo 'Skipping test (Docker not available)'"
                 exclusive = true
             }
+            // Re-managing a path still in .chezmoiremove must fail here, not delete it on apply.
+            ["chezmoiremove"] {
+                glob = List(".chezmoiremove", ".chezmoiignore", ".chezmoiexternal.toml", "dot_*/**", "private_*/**")
+                check = "bash tests/chezmoiremove.sh"
+            }
             // tests/: macOS-only (Swift, Safari) or stubbed; CI only runs the Docker test.
             ["test-macos"] {
                 glob = List("tests/**", "dot_local/share/safari-tabs-export/**", "bootstrap.sh", ".chezmoi.toml.tmpl", "run_before_*")
