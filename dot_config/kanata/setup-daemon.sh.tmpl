@@ -1,0 +1,130 @@
+#!/bin/bash
+# Install kanata's root parts for this Mac's kanata.mode (chezmoi data):
+#   always       daemon starts at boot and is kept alive
+#   active-user  daemon starts and stops with this user's console session
+#                (Hammerspoon, via a start/stop-only sudoers rule)
+#   off          remove them
+# Idempotent. Without sudo or a terminal it prints the commands to run.
+#
+#   bash ~/.config/kanata/setup-daemon.sh [always|active-user|off]
+set -euo pipefail
+
+MODE="${1:-{{ dig "kanata" "mode" "off" . }}}"
+USERNAME=$(whoami)
+R="${KANATA_SETUP_ROOT:-}" # tests point this at a fake root
+KANATA_BIN="$(command -v kanata || true)"
+KANATA_CFG="$HOME/.config/kanata/colemak-dh-iso.kbd"
+LABEL=com.kanata
+PLIST="$R/Library/LaunchDaemons/$LABEL.plist"
+WRAPPER="$R/usr/local/libexec/kanata-active-user"
+SUDOERS="$R/etc/sudoers.d/kanata-$USERNAME"
+# Karabiner-Elements ships the same driver and runs its own daemon for it.
+VHID_DAEMON="$R/Library/Application Support/org.pqrs/Karabiner-DriverKit-VirtualHIDDevice/Applications/Karabiner-VirtualHIDDevice-Daemon.app/Contents/MacOS/Karabiner-VirtualHIDDevice-Daemon"
+VHID_PLIST="$R/Library/LaunchDaemons/org.pqrs.Karabiner-VirtualHIDDevice-Daemon.plist"
+KARABINER_ELEMENTS="$R/Applications/Karabiner-Elements.app"
+STAGE="$HOME/.cache/kanata-setup"
+
+case "$MODE" in always|active-user|off) ;; *) echo "Unknown kanata mode: $MODE" >&2; exit 1 ;; esac
+
+# Root commands run via sudo when it won't hang, else they're printed.
+if sudo -n true 2>/dev/null || [[ -t 0 ]]; then CAN_SUDO=1; else CAN_SUDO=; fi
+PRINTED=
+root() {
+    if [[ -n "$CAN_SUDO" ]]; then sudo "$@"; return; fi
+    [[ -n "$PRINTED" ]] || { echo "No sudo without a terminal; run these in one:"; PRINTED=1; }
+    echo "  sudo $*"
+}
+# same <src> <dest>: is dest already src? (sudoers.d is root-only)
+same() {
+    if [[ -n "$CAN_SUDO" ]]; then sudo cmp -s "$1" "$2"; else cmp -s "$1" "$2" 2>/dev/null; fi
+}
+put() { # put <mode> <src> <dest>
+    same "$2" "$3" && return
+    root install -m "$1" -o root -g wheel "$2" "$3"
+}
+loaded() { launchctl print "system/$1" >/dev/null 2>&1; }
+remove() { # remove <path>...: the ones that exist
+    local p have=()
+    for p in "$@"; do [[ -e "$p" ]] && have+=("$p"); done
+    [[ ${#have[@]} -eq 0 ]] || root rm -f "${have[@]}"
+}
+
+if [[ "$MODE" == off ]]; then
+    loaded "$LABEL" && root launchctl bootout "system/$LABEL"
+    remove "$PLIST" "$SUDOERS" "$WRAPPER"
+    exit 0
+fi
+
+[[ -x "$KANATA_BIN" ]] || { echo "Error: kanata not on PATH (brew install kanata)" >&2; exit 1; }
+[[ -f "$KANATA_CFG" ]] || { echo "Error: config not found at $KANATA_CFG" >&2; exit 1; }
+# kanata < 1.13 pairs with driver v6.x: https://github.com/pqrs-org/Karabiner-DriverKit-VirtualHIDDevice/releases
+if [[ ! -x "$VHID_DAEMON" ]]; then
+    echo "Error: Karabiner VirtualHIDDevice driver not installed. Install the .pkg, then:" >&2
+    echo "  sudo /Applications/.Karabiner-VirtualHIDDevice-Manager.app/Contents/MacOS/Karabiner-VirtualHIDDevice-Manager forceActivate" >&2
+    exit 1
+fi
+
+mkdir -p "$STAGE"
+daemon_plist() { # daemon_plist <label> <extra keys> <log> <program args...>
+    local label="$1" extra="$2" log="$3" arg; shift 3
+    cat <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>$label</string>
+    <key>ProgramArguments</key>
+    <array>
+$(for arg in "$@"; do echo "        <string>$arg</string>"; done)
+    </array>
+    <key>UserName</key>
+    <string>root</string>
+$extra    <key>StandardOutPath</key>
+    <string>$log.log</string>
+    <key>StandardErrorPath</key>
+    <string>$log.err</string>
+</dict>
+</plist>
+PLIST
+}
+ALWAYS='    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+'
+
+if [[ ! -d "$KARABINER_ELEMENTS" && ! -f "$VHID_PLIST" ]]; then
+    daemon_plist org.pqrs.Karabiner-VirtualHIDDevice-Daemon "$ALWAYS" /var/log/karabiner-vhid-daemon "$VHID_DAEMON" \
+        > "$STAGE/org.pqrs.Karabiner-VirtualHIDDevice-Daemon.plist"
+    put 0644 "$STAGE/org.pqrs.Karabiner-VirtualHIDDevice-Daemon.plist" "$VHID_PLIST"
+    root launchctl bootstrap system "$VHID_PLIST"
+fi
+
+if [[ "$MODE" == always ]]; then
+    daemon_plist "$LABEL" "$ALWAYS" /tmp/kanata "$KANATA_BIN" -c "$KANATA_CFG" > "$STAGE/$LABEL.plist"
+    remove "$SUDOERS" "$WRAPPER"
+else
+    # No RunAtLoad/KeepAlive: Hammerspoon starts it, the wrapper ends it.
+    daemon_plist "$LABEL" "" /tmp/kanata "$WRAPPER" "$USERNAME" "$KANATA_BIN" -c "$KANATA_CFG" > "$STAGE/$LABEL.plist"
+    cp "$HOME/.config/kanata/kanata-active-user" "$STAGE/kanata-active-user"
+    cat > "$STAGE/sudoers" <<SUDOERS
+# Lets $USERNAME's Hammerspoon start and stop kanata (setup-daemon.sh, active-user mode)
+$USERNAME ALL=(root) NOPASSWD: /bin/launchctl kickstart system/$LABEL, /bin/launchctl kill TERM system/$LABEL
+SUDOERS
+    visudo -cf "$STAGE/sudoers" >/dev/null # a broken drop-in breaks sudo
+    [[ -d "$(dirname "$WRAPPER")" ]] || root mkdir -p "$(dirname "$WRAPPER")"
+    put 0755 "$STAGE/kanata-active-user" "$WRAPPER"
+    put 0440 "$STAGE/sudoers" "$SUDOERS"
+fi
+LAUNCHD_CHANGED=
+same "$STAGE/$LABEL.plist" "$PLIST" || LAUNCHD_CHANGED=1
+put 0644 "$STAGE/$LABEL.plist" "$PLIST"
+
+if [[ -n "$LAUNCHD_CHANGED" ]] || ! loaded "$LABEL"; then
+    loaded "$LABEL" && root launchctl bootout "system/$LABEL"
+    root launchctl bootstrap system "$PLIST"
+    [[ "$MODE" == always || "$(stat -f %Su /dev/console)" != "$USERNAME" ]] ||
+        root launchctl kickstart "system/$LABEL"
+    echo "Grant Input Monitoring to $(readlink -f "$KANATA_BIN") if it's new (System Settings → Privacy & Security → Input Monitoring), then: sudo launchctl kickstart -k system/$LABEL"
+fi
