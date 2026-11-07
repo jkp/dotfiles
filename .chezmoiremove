@@ -1,0 +1,12 @@
+# Targets (relative to ~) that chezmoi deletes on apply, for configs this repo
+# no longer manages. chezmoi never deletes a target it simply stops managing.
+# To manage one of these again, delete its line here in the same commit.
+# tests/chezmoiremove.sh fails if an entry is also a managed target.
+
+# 2026-11-07 (Sat): AeroSpace replaced by the Hammerspoon WM; config dropped in 9256afd (PR #13).
+.config/aerospace
+# 2026-11-07 (Sat): WezTerm replaced by Ghostty; config dropped in 8bbe15a (PR #13).
+.config/wezterm
+# 2026-11-07 (Sat): Karabiner-Elements replaced by kanata; config dropped in fb9ff50.
+# A stale copy would fight kanata if Karabiner-Elements ever ran again.
+.config/karabiner
