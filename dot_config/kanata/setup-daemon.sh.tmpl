@@ -22,7 +22,16 @@ SUDOERS="$R/etc/sudoers.d/kanata-$USERNAME"
 VHID_DAEMON="$R/Library/Application Support/org.pqrs/Karabiner-DriverKit-VirtualHIDDevice/Applications/Karabiner-VirtualHIDDevice-Daemon.app/Contents/MacOS/Karabiner-VirtualHIDDevice-Daemon"
 VHID_PLIST="$R/Library/LaunchDaemons/org.pqrs.Karabiner-VirtualHIDDevice-Daemon.plist"
 KARABINER_VHID=org.pqrs.service.daemon.Karabiner-VirtualHIDDevice-Daemon
+KARABINER_ELEMENTS="$R/Applications/Karabiner-Elements.app"
+VHID_MANAGER="$R/Applications/.Karabiner-VirtualHIDDevice-Manager.app/Contents/MacOS/Karabiner-VirtualHIDDevice-Manager"
+# ponytail: pinned to v6 for kanata < 1.13; bump with kanata.
+VHID_PKG_VERSION=6.5.0
+VHID_PKG_SHA256=738893c0ff52d45990f8b1c6a9f984ef53e25140d1cf259cfad82a755b32db2f
+VHID_PKG_URL="https://github.com/pqrs-org/Karabiner-DriverKit-VirtualHIDDevice/releases/download/v$VHID_PKG_VERSION/Karabiner-DriverKit-VirtualHIDDevice-$VHID_PKG_VERSION.pkg"
 STAGE="$HOME/.cache/kanata-setup"
+LOG="$R/tmp/kanata"
+VERIFY_WAIT="${KANATA_VERIFY_WAIT:-8}" # seconds to watch a restarted kanata
+console_user() { stat -f %Su "${KANATA_CONSOLE:-/dev/console}"; }
 
 case "$MODE" in always|active-user|off) ;; *) echo "Unknown kanata mode: $MODE" >&2; exit 1 ;; esac
 
@@ -56,21 +65,40 @@ if [[ "$MODE" == off ]]; then
 fi
 
 [[ -x "$KANATA_BIN" ]] || { echo "Error: kanata not on PATH (brew install kanata)" >&2; exit 1; }
+KANATA_REAL="$(readlink -f "$KANATA_BIN")" # macOS grants pin this path, not the brew symlink
 [[ -f "$KANATA_CFG" ]] || { echo "Error: config not found at $KANATA_CFG" >&2; exit 1; }
+mkdir -p "$STAGE"
 # kanata < 1.13 pairs with driver v6.x: https://github.com/pqrs-org/Karabiner-DriverKit-VirtualHIDDevice/releases
-if [[ ! -x "$VHID_DAEMON" ]]; then
-    echo "Error: Karabiner VirtualHIDDevice driver not installed. Install the .pkg, then:" >&2
-    echo "  sudo /Applications/.Karabiner-VirtualHIDDevice-Manager.app/Contents/MacOS/Karabiner-VirtualHIDDevice-Manager forceActivate" >&2
-    exit 1
-fi
-VHID_VERSION="$(plutil -extract CFBundleShortVersionString raw -o - "${VHID_DAEMON%/MacOS/*}/Info.plist" 2>/dev/null || echo unknown)"
-# ponytail: pinned to v6 for kanata < 1.13; bump with kanata.
+vhid_version() {
+    [[ -x "$VHID_DAEMON" ]] || return 0
+    plutil -extract CFBundleShortVersionString raw -o - "${VHID_DAEMON%/MacOS/*}/Info.plist" 2>/dev/null || echo unknown
+}
+VHID_VERSION="$(vhid_version)"
 if [[ "$VHID_VERSION" != 6.* ]]; then
-    echo "Error: Karabiner VirtualHIDDevice driver $VHID_VERSION, but kanata < 1.13 needs v6.x. Install the v6 .pkg, then forceActivate as above." >&2
-    exit 1
+    if [[ -n "$VHID_VERSION" && -d "$KARABINER_ELEMENTS" ]]; then
+        echo "Error: Karabiner-Elements is installed with VirtualHIDDevice driver $VHID_VERSION, but kanata < 1.13 needs v6.x." >&2
+        echo "Uninstall Karabiner-Elements (Settings → Misc → Uninstall), then rerun this to install the v6 driver." >&2
+        exit 1
+    fi
+    echo "Installing Karabiner VirtualHIDDevice driver $VHID_PKG_VERSION (have: ${VHID_VERSION:-none})"
+    pkg="$STAGE/Karabiner-DriverKit-VirtualHIDDevice-$VHID_PKG_VERSION.pkg"
+    if [[ -n "$CAN_SUDO" ]]; then
+        curl -fsSL -o "$pkg" "$VHID_PKG_URL"
+        echo "$VHID_PKG_SHA256  $pkg" | shasum -a 256 -c >/dev/null ||
+            { rm -f "$pkg"; echo "Error: $VHID_PKG_URL doesn't match its pinned checksum" >&2; exit 1; }
+    else
+        [[ -n "$PRINTED" ]] || { echo "No sudo without a terminal; run these in one:"; PRINTED=1; }
+        echo "  curl -fsSL -o $pkg $VHID_PKG_URL"
+        echo "  echo '$VHID_PKG_SHA256  $pkg' | shasum -a 256 -c"
+    fi
+    root installer -pkg "$pkg" -target /
+    root "$VHID_MANAGER" forceActivate
+    if [[ -n "$CAN_SUDO" && "$(vhid_version)" != 6.* ]]; then
+        echo "Error: driver still not v6. Approve it in System Settings → General → Login Items & Extensions, then rerun." >&2
+        exit 1
+    fi
 fi
 
-mkdir -p "$STAGE"
 daemon_plist() { # daemon_plist <label> <extra keys> <log> <program args...>
     local label="$1" extra="$2" log="$3" arg; shift 3
     cat <<PLIST
@@ -108,11 +136,11 @@ if ! loaded "$KARABINER_VHID" && [[ ! -f "$VHID_PLIST" ]]; then
 fi
 
 if [[ "$MODE" == always ]]; then
-    daemon_plist "$LABEL" "$ALWAYS" /tmp/kanata "$KANATA_BIN" -c "$KANATA_CFG" > "$STAGE/$LABEL.plist"
+    daemon_plist "$LABEL" "$ALWAYS" "$LOG" "$KANATA_BIN" -c "$KANATA_CFG" > "$STAGE/$LABEL.plist"
     remove "$SUDOERS" "$WRAPPER"
 else
     # No RunAtLoad/KeepAlive: Hammerspoon starts it, the wrapper ends it.
-    daemon_plist "$LABEL" "" /tmp/kanata "$WRAPPER" "$USERNAME" "$KANATA_BIN" -c "$KANATA_CFG" > "$STAGE/$LABEL.plist"
+    daemon_plist "$LABEL" "" "$LOG" "$WRAPPER" "$USERNAME" "$KANATA_BIN" -c "$KANATA_CFG" > "$STAGE/$LABEL.plist"
     cp "$HOME/.config/kanata/kanata-active-user" "$STAGE/kanata-active-user"
     cat > "$STAGE/sudoers" <<SUDOERS
 # Lets $USERNAME's Hammerspoon start and stop kanata (setup-daemon.sh, active-user mode)
@@ -130,7 +158,56 @@ put 0644 "$STAGE/$LABEL.plist" "$PLIST"
 if [[ -n "$LAUNCHD_CHANGED" ]] || ! loaded "$LABEL"; then
     loaded "$LABEL" && root launchctl bootout "system/$LABEL"
     root launchctl bootstrap system "$PLIST"
-    [[ "$MODE" == always || "$(stat -f %Su /dev/console)" != "$USERNAME" ]] ||
-        root launchctl kickstart "system/$LABEL"
-    echo "Grant Input Monitoring to $(readlink -f "$KANATA_BIN") if it's new (System Settings → Privacy & Security → Input Monitoring), then: sudo launchctl kickstart -k system/$LABEL"
+fi
+
+if [[ "$MODE" == active-user ]] && ! pgrep -xq Hammerspoon; then
+    echo "Hammerspoon isn't running, and it's what starts kanata when you log in or switch back. Opening it: allow Accessibility when it asks."
+    open -g -a Hammerspoon || true
+fi
+
+# grant <pane anchor> <name shown in System Settings>
+grant() {
+    printf '%s' "$KANATA_REAL" | pbcopy
+    open "x-apple.systempreferences:com.apple.preference.security?$1" || true
+    echo "kanata needs \"$2\" (System Settings → Privacy & Security, now open)."
+    echo "  Click +, press Cmd+Shift+G, paste (copied) $KANATA_REAL, Open, and switch it on."
+    [[ -t 0 ]] || return 1
+    read -rp "  Press Enter once it's on... "
+}
+
+# Restart kanata and walk through any permission it lacks.
+verify() {
+    local attempt size said waited
+    for attempt in 1 2 3; do
+        size=$(stat -f %z "$LOG.err" 2>/dev/null || echo 0)
+        root launchctl kickstart -k "system/$LABEL"
+        said=
+        for ((waited = 0; waited <= VERIFY_WAIT; waited++)); do
+            said="$(tail -c "+$((size + 1))" "$LOG.err" 2>/dev/null || true)"
+            [[ "$said" == *permission* ]] && break
+            ((waited == VERIFY_WAIT)) || sleep 1
+        done
+        if [[ "$said" == *"Input Monitoring permission"* ]]; then
+            grant Privacy_ListenEvent "Input Monitoring" || return 1
+        elif [[ "$said" == *"Accessibility permission"* ]]; then
+            grant Privacy_Accessibility "Allow assistive applications to control the computer" || return 1
+        elif launchctl print "system/$LABEL" 2>/dev/null | grep -q 'state = running'; then
+            echo "✅ kanata is running"
+            return 0
+        else
+            echo "Error: kanata isn't running. $LOG.err says:" >&2
+            echo "${said:-(nothing)}" >&2
+            return 1
+        fi
+    done
+    echo "Error: kanata still lacks a permission; see $LOG.err" >&2
+    return 1
+}
+
+if [[ -z "$CAN_SUDO" ]]; then
+    echo "Then grant $KANATA_REAL Input Monitoring and Accessibility (\"Allow assistive applications to control the computer\") under System Settings → Privacy & Security, and rerun this to check."
+elif [[ "$MODE" == active-user && "$(console_user)" != "$USERNAME" ]]; then
+    echo "Installed. kanata starts next time you're the active user."
+else
+    verify
 fi
