@@ -31,31 +31,36 @@ echo "PASS: linux config has no encryption"
 # kanata.mode: explicit KANATA_MODE wins, then stored data, then "always" for a
 # machine that already has the always-on daemon (tkol), else prompt (TTY, default always) or,
 # with no terminal to choose in, the safe "active-user".
-mode() { # mode <expected> [env...] -- [execute-template args...]
-    local want="$1" got; shift
+# chezmoi 2.68 simulates stdinIsATTY from --stdinisatty while 2.73 reads the
+# real stdin, so set both: script's pty or /dev/null, plus the matching flag.
+mode() { # mode <expected> tty|notty [env...] -- [execute-template args...]
+    local want="$1" how="$2" got; shift 2
     local envs=(); while [[ "$1" != -- ]]; do envs+=("$1"); shift; done; shift
-    got="$(env ${envs[@]+"${envs[@]}"} chezmoi --source "$HERE" execute-template --init \
-        --override-data '{"chezmoi":{"os":"darwin"},"kanataPlist":"'"$WORK"'/no.plist"}' "$@" \
-        < "$HERE/.chezmoi.toml.tmpl")" || fail "render failed for $want: $got"
-    grep -qx "[[:space:]]*mode = \"$want\"" <<<"$got" || fail "expected kanata mode $want, got: $got"
+    local cmd=(env ${envs[@]+"${envs[@]}"} chezmoi --source "$HERE" execute-template --init
+        --override-data '{"chezmoi":{"os":"darwin"},"kanataPlist":"'"$WORK"'/no.plist"}' "$@"
+        --stdinisatty="$([[ "$how" == tty ]] && echo true || echo false)" "$(cat "$HERE/.chezmoi.toml.tmpl")")
+    [[ "$how" == tty ]] && cmd=(script -q /dev/null "${cmd[@]}")
+    got="$("${cmd[@]}" < /dev/null | tr -d '\r')" || fail "render failed for $want: $got"
+    grep -qx "[[:space:]]*mode = \"$want\"" <<<"$got" || fail "expected kanata mode $want ($how), got: $got"
 }
-mode active-user -- --config "$WORK/none.toml" --stdinisatty=false
+mode active-user notty -- --config "$WORK/none.toml"
 echo "PASS: kanata mode defaults to active-user without a TTY"
-mode always -- --config "$WORK/none.toml"
+mode always tty -- --config "$WORK/none.toml"
 echo "PASS: the kanata mode prompt defaults to always"
-mode active-user -- --config "$WORK/none.toml" --promptChoice "Kanata mode=active-user"
+mode active-user tty -- --config "$WORK/none.toml" --promptChoice "Kanata mode=active-user"
 echo "PASS: kanata mode is prompted for with a TTY"
-mode active-user KANATA_MODE=active-user -- --config "$WORK/none.toml" --stdinisatty=false
+mode active-user notty KANATA_MODE=active-user -- --config "$WORK/none.toml"
 echo "PASS: KANATA_MODE sets the mode without a TTY"
 printf '[data.kanata]\n    mode = "off"\n' > "$WORK/off.toml"
-mode off -- --config "$WORK/off.toml"
+mode off tty -- --config "$WORK/off.toml"
 printf '[data.kanata]\n    mode = "always"\n' > "$WORK/always.toml"
-mode always -- --config "$WORK/always.toml" --stdinisatty=false
+mode always notty -- --config "$WORK/always.toml"
 echo "PASS: a stored kanata mode is kept without prompting"
-mode active-user KANATA_MODE=active-user -- --config "$WORK/off.toml"
+mode active-user tty KANATA_MODE=active-user -- --config "$WORK/off.toml"
 echo "PASS: KANATA_MODE overrides a stored mode"
 touch "$WORK/no.plist"
-mode always -- --config "$WORK/none.toml"
+mode always tty -- --config "$WORK/none.toml"
+mode always notty -- --config "$WORK/none.toml"
 echo "PASS: an existing always-on daemon means always, without prompting"
 KANATA_MODE=bogus chezmoi --source "$HERE" --config "$WORK/none.toml" execute-template --init \
     --override-data '{"chezmoi":{"os":"darwin"}}' < "$HERE/.chezmoi.toml.tmpl" >/dev/null 2>&1 &&
