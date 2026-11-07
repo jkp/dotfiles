@@ -24,6 +24,7 @@ Spoons/
 .config/gh/
 .config/imap-mcp/
 .config/op/
+.config/1Password/
 .config/uv/
 .config/zed/
 .config/direnv/
