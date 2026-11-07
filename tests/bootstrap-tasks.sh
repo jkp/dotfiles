@@ -1,7 +1,8 @@
 #!/bin/bash
 # bootstrap.sh through the mise bootstrap tasks (real mise, this repo's
-# mise.toml): a failing step fails the bootstrap. uname, brew, chezmoi, uv,
-# sudo, chsh and ~/.local/bin/mise are stubs.
+# mise.toml): a failing step fails the bootstrap, and fish-default runs after
+# brew-core has installed fish, warning rather than hanging when it can't set
+# it. uname, brew, chezmoi, uv, sudo, chsh and ~/.local/bin/mise are stubs.
 #
 #   ./tests/bootstrap-tasks.sh
 set -euo pipefail
@@ -86,5 +87,26 @@ bootstrap
 [[ "$status" -eq 0 ]] || fail "bootstrap (no --full) failed"
 grep -q 'Brewfile.personal' "$WORK/log" && fail "brew-personal ran without --full"
 grep -q '✅ Bootstrap complete' "$WORK/out" || fail "no success message"
+
+# --- fish-default waits for brew-core's fish; no terminal but sudo cached: chsh
+setup
+SUDO_CACHED=1 bootstrap
+[[ "$status" -eq 0 ]] || fail "bootstrap failed"
+grep -q "^chsh -s $WORK/bin/fish tester" "$WORK/log" || fail "fish wasn't set as the default shell"
+
+# --- no terminal and sudo needs a password: print the commands, don't run sudo
+setup
+bootstrap
+[[ "$status" -eq 0 ]] || fail "bootstrap failed"
+grep -q '^chsh' "$WORK/log" && fail "ran chsh with no way to prompt for a password"
+grep -q "sudo chsh -s $WORK/bin/fish tester" "$WORK/out" || fail "didn't print the chsh command"
+grep -q "sudo tee -a /etc/shells" "$WORK/out" || fail "didn't print the /etc/shells command"
+
+# --- fish missing after brew-core: warn
+setup
+stub brew 'echo "brew $*" >> "$LOG"'
+bootstrap
+[[ "$status" -eq 0 ]] || fail "bootstrap failed"
+grep -q '⚠️.*fish' "$WORK/out" || fail "no warning that fish is missing"
 
 echo "PASS: bootstrap tasks"
