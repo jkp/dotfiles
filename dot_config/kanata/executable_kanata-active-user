@@ -1,0 +1,21 @@
+#!/bin/bash
+# Run kanata only while USER owns the console (active-user mode). Exits once
+# anyone else does (fast user switch, logout, login window), so a shared Mac
+# never remaps another session even if Hammerspoon isn't there to stop it.
+#
+#   kanata-active-user <user> <kanata> [kanata args...]
+set -u
+user="$1"; shift
+owner() { stat -f %Su /dev/console; }
+
+[[ "$(owner)" == "$user" ]] || exit 0
+"$@" & pid=$!
+trap 'kill $pid 2>/dev/null; wait $pid; exit 0' TERM INT
+# ponytail: 1s poll; Hammerspoon stops kanata at once on a switch, this is the backstop.
+while kill -0 $pid 2>/dev/null; do
+    if [[ "$(owner)" != "$user" ]]; then
+        kill $pid; wait $pid; exit 0
+    fi
+    sleep 1
+done
+wait $pid
