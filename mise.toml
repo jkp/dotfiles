@@ -17,7 +17,8 @@ usage = 'flag "--full" help="Include personal Homebrew packages"'
 shell = "bash -c"
 run = """
 if [[ "$usage_full" == "true" ]]; then
-  mise run brew-personal || { echo '❌ Bootstrap failed: personal packages did not install (errors above)' >&2; exit 1; }
+  { mise run brew-personal && mise run ansible; } ||
+    { echo '❌ Bootstrap failed: personal packages did not install (errors above)' >&2; exit 1; }
 fi
 echo '✅ Bootstrap complete'
 """
@@ -46,6 +47,11 @@ run = """
 [[ "$(uname)" != "Darwin" ]] && exit 0
 brew bundle --file=~/.Brewfile.personal
 """
+
+[tasks.ansible]
+description = "Install Ansible with uv (Homebrew's needs a source build of llvm)"
+hide = true
+run = "uv tool install ansible --with-executables-from ansible-core"  # no-op once installed
 
 [tasks.chezmoi-apply]
 description = "Apply chezmoi dotfiles"
