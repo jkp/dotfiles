@@ -50,3 +50,6 @@ Spoons/
 
 # Machine-local desktop settings database
 .config/dconf/
+
+# Local Evolution configuration
+.config/evolution/
