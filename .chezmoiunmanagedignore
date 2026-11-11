@@ -53,3 +53,6 @@ Spoons/
 
 # Local Evolution configuration
 .config/evolution/
+
+# Local GNOME session state
+.config/gnome-session/
