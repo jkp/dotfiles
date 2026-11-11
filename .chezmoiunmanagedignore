@@ -39,3 +39,6 @@ Spoons/
 
 # User services owned by their installers and Ansible
 .config/systemd/
+
+# Machine-specific HQPlayer desktop and client preferences
+.config/Signalyst/
