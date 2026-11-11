@@ -18,6 +18,7 @@ Spoons/
 **/logs/
 
 # CLI tool state (credentials, cache, runtime)
+.config/.wrangler/
 .claude/
 .config/chezmoi/
 .config/gcloud/
