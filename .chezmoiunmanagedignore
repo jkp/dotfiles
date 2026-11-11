@@ -32,5 +32,6 @@ Spoons/
 .config/rift/
 
 # Secrets (never track)
+.config/supertest/
 .config/fish/conf.d/api_keys.fish
 .config/fish/functions/load_api_key.fish
