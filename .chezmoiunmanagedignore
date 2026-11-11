@@ -47,3 +47,6 @@ Spoons/
 
 # Local Linux file-manager preferences
 .config/Thunar/
+
+# Machine-local desktop settings database
+.config/dconf/
