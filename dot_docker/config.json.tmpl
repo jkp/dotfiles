@@ -8,10 +8,12 @@
 		"europe-west2-docker.pkg.dev": "gcloud",
 		"europe-west4-docker.pkg.dev": "gcloud"
 	},
+{{- if eq .chezmoi.os "darwin" }}
 	"currentContext": "colima",
 	"cliPluginsExtraDirs": [
 		"/opt/homebrew/lib/docker/cli-plugins"
 	],
+{{- end }}
 	"plugins": {
 		"-x-cli-hints": {
 			"enabled": "true"
