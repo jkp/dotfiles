@@ -19,6 +19,7 @@ Spoons/
 
 # CLI tool state (credentials, cache, runtime)
 .config/cni/
+.config/containers/
 .config/.wrangler/
 .claude/
 .config/chezmoi/
