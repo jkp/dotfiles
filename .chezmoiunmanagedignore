@@ -35,3 +35,6 @@ Spoons/
 .config/supertest/
 .config/fish/conf.d/api_keys.fish
 .config/fish/functions/load_api_key.fish
+
+# User services owned by their installers and Ansible
+.config/systemd/
