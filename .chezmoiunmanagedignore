@@ -42,3 +42,6 @@ Spoons/
 
 # Machine-specific HQPlayer desktop and client preferences
 .config/Signalyst/
+
+# Local Linux file-manager preferences
+.config/Thunar/
