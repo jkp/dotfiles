@@ -1,0 +1,12 @@
+{{- if eq .chezmoi.os "darwin" -}}
+#!/bin/bash
+# Enable Touch ID for sudo via /etc/pam.d/sudo_local, which survives macOS
+# updates. Prompts for sudo once, only when the line is not yet enabled.
+set -euo pipefail
+f=/etc/pam.d/sudo_local
+if grep -qE '^auth[[:space:]]+sufficient[[:space:]]+pam_tid\.so' "$f" 2>/dev/null; then
+  exit 0
+fi
+echo "Enabling Touch ID for sudo ($f)"
+sed 's/^#auth/auth/' /etc/pam.d/sudo_local.template | sudo tee "$f" >/dev/null
+{{ end -}}
