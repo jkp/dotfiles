@@ -11,6 +11,7 @@ function chezmoi-unmanaged
     end
 
     set -l output (chezmoi unmanaged $args)
+    or return 1
     set -l ignore_file ~/.local/share/chezmoi/.chezmoiunmanagedignore
 
     if test "$do_filter" = true
@@ -66,4 +67,5 @@ function chezmoi-unmanaged
     else
         printf '%s\n' $output
     end
+    return 0
 end

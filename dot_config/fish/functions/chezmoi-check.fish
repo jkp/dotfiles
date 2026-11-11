@@ -6,24 +6,32 @@ function chezmoi-check
         test "$arg" = "--quiet" -o "$arg" = "-q" && set quiet true
     end
 
-    set -l tmpdir (mktemp -d)
+    # Linux does not configure age: encrypted files are macOS-only.
+    set -l chezmoi_args
+    if test (uname -s) = Linux
+        set chezmoi_args --exclude=encrypted
+    end
 
-    # Run expensive commands in parallel
-    chezmoi status 2>/dev/null | grep -v '^ R ' > $tmpdir/drift &
-    git -C ~/.local/share/chezmoi status --porcelain 2>/dev/null > $tmpdir/git &
-    # Build list of managed directories, then single call to chezmoi-unmanaged
-    set -l managed_dirs (chezmoi managed | grep -o '^\.[^/]*' | sort -u)
+    set -l drift (chezmoi status $chezmoi_args)
+    or begin
+        echo "chezmoi-check: drift check failed" >&2
+        return 1
+    end
+    set drift (string match -v ' R *' -- $drift)
+    set -l git_status (git -C ~/.local/share/chezmoi status --porcelain)
+    or return 1
+    set -l managed (chezmoi managed $chezmoi_args)
+    or return 1
+    set -l managed_dirs (printf '%s\n' $managed | grep -o '^\.[^/]*' | sort -u)
     set -l dir_paths
     for dir in $managed_dirs
         test -d ~/$dir && set -a dir_paths ~/$dir
     end
-    chezmoi-unmanaged --filter $dir_paths 2>/dev/null > $tmpdir/unmanaged &
-    wait
-
-    set -l drift (cat $tmpdir/drift)
-    set -l git_status (cat $tmpdir/git)
-    set -l unmanaged_items (cat $tmpdir/unmanaged 2>/dev/null)
-    rm -rf $tmpdir
+    set -l unmanaged_items (chezmoi-unmanaged --filter $dir_paths)
+    or begin
+        echo "chezmoi-check: unmanaged check failed" >&2
+        return 1
+    end
 
     # Batch check file types and build final list
     set -l untracked
@@ -38,8 +46,8 @@ function chezmoi-check
 
     # Filter out binaries and pipx-installed scripts in batch
     if test -n "$files_to_check"
-        # Mach-O binaries (one file command)
-        set -l binaries (file (printf "$HOME/%s\n" $files_to_check) 2>/dev/null | grep "Mach-O" | cut -d: -f1 | sed "s|$HOME/||")
+        # Follow installed-tool symlinks and recognise both macOS and Linux binaries.
+        set -l binaries (file -L (printf "$HOME/%s\n" $files_to_check) 2>/dev/null | grep -E ": .* (Mach-O|ELF)|: (Mach-O|ELF)" | cut -d: -f1 | sed "s|$HOME/||")
 
         # Get non-binary files for shebang check
         set -l scripts
