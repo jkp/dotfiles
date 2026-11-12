@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<!-- Safari tabs for Alfred: every iCloud device's open tabs, exported every
-     10 min into ~/.local/share/safari-tabs, a send-only Syncthing folder
-     (orchestra: safari-tabs). Needs Full Disk Access. Managed by chezmoi. -->
+<!-- Safari for Alfred: open tabs (iCloud + Tab Groups) and 30 days of
+     history, exported every 10 min into ~/.local/share/safari-tabs, a
+     send-only Syncthing folder (orchestra: safari-tabs). Needs Full Disk
+     Access. Managed by chezmoi. -->
 <plist version="1.0">
 <dict>
   <key>Label</key><string>co.kirkconsulting.safari-tabs-export</string>
   <key>ProgramArguments</key>
   <array>
     <string>{{ .chezmoi.homeDir }}/.local/bin/safari-tabs-export</string>
-    <string>{{ .chezmoi.homeDir }}/.local/share/safari-tabs/tabs.json</string>
+    <string>{{ .chezmoi.homeDir }}/.local/share/safari-tabs</string>
   </array>
   <key>StartInterval</key><integer>600</integer>
   <key>RunAtLoad</key><true/>
