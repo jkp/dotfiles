@@ -5,13 +5,13 @@
 {{- range .agentPlugins -}}
 {{-   $mp := printf "[marketplaces.%s]" .marketplace -}}
 {{-   if not (contains $mp $out) -}}
-{{-     if and $out (not (hasSuffix "\n" $out)) }}{{ $out = printf "%s\n" $out }}{{ end -}}
-{{-     $out = printf "%s\n%s\nsource_type = \"git\"\nsource = \"https://github.com/%s.git\"\n" $out $mp .repo -}}
+{{-     if $out }}{{ $out = printf "%s\n\n" (trimSuffix "\n" $out) }}{{ end -}}
+{{-     $out = printf "%s%s\nsource_type = \"git\"\nsource = \"https://github.com/%s.git\"\n" $out $mp .repo -}}
 {{-   end -}}
 {{-   $pl := printf "[plugins.%q]" .id -}}
 {{-   if not (contains $pl $out) -}}
-{{-     if and $out (not (hasSuffix "\n" $out)) }}{{ $out = printf "%s\n" $out }}{{ end -}}
-{{-     $out = printf "%s\n%s\nenabled = true\n" $out $pl -}}
+{{-     if $out }}{{ $out = printf "%s\n\n" (trimSuffix "\n" $out) }}{{ end -}}
+{{-     $out = printf "%s%s\nenabled = true\n" $out $pl -}}
 {{-   end -}}
 {{- end -}}
 {{- $out -}}

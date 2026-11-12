@@ -61,6 +61,7 @@ PY
 # Codex config: tables appended once, existing text byte-for-byte preserved.
 codex="$HERE/dot_codex/modify_private_config.toml"
 render "$codex" < /dev/null > "$WORK/empty.toml"
+[[ "$(head -c1 "$WORK/empty.toml")" == "[" ]] || fail "new Codex config starts with a blank line"
 printf '# mine\nmodel = "gpt-5"\n\n[projects."/x"]\ntrust_level = "trusted"' > "$WORK/in.toml"
 render "$codex" < "$WORK/in.toml" > "$WORK/merged.toml"
 render "$codex" < "$WORK/merged.toml" > "$WORK/again.toml"
