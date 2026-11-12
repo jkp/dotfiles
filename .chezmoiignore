@@ -20,6 +20,8 @@ hk.pkl
 .claude/ide
 .claude/commands
 .claude/*.json
+# settings.json is merged by modify_settings.json (plugin entries only)
+!.claude/settings.json
 
 # Tool state files (not config)
 .config/fish/fish_variables

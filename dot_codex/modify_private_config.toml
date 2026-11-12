@@ -1,0 +1,17 @@
+{{- /* chezmoi:modify-template */ -}}
+{{- /* Append agentPlugins tables to Codex's config when missing. Text-only so the
+       app's own formatting, comments and later edits (e.g. enabled = false) survive. */ -}}
+{{- $out := .chezmoi.stdin -}}
+{{- range .agentPlugins -}}
+{{-   $mp := printf "[marketplaces.%s]" .marketplace -}}
+{{-   if not (contains $mp $out) -}}
+{{-     if and $out (not (hasSuffix "\n" $out)) }}{{ $out = printf "%s\n" $out }}{{ end -}}
+{{-     $out = printf "%s\n%s\nsource_type = \"git\"\nsource = \"https://github.com/%s.git\"\n" $out $mp .repo -}}
+{{-   end -}}
+{{-   $pl := printf "[plugins.%q]" .id -}}
+{{-   if not (contains $pl $out) -}}
+{{-     if and $out (not (hasSuffix "\n" $out)) }}{{ $out = printf "%s\n" $out }}{{ end -}}
+{{-     $out = printf "%s\n%s\nenabled = true\n" $out $pl -}}
+{{-   end -}}
+{{- end -}}
+{{- $out -}}

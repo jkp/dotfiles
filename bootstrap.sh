@@ -29,6 +29,14 @@ if [[ "$(uname)" != "Darwin" ]] && ! command -v fish &>/dev/null; then
     sudo apt-get install -y -qq fish >/dev/null
 fi
 
+# mise's prebuilt Node (used to install agent skills) needs libatomic, which
+# minimal Debian/Ubuntu images lack.
+if [[ "$(uname)" != "Darwin" ]] && ! ldconfig -p 2>/dev/null | grep -q 'libatomic\.so\.1'; then
+    echo "📦 Installing libatomic1 for Node..."
+    sudo apt-get update -qq
+    sudo apt-get install -y -qq libatomic1 >/dev/null
+fi
+
 # Install mise
 if ! command -v mise &>/dev/null; then
     echo "🔧 Installing mise..."

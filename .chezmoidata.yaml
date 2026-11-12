@@ -1,2 +1,9 @@
 name: "Jamie Kirkpatrick"
 email: "jkp@kirkconsulting.co.uk"
+
+# Agent plugins for Claude Code and Codex, from GitHub marketplaces.
+# modify_ templates declare them; run_onchange_after_install-agent-skills installs them.
+agentPlugins:
+  - id: ponytail@ponytail
+    marketplace: ponytail
+    repo: DietrichGebert/ponytail

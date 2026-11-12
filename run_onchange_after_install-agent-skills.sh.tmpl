@@ -1,0 +1,28 @@
+#!/bin/bash
+# Third-party agent skills and plugins, installed from upstream on every machine.
+# Personal skills are plain files in dot_agents/skills. Codex reads ~/.agents/skills
+# itself; the skills CLI links each skill into ~/.claude/skills for Claude Code.
+set -euo pipefail
+export DO_NOT_TRACK=1
+
+if command -v mise >/dev/null 2>&1; then
+    skills() { # skills <repo> <skill>
+        mise exec node@lts -- npx -y skills@1.8.1 add "$1" -g -a claude-code -a codex -s "$2" -y
+    }
+    skills vercel-labs/skills find-skills
+    skills mwunsch/termscope termscope
+    skills mattpocock/skills prototype
+    skills t3dotgg/tstack '*'
+else
+    echo "agent skills: mise not installed, skipping third-party skills" >&2
+fi
+{{ range .agentPlugins }}
+if command -v claude >/dev/null 2>&1; then
+    claude plugin marketplace add {{ .repo }}
+    claude plugin install {{ .id }} --scope user
+fi
+if command -v codex >/dev/null 2>&1; then
+    codex plugin marketplace add {{ .repo }}
+    codex plugin add {{ .id }}
+fi
+{{ end -}}

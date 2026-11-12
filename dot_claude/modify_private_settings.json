@@ -1,0 +1,19 @@
+{{- /* chezmoi:modify-template */ -}}
+{{- /* Add agentPlugins to Claude's settings, leaving everything else as the app wrote it. */ -}}
+{{- $in := .chezmoi.stdin -}}
+{{- $s := dict -}}
+{{- if trim $in }}{{ $s = fromJson $in }}{{ end -}}
+{{- $out := deepCopy $s -}}
+{{- range .agentPlugins -}}
+{{-   $plugins := get $out "enabledPlugins" | default dict -}}
+{{-   if not (hasKey $plugins .id) }}{{ $_ := set $plugins .id true }}{{ end -}}
+{{-   $_ := set $out "enabledPlugins" $plugins -}}
+{{-   $mps := get $out "extraKnownMarketplaces" | default dict -}}
+{{-   $_ := set $mps .marketplace (dict "source" (dict "source" "github" "repo" .repo)) -}}
+{{-   $_ := set $out "extraKnownMarketplaces" $mps -}}
+{{- end -}}
+{{- if and (trim $in) (eq (toJson $s) (toJson $out)) -}}
+{{- $in -}}
+{{- else -}}
+{{- toPrettyJson "  " $out }}
+{{ end -}}
