@@ -10,6 +10,7 @@
 #   - Machine-specific tools go in config.local.toml automatically
 [tools]
 bat = "0.26.0"
+"github:gastownhall/beads" = "1.3.4"  # bd, for the personal-beads skill
 fd = "10.3.0"
 jj = "0.47.1"  # aqua:jj-vcs/jj (prebuilt); Homebrew's builds llvm on old macOS
 jq = "1.8.1"
