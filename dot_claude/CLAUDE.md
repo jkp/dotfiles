@@ -3,7 +3,7 @@
 ## Personal work tracking
 
 When starting or resuming project work, read
-`/Users/jkp/.agents/skills/personal-beads/SKILL.md` and apply its project discovery
+`~/.agents/skills/personal-beads/SKILL.md` and apply its project discovery
 and local-first capture workflow. This is a personal preference, not permission
 to initialise a tracker or change team policy. Repository requirements still apply.
 
