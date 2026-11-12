@@ -31,6 +31,21 @@ if grep -rnE '/Users/|/home/' "$skills"; then fail "home path in a skill"; fi
 [[ ! -d "$skills/personal-beads/references" ]] || fail "project mappings belong in tracker workspaces"
 grep -q 'TRACKER.md' "$skills/personal-beads/SKILL.md" || fail "personal-beads must discover TRACKER.md"
 
+# One personal instructions file for both agents. Codex doesn't expand @imports,
+# so it must be self-contained, and any ~/.agents file it points at must exist.
+agents_md="$HERE/dot_agents/AGENTS.md"
+[[ -f "$agents_md" ]] || fail "no dot_agents/AGENTS.md"
+[[ "$(cat "$HERE/dot_claude/symlink_CLAUDE.md" 2>/dev/null)" == "../.agents/AGENTS.md" ]] || fail "~/.claude/CLAUDE.md must link to AGENTS.md"
+[[ "$(cat "$HERE/dot_codex/symlink_AGENTS.md" 2>/dev/null)" == "../.agents/AGENTS.md" ]] || fail "~/.codex/AGENTS.md must link to AGENTS.md"
+if grep -nE '(^|[[:space:]])@[~./a-zA-Z]' "$agents_md"; then fail "AGENTS.md uses @imports Codex can't read"; fi
+grep -q 'personal-beads/SKILL.md' "$agents_md" || fail "AGENTS.md lost the personal-beads pointer"
+for p in $(grep -oE '~/\.agents/[A-Za-z0-9_./-]+[A-Za-z0-9_]' "$agents_md"); do
+    [[ -e "$HERE/dot_agents/${p#\~/.agents/}" ]] || fail "AGENTS.md points at missing $p"
+done
+for gone in .claude/instructions .claude/docs; do
+    grep -qx "$gone" "$HERE/.chezmoiremove" || fail "$gone must be in .chezmoiremove"
+done
+
 # Third-party skills come from upstream for both agents.
 installer="$HERE/run_onchange_after_install-agent-skills.sh.tmpl"
 render "$installer" < /dev/null > "$WORK/install.sh"

@@ -10,3 +10,6 @@
 # 2026-11-07 (Sat): Karabiner-Elements replaced by kanata; config dropped in fb9ff50.
 # A stale copy would fight kanata if Karabiner-Elements ever ran again.
 .config/karabiner
+# 2026-11-12 (Thu): folded into ~/.agents/AGENTS.md, shared by Claude and Codex.
+.claude/instructions
+.claude/docs

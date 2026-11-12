@@ -26,7 +26,7 @@ entries() { cz "$1" execute-template "$(cat "$HERE/.chezmoiremove")" | sed -E 's
 
 for os in darwin linux; do
     got="$(entries "$os" | sort)"
-    want="$(printf '%s\n' .config/aerospace .config/karabiner .config/wezterm)"
+    want="$(printf '%s\n' .claude/docs .claude/instructions .config/aerospace .config/karabiner .config/wezterm)"
     [[ "$got" == "$want" ]] || fail "$os entries are not the dropped configs: $got"
 
     managed="$(cz "$os" --destination "$WORK/empty" managed --include all)"
@@ -47,6 +47,7 @@ home="$WORK/home"
 for d in aerospace wezterm karabiner karabiner/automatic_backups aerospace.bak unrelated; do
     mkdir -p "$home/.config/$d" && echo x >"$home/.config/$d/file"
 done
+for d in docs instructions; do mkdir -p "$home/.claude/$d" && echo x >"$home/.claude/$d/file"; done
 apply() { cz "$os" --destination "$home" apply --exclude=scripts,externals,encrypted "$@"; }
 snapshot() { (cd "$home" && find . -print | sort); }
 
@@ -54,6 +55,11 @@ apply || fail "apply failed"
 for d in aerospace wezterm karabiner; do
     [[ ! -e "$home/.config/$d" ]] || fail "~/.config/$d survived apply"
 done
+for d in docs instructions; do
+    [[ ! -e "$home/.claude/$d" ]] || fail "~/.claude/$d survived apply"
+done
+[[ -L "$home/.claude/CLAUDE.md" && -L "$home/.codex/AGENTS.md" ]] || fail "agent instruction links missing"
+{ grep -q J-Dog "$home/.claude/CLAUDE.md" && grep -q J-Dog "$home/.codex/AGENTS.md"; } || fail "agent instruction links don't resolve"
 for d in aerospace.bak unrelated; do
     [[ -f "$home/.config/$d/file" ]] || fail "~/.config/$d was touched"
 done
