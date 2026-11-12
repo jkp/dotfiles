@@ -14,6 +14,9 @@ ZOXIDE="$(sed -n 's/^zoxide = "\(.*\)"/\1/p' "$HERE/dot_config/mise/config.toml"
 grep -qF 'zoxide init fish --cmd n | source' "$HERE/dot_config/fish/config.fish" ||
     fail "config.fish no longer runs zoxide's init the way this test does"
 
+# Keep first-install progress outside the shell output being checked.
+mise install "zoxide@$ZOXIDE"
+
 out="$(mise exec "zoxide@$ZOXIDE" -- fish --no-config -c 'zoxide init fish --cmd n | source; functions -q n; or echo "no n function"' 2>&1)"
 [[ -z "$out" ]] || fail "zoxide $ZOXIDE's fish init isn't silent on fish $(fish --version | awk '{print $NF}'): $out"
 echo "PASS: zoxide $ZOXIDE initialises silently on fish $(fish --version | awk '{print $NF}')"

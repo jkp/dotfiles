@@ -25,8 +25,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install chezmoi
-        run: brew install chezmoi
+      - name: Install test dependencies
+        run: brew install chezmoi fish
 
       - name: Install mise
         uses: jdx/mise-action@v2
