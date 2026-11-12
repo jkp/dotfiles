@@ -27,9 +27,6 @@ to initialise a tracker or change team policy. Repository requirements still app
 
 ## Getting help
 
-- ALWAYS try to fetch the latest docs for dependencies using the context7 tool do this:
-    - BEFORE attempting to write code that uses them.
-    - When running into usage errors stemming from incorrect API usage.
 - ALWAYS try to follow the official documentation if you're running into issues with an API; its more efficient than reverse engineering in most cases.
 - ALWAYS ask for clarification rather than making assumptions.
 - If you're having trouble with something, it's ok to stop and ask for help. Especially if it's something your human might be better at.
