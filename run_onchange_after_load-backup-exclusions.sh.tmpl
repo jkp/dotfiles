@@ -1,0 +1,17 @@
+{{- if and (eq .chezmoi.os "darwin") (eq .chezmoi.hostname "tkol") -}}
+#!/bin/bash
+# worker: {{ include "dot_local/bin/executable_backup-exclusions" | sha256sum }}
+# plist: {{ include "private_Library/private_LaunchAgents/co.kirkconsulting.backup-exclusions.plist.tmpl" | sha256sum }}
+# config: {{ include "dot_config/asimov/config" | sha256sum }}
+set -euo pipefail
+for tool in asimov gtimeout; do
+    command -v "$tool" >/dev/null || { echo "Install $tool before enabling backup exclusions" >&2; exit 1; }
+done
+mkdir -p "$HOME/Library/Logs/Asimov"
+# Retire this machine's earlier standalone Asimov schedule before taking ownership.
+launchctl bootout "gui/$(id -u)/com.stevegrunwell.asimov" 2>/dev/null || true
+rm -f "$HOME/Library/LaunchAgents/com.stevegrunwell.asimov.plist"
+label=co.kirkconsulting.backup-exclusions
+launchctl bootout "gui/$(id -u)/$label" 2>/dev/null || true
+launchctl bootstrap "gui/$(id -u)" "$HOME/Library/LaunchAgents/$label.plist"
+{{ end -}}

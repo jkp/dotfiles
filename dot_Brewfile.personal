@@ -13,6 +13,8 @@ brew "docker-buildx"
 brew "postgresql@14"
 
 # Tools
+brew "asimov"
+brew "coreutils"
 brew "tmux"
 cask "ollama-app"
 brew "terminal-notifier"
