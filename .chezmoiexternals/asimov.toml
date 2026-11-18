@@ -1,0 +1,9 @@
+{{ if and (eq .chezmoi.os "darwin") (eq .chezmoi.hostname "tkol") }}
+# Temporary pin until https://github.com/AsimovMac/asimov/pull/148 is released.
+[".local/share/asimov"]
+type = "archive"
+url = "https://github.com/jkp/asimov/archive/14ff3e6ec830192e65ec2d9a618b8fe6bb0e1582.tar.gz"
+checksum.sha256 = "bfbce24c52a7d1c079e0c9bf673fffdfc44db446a33d162a41f33c1234822372"
+stripComponents = 1
+include = ["*/bin/**", "*/lib/**", "*/data/**"]
+{{ end }}
