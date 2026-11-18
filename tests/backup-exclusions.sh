@@ -11,6 +11,7 @@ import sys
 import tempfile
 import runpy
 import time
+import threading
 from unittest.mock import patch
 
 with tempfile.TemporaryDirectory() as tmp:
@@ -32,8 +33,10 @@ with tempfile.TemporaryDirectory() as tmp:
     def run(*args):
         return subprocess.run([sys.executable, sys.argv[1], *map(str, args)], env=env,
                               capture_output=True, text=True, timeout=30)
-    assert run(checkout).returncode == 0
-    assert run(checkout).returncode == 0
+    result = run(checkout)
+    assert result.returncode == 0, result.stderr
+    result = run(checkout)
+    assert result.returncode == 0, result.stderr
     db = sqlite3.connect(root / 'backup-exclusions/queue.sqlite3')
     assert db.execute('select count(*) from jobs').fetchone()[0] == 1
     with (root / 'backup-exclusions/worker.lock').open('a') as lock:
@@ -48,7 +51,8 @@ with tempfile.TemporaryDirectory() as tmp:
     assert run('--run').returncode == 0
     assert db.execute('select count(*) from jobs').fetchone()[0] == 0
     assert '--no-cache ' + str(checkout) in (root / 'calls').read_text()
-    assert run(checkout).returncode == 0
+    result = run(checkout)
+    assert result.returncode == 0, result.stderr
     (checkout / '.git').unlink()
     before = (root / 'calls').read_text()
     assert run('--run').returncode == 0
@@ -69,6 +73,34 @@ with tempfile.TemporaryDirectory() as tmp:
             assert len(calls) == expected
             if calls:
                 assert str(work) in calls[0]
+    dependency = checkout / 'node_modules'
+    dependency.mkdir()
+    venv = checkout / '.venv'
+    venv.mkdir()
+    assert run(dependency, venv).returncode == 0
+    before = (root / 'calls').read_text()
+    with patch.dict(os.environ, env), patch.object(sys, 'argv', ['worker', '--run']), \
+         patch.dict(worker['main'].__globals__, exclude=lambda path: True):
+        assert worker['main']() == 0
+    assert db.execute('select count(*) from jobs').fetchone()[0] == 0
+    assert (root / 'calls').read_text() == before
+    assert run(checkout).returncode != 0
+    link = checkout / 'other' / '.venv'
+    link.parent.mkdir()
+    link.symlink_to(dependency, target_is_directory=True)
+    assert run(link).returncode != 0
+    marked = threading.Event()
+    def scanning(_root):
+        with sqlite3.connect(root / 'backup-exclusions/queue.sqlite3') as writer:
+            writer.execute('insert into jobs values (?, ?)', (str(dependency), 'during-sweep'))
+        assert marked.wait(10), 'full scan blocked the exclusion queue'
+        return True
+    with patch.dict(os.environ, env), patch.object(sys, 'argv', ['worker', '--run']), \
+         patch.object(pathlib.Path, 'home', return_value=home), \
+         patch.object(time, 'time', return_value=time.mktime((2026, 11, 19, 3, 0, 0, 0, 0, -1))), \
+         patch.dict(worker['main'].__globals__, scan=scanning, exclude=lambda path: marked.set() or True):
+        assert worker['main']() == 0
+    assert db.execute('select count(*) from jobs').fetchone()[0] == 0
     warning = f'! {root / "vanished"}: read-only, cannot be excluded — skipping.\n'
     with patch.object(subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, stderr=warning)):
         assert worker['scan'](str(work))
