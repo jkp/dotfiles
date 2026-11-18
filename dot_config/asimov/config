@@ -1,0 +1,47 @@
+# Machine-local backup policy. Retained state is never excluded wholesale.
+# Full scans are scheduled because hidden worktrees and recreated directories
+# must not depend on Spotlight or a stale exclusion cache.
+[skip_paths]
+# Keep personal/cloud document trees untouched; avoid cloud hydration during scans.
+extra = ~/Documents
+extra = ~/Desktop
+extra = ~/Downloads
+extra = ~/Dropbox
+extra = ~/.cache
+extra = ~/.local
+extra = ~/.colima
+extra = ~/.rustup
+extra = ~/.cargo
+extra = ~/.npm
+extra = ~/.bun
+extra = ~/.pnpm
+extra = ~/.ivy2
+extra = ~/.m2
+extra = ~/.gradle
+extra = ~/.nuget
+extra = ~/.gem
+extra = ~/.rbenv
+extra = ~/.nvm
+extra = ~/.asdf
+extra = ~/go/pkg
+extra = ~/worktree-salvage-2026-09-16
+extra = ~/Pictures
+extra = ~/Music
+extra = ~/Movies
+extra = ~/Work/tinyteam/verity/.git
+
+[sentinels]
+# These can contain checked-in patches, vendored source or retained local state.
+disabled = .yarn .yarnrc.yml
+disabled = vendor Gemfile
+disabled = vendor go.mod
+disabled = vendor composer.json
+disabled = renv renv.lock
+disabled = .direnv .envrc
+disabled = .vagrant Vagrantfile
+disabled = .terraform.d .terraformrc
+disabled = build setup.py
+disabled = dist setup.py
+
+[fixed_dirs]
+enabled = false

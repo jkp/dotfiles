@@ -79,3 +79,11 @@ load-colima.sh
 
 # Repo tests, not dotfiles
 tests
+
+# Backup-exclusion pilot belongs to TKOL.
+{{ if or (ne .chezmoi.os "darwin") (ne .chezmoi.hostname "tkol") }}
+.local/bin/backup-exclusions
+.config/asimov
+.config/mise/conf.d/backup-exclusions.toml
+Library/LaunchAgents/co.kirkconsulting.backup-exclusions.plist
+{{ end }}
