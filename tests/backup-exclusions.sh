@@ -9,6 +9,9 @@ import sqlite3
 import subprocess
 import sys
 import tempfile
+import runpy
+import time
+from unittest.mock import patch
 
 with tempfile.TemporaryDirectory() as tmp:
     root = pathlib.Path(tmp).resolve()
@@ -51,5 +54,30 @@ with tempfile.TemporaryDirectory() as tmp:
     assert run('--run').returncode == 0
     assert (root / 'calls').read_text() == before
     assert db.execute('select count(*) from jobs').fetchone()[0] == 0
+    worker = runpy.run_path(sys.argv[1])
+    home = root / 'home'
+    work = home / 'Work'
+    work.mkdir(parents=True)
+    with patch.dict(os.environ, env), patch.object(sys, 'argv', ['worker', '--run']), \
+         patch.object(pathlib.Path, 'home', return_value=home):
+        for hour, expected in [(12, 0), (3, 1), (3, 0)]:
+            now = time.mktime((2026, 11, 18, hour, 0, 0, 0, 0, -1))
+            before = len((root / 'calls').read_text().splitlines())
+            with patch.object(time, 'time', return_value=now):
+                assert worker['main']() == 0
+            calls = (root / 'calls').read_text().splitlines()[before:]
+            assert len(calls) == expected
+            if calls:
+                assert str(work) in calls[0]
+    warning = f'! {root / "vanished"}: read-only, cannot be excluded — skipping.\n'
+    with patch.object(subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, stderr=warning)):
+        assert worker['scan'](str(work))
+    (root / 'vanished').mkdir()
+    with patch.object(subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, stderr=warning)):
+        from contextlib import redirect_stderr, redirect_stdout
+        from io import StringIO
+        with redirect_stderr(StringIO()) as errors, redirect_stdout(StringIO()):
+            assert not worker['scan'](str(work))
+        assert warning in errors.getvalue()
 print('backup-exclusions: PASS (deduplicate, single owner, retry, scoped scan, retired checkout)')
 PY
