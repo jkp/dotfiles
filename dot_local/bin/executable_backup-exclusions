@@ -11,6 +11,7 @@ import uuid
 
 
 def scan(root):
+    started = time.monotonic()
     print(f'Scanning {root or "scheduled sweep"}', flush=True)
     result = subprocess.run(
         ['gtimeout', '--foreground', '-k', '10', '21600', 'asimov', '--no-cache', *([root] if root else [])],
@@ -19,6 +20,12 @@ def scan(root):
     if result.returncode in (124, 137):
         # End the launchd job so it also reaps any remaining scan descendants.
         raise SystemExit(result.returncode)
+    print(f'Scan finished in {time.monotonic() - started:.1f}s: {root}', flush=True)
+    # Worktrees can disappear between Asimov finding a path and excluding it.
+    suffix = ': read-only, cannot be excluded — skipping.'
+    result.stderr = ''.join(line for line in result.stderr.splitlines(keepends=True)
+                            if not (line.startswith('! ') and line.rstrip().endswith(suffix)
+                                    and not os.path.lexists(line.rstrip()[2:-len(suffix)])))
     # Asimov can report failed exclusions on stderr while returning zero.
     if result.stderr:
         print(result.stderr, file=sys.stderr, end='')
@@ -62,8 +69,12 @@ def main():
                         db.execute('DELETE FROM jobs WHERE root = ? AND token = ?', (root, token))
                 else:
                     success = False
-            if time.time() - db.execute('SELECT completed FROM sweeps WHERE id = 1').fetchone()[0] >= 900:
-                if scan(None):
+            now = time.localtime(time.time())
+            completed = time.localtime(db.execute('SELECT completed FROM sweeps WHERE id = 1').fetchone()[0])
+            if now.tm_hour == 3 and now[:3] != completed[:3]:
+                roots = ('Work', '.t3/worktrees', '.t3/scratch', '.codex/worktrees', '.codex-workspaces/worktrees')
+                results = [scan(str(Path.home() / root)) for root in roots if (Path.home() / root).is_dir()]
+                if all(results):
                     with db:
                         db.execute('UPDATE sweeps SET completed = ? WHERE id = 1', (time.time(),))
                 else:
