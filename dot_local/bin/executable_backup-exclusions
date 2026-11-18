@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
-"""Queue a checkout path, or run queued Asimov scans under the user LaunchAgent."""
+"""Queue dependency exclusions; retain Asimov for checkout and nightly catch-up scans."""
+import ctypes
+import ctypes.util
 import fcntl
+from functools import lru_cache
 import os
 from pathlib import Path
 import sqlite3
@@ -8,6 +11,51 @@ import subprocess
 import sys
 import time
 import uuid
+
+
+def dependency(path):
+    return path.name in ('.venv', 'node_modules') or path.parts[-2:] == ('.moon', 'cache')
+
+
+@lru_cache(maxsize=1)
+def marker():
+    cf = ctypes.CDLL(ctypes.util.find_library('CoreFoundation'))
+    cs = ctypes.CDLL(ctypes.util.find_library('CoreServices'))
+    cf.CFURLCreateFromFileSystemRepresentation.restype = ctypes.c_void_p
+    cf.CFURLCreateFromFileSystemRepresentation.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_long, ctypes.c_bool]
+    cf.CFRelease.argtypes = [ctypes.c_void_p]
+    cs.CSBackupIsItemExcluded.restype = ctypes.c_bool
+    cs.CSBackupIsItemExcluded.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_bool)]
+    cs.CSBackupSetItemExcluded.restype = ctypes.c_int32
+    cs.CSBackupSetItemExcluded.argtypes = [ctypes.c_void_p, ctypes.c_bool, ctypes.c_bool]
+    return cf, cs
+
+
+def exclude(path):
+    started = time.monotonic()
+    try:
+        if path.is_symlink() or not dependency(path.resolve(strict=True)):
+            raise ValueError(f'Unsafe dependency path: {path}')
+        cf, cs = marker()
+        raw = os.fsencode(path)
+        url = cf.CFURLCreateFromFileSystemRepresentation(None, raw, len(raw), True)
+        if not url:
+            raise ValueError(f'Cannot create file URL: {path}')
+        try:
+            already = cs.CSBackupIsItemExcluded(url, None)
+            if not already:
+                status = cs.CSBackupSetItemExcluded(url, True, False)
+                if status:
+                    raise OSError(status, f'Cannot exclude {path}')
+        finally:
+            cf.CFRelease(url)
+        print(f'Direct exclusion in {time.monotonic() - started:.3f}s (new={not already}): {path}', flush=True)
+        return True
+    except FileNotFoundError:
+        return True
+    except (OSError, ValueError) as error:
+        print(error, file=sys.stderr)
+        return False
 
 
 def scan(root):
@@ -45,15 +93,20 @@ def main():
             CREATE TABLE IF NOT EXISTS sweeps (id INTEGER PRIMARY KEY, completed REAL);
             INSERT OR IGNORE INTO sweeps VALUES (1, 0);
         ''')
-        if len(sys.argv) != 2:
-            raise SystemExit('Usage: backup-exclusions <checkout> | --run')
+        if len(sys.argv) < 2:
+            raise SystemExit('Usage: backup-exclusions <dependency-directory>... | <checkout> | --run')
         if sys.argv[1] != '--run':
-            root = Path(sys.argv[1]).resolve(strict=True)
-            if not (root / '.git').exists():
-                raise SystemExit(f'Not a checkout: {root}')
+            roots = []
+            for argument in sys.argv[1:]:
+                path = Path(argument)
+                root = path.resolve(strict=True)
+                if path.is_symlink() or not root.is_dir() or not (dependency(root) or (root / '.git').exists()):
+                    raise SystemExit(f'Not a dependency directory or checkout: {path}')
+                roots.append(root)
             with db:
-                db.execute('INSERT OR REPLACE INTO jobs VALUES (?, ?)', (str(root), uuid.uuid4().hex))
-            subprocess.run(['launchctl', 'kickstart', f'gui/{os.getuid()}/co.kirkconsulting.backup-exclusions'],
+                db.executemany('INSERT OR REPLACE INTO jobs VALUES (?, ?)',
+                               [(str(root), uuid.uuid4().hex) for root in roots])
+            subprocess.run(['launchctl', 'start', 'co.kirkconsulting.backup-exclusions'],
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=2, check=False)
             return 0
         with (state / 'worker.lock').open('a') as lock:
@@ -63,7 +116,9 @@ def main():
                 return 0
             success = True
             for root, token in db.execute('SELECT root, token FROM jobs').fetchall():
-                if not (Path(root) / '.git').exists() or scan(root):
+                path = Path(root)
+                done = exclude(path) if dependency(path) else not (path / '.git').exists() or scan(root)
+                if done:
                     with db:
                         # A request made during this scan belongs to the next run.
                         db.execute('DELETE FROM jobs WHERE root = ? AND token = ?', (root, token))

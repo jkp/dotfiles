@@ -69,6 +69,22 @@ with tempfile.TemporaryDirectory() as tmp:
             assert len(calls) == expected
             if calls:
                 assert str(work) in calls[0]
+    dependency = checkout / 'node_modules'
+    dependency.mkdir()
+    venv = checkout / '.venv'
+    venv.mkdir()
+    assert run(dependency, venv).returncode == 0
+    before = (root / 'calls').read_text()
+    with patch.dict(os.environ, env), patch.object(sys, 'argv', ['worker', '--run']), \
+         patch.dict(worker['main'].__globals__, exclude=lambda path: True):
+        assert worker['main']() == 0
+    assert db.execute('select count(*) from jobs').fetchone()[0] == 0
+    assert (root / 'calls').read_text() == before
+    assert run(checkout).returncode != 0
+    link = checkout / 'other' / '.venv'
+    link.parent.mkdir()
+    link.symlink_to(dependency, target_is_directory=True)
+    assert run(link).returncode != 0
     warning = f'! {root / "vanished"}: read-only, cannot be excluded — skipping.\n'
     with patch.object(subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, stderr=warning)):
         assert worker['scan'](str(work))
