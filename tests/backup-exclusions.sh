@@ -84,6 +84,17 @@ with tempfile.TemporaryDirectory() as tmp:
         assert worker['main']() == 0
     assert db.execute('select count(*) from jobs').fetchone()[0] == 0
     assert (root / 'calls').read_text() == before
+    (checkout / '.git').touch()
+    cache = checkout / '.moon/cache'
+    cache.mkdir(parents=True)
+    assert run(checkout, dependency, venv).returncode == 0
+    excluded = []
+    with patch.dict(os.environ, env), patch.object(sys, 'argv', ['worker', '--run']), \
+         patch.dict(worker['main'].__globals__, exclude=lambda path: excluded.append(path) or True):
+        assert worker['main']() == 0
+    assert set(excluded) == {dependency, venv, cache}
+    assert (root / 'calls').read_text() == before
+    (checkout / '.git').unlink()
     assert run(checkout).returncode != 0
     link = checkout / 'other' / '.venv'
     link.parent.mkdir()
