@@ -12,6 +12,8 @@
 {{-   $_ := set $mps .marketplace (dict "source" (dict "source" "github" "repo" .repo)) -}}
 {{-   $_ := set $out "extraKnownMarketplaces" $mps -}}
 {{- end -}}
+{{- /* Keep transcripts ~forever; the 30-day default silently deleted past sessions. */ -}}
+{{- $_ := set $out "cleanupPeriodDays" 36500 -}}
 {{- if and (trim $in) (eq (toJson $s) (toJson $out)) -}}
 {{- $in -}}
 {{- else -}}
