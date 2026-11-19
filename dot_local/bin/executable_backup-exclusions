@@ -117,7 +117,7 @@ def main():
             INSERT OR IGNORE INTO sweeps VALUES (1, 0);
         ''')
         if len(sys.argv) < 2:
-            raise SystemExit('Usage: backup-exclusions <dependency-directory>... | <checkout> | --run')
+            raise SystemExit('Usage: backup-exclusions <checkout> [dependency-directory...] | <dependency-directory>... | --run')
         if sys.argv[1] != '--run':
             roots = []
             for argument in sys.argv[1:]:
@@ -126,6 +126,11 @@ def main():
                 if path.is_symlink() or not root.is_dir() or not (dependency(root) or (root / '.git').exists()):
                     raise SystemExit(f'Not a dependency directory or checkout: {path}')
                 roots.append(root)
+            if len(roots) > 1 and (roots[0] / '.git').exists():
+                # Root-only calls still request a scan; hints avoid rescanning the checkout.
+                cache = roots.pop(0) / '.moon/cache'
+                if cache.is_dir() and not cache.is_symlink() and dependency(cache.resolve()):
+                    roots.append(cache)
             with db:
                 db.executemany('INSERT OR REPLACE INTO jobs VALUES (?, ?)',
                                [(str(root), uuid.uuid4().hex) for root in roots])
