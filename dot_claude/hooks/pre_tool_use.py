@@ -191,30 +191,7 @@ def main():
                 if re.search(pattern, command):
                     print("BLOCKED: Manipulation of git hooks is not allowed! Hooks protect code quality", file=sys.stderr)
                     sys.exit(2)  # Exit code 2 blocks tool call and shows error to Claude
-        
-        # Ensure log directory exists, relative to git root
-        git_root = find_git_root()
-        log_dir = git_root / 'logs'
-        log_dir.mkdir(parents=True, exist_ok=True)
-        log_path = log_dir / 'pre_tool_use.json'
-        
-        # Read existing log data or initialize empty list
-        if log_path.exists():
-            with open(log_path, 'r') as f:
-                try:
-                    log_data = json.load(f)
-                except (json.JSONDecodeError, ValueError):
-                    log_data = []
-        else:
-            log_data = []
-        
-        # Append new data
-        log_data.append(input_data)
-        
-        # Write back to file with formatting
-        with open(log_path, 'w') as f:
-            json.dump(log_data, f, indent=2)
-        
+
         sys.exit(0)
         
     except json.JSONDecodeError:
