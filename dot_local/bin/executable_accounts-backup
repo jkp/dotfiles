@@ -1,0 +1,78 @@
+#!/bin/bash
+# accounts-backup run|stale|verify|restic ARGS — encrypted, off-site backup of
+# ~/accounts (company and personal tax records) with restic to the R2 bucket
+# accounts-backup. Snapshots are never pruned: an R2 bucket lock keeps them for
+# 7 years, beyond HMRC's 6-year retention. Secrets are files in $STATE, written
+# by chezmoi apply from 1Password (op can't run unattended here). Any failure
+# alerts via ntfy. Managed by chezmoi; see ~/accounts/README.md for restores.
+set -Eeuo pipefail
+
+SRC="${ACCOUNTS_BACKUP_SRC:-$HOME/accounts}"
+STATE="${ACCOUNTS_BACKUP_STATE:-$HOME/.local/state/accounts-backup}"
+# The ntfy topic is secret (anyone with it can read or forge alerts), so it
+# lives in an age-encrypted chezmoi file, not in this public repo.
+NTFY="${ACCOUNTS_BACKUP_NTFY:-$(cat "$HOME/.config/accounts-backup/ntfy-url" 2>/dev/null || true)}"
+STALE_HOURS="${ACCOUNTS_BACKUP_STALE_HOURS:-72}"
+MODE="${1:-}"
+LOCK=(--retry-lock 30m)
+# Secrets and re-creatable bulk; .env is a 1Password FIFO mount.
+EXCLUDES=(.env xero-tokens.json node_modules .venv __pycache__ .DS_Store)
+
+fail() {
+    echo "accounts-backup: $*" >&2
+    [[ -n "$NTFY" ]] || { echo "accounts-backup: no alert URL configured, so no alert sent" >&2; exit 1; }
+    # The body names no figures or files, in case the topic ever leaks.
+    curl -fsS -m 30 -H "Title: accounts-backup $MODE failed on $(hostname -s)" \
+        -d "$* (log: ~/Library/Logs/accounts-backup.log)" "$NTFY" >/dev/null ||
+        echo "accounts-backup: couldn't send the alert" >&2
+    exit 1
+}
+trap 'fail "unexpected error at line $LINENO"' ERR
+
+load_env() {
+    [[ -s "$STATE/env" && -s "$STATE/password" ]] ||
+        fail "secrets missing in $STATE: run chezmoi apply in a terminal (1Password needs Touch ID)"
+    set -a
+    # Written by chezmoi apply (see the header).
+    # shellcheck source=/dev/null
+    . "$STATE/env"
+    set +a
+    export RESTIC_PASSWORD_FILE="$STATE/password"
+}
+
+# Init only when the repository is genuinely absent, never on other errors.
+ensure_repo() {
+    local err
+    # set -E would carry the ERR trap into $(…) and alert on the expected miss.
+    err="$(trap - ERR; restic cat config 2>&1 >/dev/null)" && return 0
+    [[ "$err" == *"The specified key does not exist"* ]] || fail "can't open the repository: $err"
+    restic init || fail "restic init failed"
+}
+
+run() {
+    local e excl=()
+    # restic skips a missing top-level path and exits 0: check it ourselves.
+    [[ -d "$SRC" ]] || fail "backup path is missing: $SRC"
+    ensure_repo
+    for e in "${EXCLUDES[@]}"; do excl+=(--exclude "$e"); done
+    restic backup "${LOCK[@]}" --tag daily "${excl[@]}" "$SRC" || fail "restic backup failed"
+    touch "$STATE/last-success"
+}
+
+# Separate agent from run, so a run that silently stops firing is still caught.
+stale() {
+    [[ -e "$STATE/last-success" ]] || fail "no successful backup recorded yet"
+    [[ -z "$(find "$STATE/last-success" -mmin +$((STALE_HOURS * 60)))" ]] ||
+        fail "the last successful backup is over ${STALE_HOURS}h old"
+}
+
+verify() {
+    restic check "${LOCK[@]}" --read-data || fail "restic check failed"
+}
+
+case "$MODE" in
+    run|verify) load_env; "$MODE" ;;
+    stale) stale ;;
+    restic) shift; trap - ERR; load_env; exec restic "$@" ;;
+    *) trap - ERR; echo "usage: accounts-backup run|stale|verify|restic ARGS" >&2; exit 2 ;;
+esac

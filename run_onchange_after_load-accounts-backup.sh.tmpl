@@ -1,0 +1,12 @@
+{{- if eq .chezmoi.os "darwin" -}}
+#!/bin/bash
+# (Re)load the accounts-backup LaunchAgents whenever one of them changes.
+# run: {{ include "private_Library/private_LaunchAgents/co.kirkconsulting.accounts-backup-run.plist.tmpl" | sha256sum }}
+# stale: {{ include "private_Library/private_LaunchAgents/co.kirkconsulting.accounts-backup-stale.plist.tmpl" | sha256sum }}
+# verify: {{ include "private_Library/private_LaunchAgents/co.kirkconsulting.accounts-backup-verify.plist.tmpl" | sha256sum }}
+for job in run stale verify; do
+    label="co.kirkconsulting.accounts-backup-$job"
+    launchctl bootout "gui/$(id -u)/$label" 2>/dev/null || true
+    launchctl bootstrap "gui/$(id -u)" "$HOME/Library/LaunchAgents/$label.plist"
+done
+{{ end -}}
