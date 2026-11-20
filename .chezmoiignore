@@ -77,6 +77,15 @@ Library/LaunchAgents/co.kirkconsulting.colima.plist
 load-colima.sh
 {{ end }}
 
+# accounts-backup only where ~/accounts exists (J-Dog's company records)
+{{ if not (stat (joinPath (toString .chezmoi.destDir) "accounts")) }}
+.local/bin/accounts-backup
+.config/accounts-backup
+Library/LaunchAgents/co.kirkconsulting.accounts-backup-*.plist
+accounts-backup-secrets.sh
+load-accounts-backup.sh
+{{ end }}
+
 # Repo tests, not dotfiles
 tests
 

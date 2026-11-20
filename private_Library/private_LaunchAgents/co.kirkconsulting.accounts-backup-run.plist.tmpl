@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- accounts-backup run: daily snapshot of ~/accounts to R2.
+     launchd runs a missed slot when the Mac wakes. Managed by chezmoi. -->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>co.kirkconsulting.accounts-backup-run</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>{{ .chezmoi.destDir }}/.local/bin/accounts-backup</string>
+    <string>run</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>HOME</key><string>{{ .chezmoi.destDir }}</string>
+    <key>PATH</key><string>{{ .chezmoi.destDir }}/.local/share/mise/shims:{{ .chezmoi.destDir }}/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
+  <key>StartCalendarInterval</key>
+  <dict><key>Hour</key><integer>12</integer><key>Minute</key><integer>30</integer></dict>
+  <key>RunAtLoad</key><false/>
+  <key>LowPriorityIO</key><true/>
+  <key>StandardOutPath</key><string>{{ .chezmoi.destDir }}/Library/Logs/accounts-backup.log</string>
+  <key>StandardErrorPath</key><string>{{ .chezmoi.destDir }}/Library/Logs/accounts-backup.log</string>
+</dict>
+</plist>
