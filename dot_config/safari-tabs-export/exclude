@@ -1,0 +1,17 @@
+# Hosts whose tabs and history never leave the Mac (safari-tabs-export).
+# One per line; each also covers its subdomains. URLs carrying a secret
+# (token=, code=, #access_token=, ...) are dropped regardless.
+proton.me
+1password.com
+accounts.google.com
+mail.google.com
+starlingbank.com
+americanexpress.com
+paypal.com
+# payment and open-banking flows
+truelayer.com
+protectedpayments.net
+checkout.stripe.com
+ts.net
+localhost
+127.0.0.1
