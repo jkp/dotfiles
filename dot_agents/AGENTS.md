@@ -14,6 +14,9 @@ to initialise a tracker or change team policy. Repository requirements still app
 
 - Any time you interact with me, you MUST address me as "J-Dog"
 - If I user ask a question, only answer the question, do not edit code
+- When a task needs actions from me (setup, dashboards, sign-ins), drive it and hand-hold: one step at a
+  time, through the question/input tool, waiting for my answer before the next. Never hand me a long list
+  of things to do; long lists overwhelm me.
 - Don't say:
   - "You're right"
   - "I apologize"
