@@ -66,7 +66,10 @@ quiet; pass "an existing repository is backed up without re-init"
 
 setup broken; FAKE_CONFIG=broken backup run && fail "a repository error should fail the run"
 grep -q '^restic init' "$T/log" && fail "init attempted on an error that isn't 'missing'"
-alerted "Access Denied"; pass "a repository error alerts and never triggers init"
+alerted "can't open the repository"
+grep -q "Access Denied" "$T/err" || fail "restic's error not logged"
+grep -q "Access Denied" "$T/alerts" && fail "restic's raw error (account, bucket) sent in the alert"
+pass "a repository error alerts without details, logs them, and never triggers init"
 
 setup failing; FAKE_FAIL=backup backup run && fail "a failed backup should fail the run"
 [[ -e "$T/state/last-success" ]] && fail "failed backup recorded as success"
@@ -101,6 +104,9 @@ setup passthrough; backup restic env || fail "passthrough failed"
 grep -q "pw=$T/state/password key=kid repo=s3:" "$T/out" || fail "passthrough env wrong: $(cat "$T/out")"
 pass "'accounts-backup restic …' runs restic with the backup's credentials"
 
+setup passquiet; rm "$T/state/password"; backup restic snapshots && fail "should fail without secrets"
+quiet; pass "interactive passthrough failures don't alert"
+
 # --- chezmoi: managed only where ~/accounts exists; secrets fetched from 1Password.
 [[ "$(uname)" == Darwin ]] || { echo "SKIP: LaunchAgents are macOS-only"; exit 0; }
 CHEZMOI="$(command -v chezmoi)"
@@ -125,7 +131,7 @@ cat > "$WORK/bin/op" <<'EOF'
 echo "op $*" >> "$FAKE_LOG"
 [[ "${FAKE_OP:-}" == fail ]] && { echo "not signed in" >&2; exit 1; }
 case "${@: -1}" in
-  op://Private/accounts-backup/password) printf '%s' 'p@ss $word"x' ;;
+  op://Private/accounts-backup/password) printf '%s' 'p@ss $word"x'; [[ "$*" == *--no-newline* ]] || echo ;;
   op://Private/accounts-backup/r2_access_key_id) echo kid ;;
   op://Private/accounts-backup/r2_secret_access_key) echo sk ;;
   op://Private/accounts-backup/r2_endpoint) echo https://acct.r2.cloudflarestorage.com ;;
@@ -138,6 +144,10 @@ cz "$WORK/with" execute-template < "$HERE/run_after_accounts-backup-secrets.sh.t
 secrets() { HOME="$WORK/with" PATH="$WORK/bin:/usr/bin:/bin" FAKE_LOG="$WORK/oplog" bash "$SECRETS" > "$WORK/sout" 2> "$WORK/serr"; }
 S="$WORK/with/.local/state/accounts-backup"
 
+: > "$WORK/oplog"; CHEZMOI_ARGS="chezmoi apply --exclude=encrypted" secrets || fail "agent apply failed"
+[[ -s "$WORK/oplog" ]] && fail "op called during an agent apply (--exclude=encrypted): it would hang"
+pass "an agent's apply (--exclude=encrypted) never calls op"
+
 : > "$WORK/oplog"; FAKE_OP=fail secrets || fail "an op failure must not fail chezmoi apply"
 grep -q "couldn't read" "$WORK/serr" || fail "op failure not explained: $(cat "$WORK/serr")"
 [[ -e "$S/env" || -e "$S/password" ]] && fail "partial secrets left behind"
@@ -145,7 +155,7 @@ pass "if 1Password can't be read, apply warns and leaves nothing half-written"
 
 secrets || fail "secrets fetch failed: $(cat "$WORK/serr")"
 # shellcheck disable=SC2016  # a literal $ on purpose: the password must survive unexpanded
-[[ "$(cat "$S/password")" == 'p@ss $word"x' ]] || fail "password not byte-exact"
+cmp -s <(printf '%s' 'p@ss $word"x') "$S/password" || fail "password not byte-exact"
 grep -qx 'RESTIC_REPOSITORY=s3:https://acct.r2.cloudflarestorage.com/accounts-backup' "$S/env" || fail "repository wrong: $(cat "$S/env")"
 grep -qx 'AWS_ACCESS_KEY_ID=kid' "$S/env" || fail "R2 key ID missing"
 grep -qx 'AWS_SECRET_ACCESS_KEY=sk' "$S/env" || fail "R2 secret missing"

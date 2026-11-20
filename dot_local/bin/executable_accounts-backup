@@ -42,10 +42,15 @@ load_env() {
 
 # Init only when the repository is genuinely absent, never on other errors.
 ensure_repo() {
-    local err
+    local err rc=0
     # set -E would carry the ERR trap into $(…) and alert on the expected miss.
-    err="$(trap - ERR; restic cat config 2>&1 >/dev/null)" && return 0
-    [[ "$err" == *"The specified key does not exist"* ]] || fail "can't open the repository: $err"
+    err="$(trap - ERR; restic cat config 2>&1 >/dev/null)" || rc=$?
+    ((rc == 0)) && return 0
+    # restic exits 10 for "no repository"; R2's wording is the fallback.
+    if ((rc != 10)) && [[ "$err" != *"The specified key does not exist"* ]]; then
+        echo "$err" >&2   # log only: restic's errors name the account and bucket
+        fail "can't open the repository"
+    fi
     restic init || fail "restic init failed"
 }
 
@@ -73,6 +78,6 @@ verify() {
 case "$MODE" in
     run|verify) load_env; "$MODE" ;;
     stale) stale ;;
-    restic) shift; trap - ERR; load_env; exec restic "$@" ;;
+    restic) shift; trap - ERR; NTFY=""; load_env; exec restic "$@" ;;
     *) trap - ERR; echo "usage: accounts-backup run|stale|verify|restic ARGS" >&2; exit 2 ;;
 esac
