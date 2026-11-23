@@ -66,3 +66,20 @@ setup gh-in op-in; bootstrap GITHUB_TOKEN=env-secret
 mise_token env-secret
 grep -q '^gh auth token' "$WORK/log" && fail "asked gh though GITHUB_TOKEN is set"
 echo "PASS: an existing GITHUB_TOKEN goes to mise as is"
+
+# After bootstrap, everyday mise gets gh's token too: gh keeps it in the macOS
+# keychain, where mise's own gh_cli_tokens lookup can't see it.
+everyday() { # everyday <gh stub body>: real mise, synced config, no token in env
+    rm -rf "$WORK/bin" "$WORK/home"; mkdir -p "$WORK/bin" "$WORK/home"
+    [[ -n "$1" ]] && stub gh "$1"
+    cd "$WORK/home" && env -i HOME="$WORK/home" PATH="$WORK/bin:/usr/bin:/bin" XDG_CONFIG_HOME="$WORK/home/.config" \
+        MISE_CONFIG_DIR="$WORK/home/.config/mise" MISE_DATA_DIR="$WORK/home/data" \
+        MISE_STATE_DIR="$WORK/home/state" MISE_CACHE_DIR="$WORK/home/cache" \
+        MISE_GLOBAL_CONFIG_FILE="$HERE/dot_config/mise/config.toml" MISE_TRUSTED_CONFIG_PATHS="$HERE" \
+        "$(command -v mise)" token github 2>&1
+}
+out="$(everyday '[[ "$*" == "auth token" ]] && echo gho_everydaysecret1234')"
+grep -q 'gho_' <<<"$out" || fail "everyday mise has no GitHub token from gh: $out"
+out="$(everyday '')"
+grep -q '(none)' <<<"$out" || fail "mise without gh should carry on tokenless: $out"
+echo "PASS: everyday mise uses gh's token, and carries on without gh"

@@ -27,3 +27,6 @@ run = "repomix --style plain --output-show-line-numbers -o code.llm.txt"
 [settings]
 experimental = true
 idiomatic_version_file_enable_tools = []
+# gh keeps its token in the macOS keychain, which mise's gh_cli_tokens can't
+# read; without it GitHub-hosted tools hit the 60/hour anonymous rate limit.
+github.credential_command = "gh auth token"
