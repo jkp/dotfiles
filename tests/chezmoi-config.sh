@@ -28,6 +28,17 @@ linux="$(render linux)"
 grep -qE 'encryption|age' <<<"$linux" && fail "linux config mentions encryption: $linux"
 echo "PASS: linux config has no encryption"
 
+# With that config, plain status and diff skip encrypted files instead of failing.
+{ render linux; printf '[warnings]\n    configFileTemplateHasChanged = false\n'; } > "$WORK/linux.toml"
+mkdir -p "$WORK/home"
+for cmd in status diff; do
+    out="$(chezmoi --source "$HERE" --config "$WORK/linux.toml" --destination "$WORK/home" \
+        --persistent-state "$WORK/state.boltdb" --override-data '{"chezmoi":{"os":"linux"}}' \
+        "$cmd" </dev/null 2>&1)" || fail "linux chezmoi $cmd fails: $out"
+    grep -q 'no encryption' <<<"$out" && fail "linux chezmoi $cmd touched encrypted files: $out"
+done
+echo "PASS: linux status and diff skip encrypted files"
+
 # kanata.mode: explicit KANATA_MODE wins, then stored data, then "always" for a
 # machine that already has the always-on daemon (tkol), else prompt (TTY, default always) or,
 # with no terminal to choose in, the safe "active-user".

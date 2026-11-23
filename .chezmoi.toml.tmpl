@@ -31,4 +31,11 @@ encryption = "age"
 
 [data.kanata]
     mode = {{ $kanataMode | quote }}
+{{ else -}}
+{{- /* No age key here, so plain status and diff skip what they can't decrypt.
+       apply has no config exclude: it still needs --exclude=encrypted. */ -}}
+[status]
+    exclude = ["encrypted"]
+[diff]
+    exclude = ["encrypted"]
 {{ end -}}
