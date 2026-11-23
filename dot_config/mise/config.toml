@@ -19,6 +19,7 @@ jq = "1.8.1"
 rg = "15.1.0"
 uv = "latest"
 zoxide = "0.10.0"
+agy = "latest"
 
 [tasks.llm-context]
 run = "repomix --style plain --output-show-line-numbers -o code.llm.txt"
