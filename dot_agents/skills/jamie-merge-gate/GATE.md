@@ -25,10 +25,19 @@ For the target PR, collect:
   Detection / recovery, Verification budget, Scope-growth trigger).
 - The PR brief / linked task scope, so scope growth can be judged.
 - Any linked PR stack position; judge one layer at a time.
+- Which base the checks ran on, and whether the test suites ran or
+  were restored from a cache. Green checks on an old base, or on
+  results the author's machine produced, are weaker evidence: say so.
+- What merged to the base since the branch was cut. A clean textual
+  merge can still break on a renamed prop or a changed default.
 
 If any input is stale (report head != PR head, checks pending on the
 reviewed head, findings unresolved), the verdict is ESCALATE with the
 missing input named. Never guess.
+
+In a local-evidence repository (see SKILL.md), `mise run gate-evidence --
+<pr>` supplies the head, review verdict, check status and tier in one
+call; read findings from the review ledger file it names.
 
 ## 2. Tier floor (from the Risk profile)
 
@@ -55,13 +64,38 @@ Also check the Risk profile against reality:
 A stale or understated Risk profile is itself a REWORK (regenerate
 the assessment) or ESCALATE if the tier would rise to high.
 
+Check the PR text the same way. Each claim is true of the diff:
+every test it names exists and would fail on the fault it names,
+every promised artefact exists, every caller it lists is real. A
+finding the author marked "accepted" is accepted only if you agree.
+
+### How the reviewer works
+
+- Read-only. Never change the git state of a shared worktree, and
+  never `cd` outside it. Read the diff by fetching the PR's ref.
+- Report what you could not verify, in so many words.
+- On a second round, verify each earlier finding on the new head,
+  then review only what changed since. When a head that passed is
+  rebased and little changed, compare the two heads; a full round
+  is not needed.
+- Where it can be done without touching shared state, run both
+  versions against the same seeded data. An identical result is
+  stronger than an argument that they are equivalent.
+- A change that writes data, alters a shared path, or that Jamie
+  has said he will not review himself gets two reviewers at high
+  effort: one applying this gate, one told only to find an input
+  for which the change behaves differently from the base. Give
+  neither the other's conclusion.
+
 ## 4. Verdicts
 
 ### PASS
 
 All rules pass on the reviewed head, tier floor allows it, checks are
 green, no unresolved findings. Arm auto-merge for that exact head
-using the repo's normal mechanism. Then stop watching/asking: report
+using the repo's normal mechanism; in a local-evidence repository,
+merge directly with `gh pr merge <pr> --squash --match-head-commit
+<reviewed head>` (see SKILL.md). Then stop watching/asking: report
 the PR, head SHA, tier, and any sampling selection (section 6), and
 let the host merge when its requirements are met.
 
@@ -89,8 +123,14 @@ genuine trade-off. Produce one merge packet and park it:
 - The single decision Jamie needs to make, in one sentence
 - Rollback / revert path
 
-Post the packet once, then stop. Do not repeat the ask in goal
-continuations, scheduled wakes, or later turns.
+Post the packet once, through the host's question tool when it has
+one, then stop. Do not repeat the ask in goal continuations,
+scheduled wakes, or later turns.
+
+When the mandate says a deeper review stands in for Jamie's own, a
+medium tier or a change Jamie would normally want to see is not by
+itself a reason to escalate. The never-auto classes and Tier high
+still are.
 
 ## 5. Learning capture
 

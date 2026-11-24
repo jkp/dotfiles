@@ -66,6 +66,17 @@ If there is no current Risk profile for the current head, stop: verdict is
 ESCALATE with reason "no current risk assessment". Do not invent one here;
 that assessment belongs to the repo's review workflow.
 
+**Local-evidence repos.** A repository that defines a `gate-evidence` mise
+task reviews and verifies locally instead of on GitHub. There, run
+`mise run gate-evidence -- <pr>` from a checkout of that repository: it
+checks the PR's exact current head for an approving local review, a
+clean-checkout build + test pass, and the Risk profile tier from the PR
+body (the rest of the profile is in the body too). Its output replaces the
+review comment and the required checks above; any MISSING or INVALID line is
+a missing input. Such a repository may have no branch protection or
+auto-merge: on PASS, merge with `gh pr merge <pr> --squash
+--match-head-commit <reviewed head>` instead of arming auto-merge.
+
 This gate consumes that assessment. It may upgrade risk, add rules, or
 block auto-merge. It must never downgrade a tier, waive a finding, or
 override a repo requirement.
