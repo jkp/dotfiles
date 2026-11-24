@@ -156,8 +156,11 @@ Purpose: audit the gate's honesty, not re-review every PR.
   until 20 consecutive PASS audits are clean; then every 10th;
   then every 15th. Any escape resets the count to 0 (back to 1 in 5).
 - Always sample (in addition to the count) when a PASS is unusually
-  large, introduces many new files, or touches a class named in a
-  rule learned in the last 30 days.
+  large or introduces many new files.
+- Also sample a PASS that touches the class of a rule learned from an
+  escape (a spot check or post-merge miss, not a seeded rule) in the
+  last 14 days, at most one such PR per rule per week. Broader
+  clauses swamped Jamie's queue and the audits stopped.
 - Sampled PRs merge normally. The audit task surfaces afterwards:
   Jamie gets the PR, the gate's per-rule answers, and the Risk
   profile. He checks the answers; he opens the diff only where an
