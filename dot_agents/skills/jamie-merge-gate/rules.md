@@ -121,6 +121,27 @@ Regardless of tier or rule answers, these always ESCALATE:
   the largest accounts would have been slower. Wrong answer: fewer
   requests was read as faster.
 
+### R7: Review weakening is named and authorised
+
+- **Question:** Does this change let any change get less review than
+  before: fewer reviewers, findings that no longer block, paths or
+  tiers that skip review, or weaker tests guarding those decisions?
+  If so, where did Jamie authorise it?
+- **Fail signal:** A diff to review routing, convergence, decline or
+  skip logic (or the tests that pin them) whose PR text doesn't say
+  what now gets less review, or names no issue, plan or decision of
+  Jamie's authorising it.
+- **Rework pattern:** State in the PR exactly what gets less review
+  and for which changes, and link Jamie's authorising decision. For
+  test-only changes, show each removed scenario is still covered,
+  scenario by scenario.
+- **Escalate when:** No authorisation from Jamie can be found, or the
+  change goes beyond what he authorised.
+- **Learned:** 2026-11-24 (Tuesday), Jamie spot check, a large cut to
+  the tests that decide whether a PR is reviewed passed as low-risk
+  test cleanup; the gate checked runtime was unchanged but had no
+  question about review strength (no rule).
+
 ## Capture format (for new or tightened rules)
 
 When Jamie catches something, draft an entry in exactly this shape
