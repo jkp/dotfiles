@@ -147,8 +147,9 @@ Distinguish completed, superseded/not-planned, and retired local mirrors in the
 closure reason. Preserve the source's actual closure reason and evidence.
 
 When GitHub remains the useful authority and a mirror adds no private value,
-retire only the local mirror with an explicit reason that the work remains open
-on GitHub. First inspect full metadata, notes, comments, acceptance and graph
+retire only the local mirror and record the source's verified state, explicitly
+noting when the work remains open on GitHub. First inspect full metadata, notes,
+comments, acceptance and graph
 roles: retirement must not falsely satisfy a dependency or parent acceptance.
 Retain or reconcile unique local scope and evidence; do not mechanically close
 records because their titles match or the source is closed. Do not delete them.
