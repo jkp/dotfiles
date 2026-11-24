@@ -104,6 +104,23 @@ Regardless of tier or rule answers, these always ESCALATE:
 - **Learned:** Seeded alongside R2: obligatory change wearing a
   config flag is still obligatory.
 
+### R6: Performance claims name who gains and who loses
+
+- **Question:** Which callers or data sizes get faster, which get
+  slower, and what measurement says so?
+- **Fail signal:** A change justified as faster by a proxy (fewer
+  requests, fewer lines, a bigger batch) with no measurement, or a
+  risk profile that names no population that gets slower.
+- **Rework pattern:** Measure before and after for a small, a typical
+  and a large case; state each in the PR; drop the change if no
+  population gains.
+- **Escalate when:** One population gains and another loses, and
+  choosing between them is a product call.
+- **Learned:** 2026-11-17 (Tuesday), post-merge, the gate itself
+  suggested a larger page size as faster; time grew with rows, so
+  the largest accounts would have been slower. Wrong answer: fewer
+  requests was read as faster.
+
 ## Capture format (for new or tightened rules)
 
 When Jamie catches something, draft an entry in exactly this shape
