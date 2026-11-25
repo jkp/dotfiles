@@ -22,14 +22,15 @@ with tempfile.TemporaryDirectory() as tmp:
     bin_dir = root / 'bin'
     bin_dir.mkdir()
     for name, body in {
-        'launchctl': 'exit 0',
+        'pitchfork': 'printf "%s %s %s %s\\n" "$PWD" "${PITCHFORK_CONFIG_DIR:-}" "${PITCHFORK_STATE_DIR:-unset}" "$*" >> "$XDG_STATE_HOME/kicks"',
         'gtimeout': 'shift 4; exec \"$@\"',
         'asimov': 'printf "%s\\n" "$*" >> "$XDG_STATE_HOME/calls"\n[ ! -f "$XDG_STATE_HOME/fail" ]',
     }.items():
         tool = bin_dir / name
         tool.write_text('#!/bin/sh\n' + body + '\n')
         tool.chmod(0o755)
-    env = dict(os.environ, XDG_STATE_HOME=tmp, PATH=f'{bin_dir}:/usr/bin:/bin')
+    # A verity dev shell exports its worktree supervisor's state dir.
+    env = dict(os.environ, XDG_STATE_HOME=tmp, PATH=f'{bin_dir}:/usr/bin:/bin', PITCHFORK_STATE_DIR=tmp + '/verity-sup')
     def run(*args):
         return subprocess.run([sys.executable, sys.argv[1], *map(str, args)], env=env,
                               capture_output=True, text=True, timeout=30)
@@ -39,6 +40,12 @@ with tempfile.TemporaryDirectory() as tmp:
     assert result.returncode == 0, result.stderr
     db = sqlite3.connect(root / 'backup-exclusions/queue.sqlite3')
     assert db.execute('select count(*) from jobs').fetchone()[0] == 1
+    # Each enqueue wakes the worker through the job supervisor, never verity's.
+    deadline = time.monotonic() + 10
+    while time.monotonic() < deadline and len((root / 'kicks').read_text().splitlines() if (root / 'kicks').exists() else []) < 2:
+        time.sleep(0.1)
+    kick = f'/ {pathlib.Path.home()}/.config/pitchfork-jobs unset start backup-exclusions'
+    assert (root / 'kicks').read_text().splitlines() == [kick, kick], (root / 'kicks').read_text()
     with (root / 'backup-exclusions/worker.lock').open('a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         assert run('--run').returncode == 0

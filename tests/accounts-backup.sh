@@ -114,15 +114,17 @@ cz() { "$CHEZMOI" --source "$HERE" --destination "$1" --config "$WORK/none.toml"
 
 mkdir -p "$WORK/with/accounts" "$WORK/without"
 with="$(cz "$WORK/with" managed --include=files,scripts --exclude=encrypted)"
-for f in .local/bin/accounts-backup Library/LaunchAgents/co.kirkconsulting.accounts-backup-{run,stale,verify}.plist; do
-  grep -qx "$f" <<<"$with" || fail "with an accounts folder, $f isn't managed"
-done
+grep -qx .local/bin/accounts-backup <<<"$with" || fail "with an accounts folder, the script isn't managed"
 grep -q accounts-backup-secrets <<<"$with" || fail "no secrets script"
-grep -q load-accounts-backup <<<"$with" || fail "no loader script"
-cz "$WORK/with" cat "$WORK/with/Library/LaunchAgents/co.kirkconsulting.accounts-backup-run.plist" |
-  grep -q "<string>$WORK/with/.local/bin/accounts-backup</string>" || fail "run agent doesn't run the script"
+jobs="$(cz "$WORK/with" cat "$WORK/with/.config/pitchfork-jobs/config.toml")"
+for job in run stale verify; do
+  grep -qx "run = \"$WORK/with/.local/bin/accounts-backup $job >> $WORK/with/Library/Logs/accounts-backup.log 2>&1\"" <<<"$jobs" ||
+    fail "no $job job running the script into the alerted log: $jobs"
+done
 without="$(cz "$WORK/without" managed --include=files,scripts --exclude=encrypted)"
 grep -q accounts-backup <<<"$without" && fail "no ~/accounts, but backup files are managed: $without"
+cz "$WORK/without" cat "$WORK/without/.config/pitchfork-jobs/config.toml" | grep -q accounts-backup &&
+  fail "no ~/accounts, but backup jobs are scheduled"
 pass "managed only where ~/accounts exists"
 
 # op stub: answers op://Private/accounts-backup/<field>; FAKE_OP=fail makes it fail.

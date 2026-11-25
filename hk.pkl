@@ -20,7 +20,7 @@ hooks {
             }
             // tests/: macOS-only (Swift, Safari) or stubbed; CI only runs the Docker test.
             ["test-macos"] {
-                glob = List("tests/**", "dot_local/share/safari-tabs-export/**", "bootstrap.sh", ".chezmoi.toml.tmpl", "run_before_*")
+                glob = List("tests/**", "bootstrap.sh", ".chezmoi.toml.tmpl", "run_before_*")
                 check = "mise run test-macos"
                 exclusive = true
             }

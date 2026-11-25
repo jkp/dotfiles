@@ -39,10 +39,20 @@ pf() { (cd "$(plist WorkingDirectory)" && env -i HOME="$HOME" PATH="$(plist Envi
 printf '[tools]\npitchfork = "%s"\n' "$(sed -n 's/^pitchfork = "\(.*\)".*/\1/p' "$HERE/dot_config/mise/config.toml")" > "$WORK/mise.toml"
 grep -q '"[0-9]' "$WORK/mise.toml" || fail "pitchfork is not pinned in the global mise config"
 daemons="$(pf env PITCHFORK_CONFIG_DIR="$WORK/shipped" PITCHFORK_STATE_DIR="$WORK/s0" "${program[0]}" x -- pitchfork daemons --json)" || fail "jobs config does not parse"
+# Each job's schedule, as "<job> <cron>", from the rendered config.
+schedules() { awk -F' = ' '/^\[daemons\./{job=substr($1,10,length($1)-10)} /^cron = /{gsub(/"/,"",$2); print job" "$2}' "$WORK/shipped.toml"; }
+want=""
 if [ "$(chezmoi execute-template '{{ .chezmoi.hostname }}')" = tkol ]; then
-  python3 -c 'import json,sys; d={x["id"].split("/")[-1]:x for x in json.loads(sys.argv[1])}; assert "worktree-reap" in d, d' "$daemons" || fail "worktree-reap missing: $daemons"
-  grep -q 'cron = "0 0 4 \* \* \*"' "$WORK/shipped.toml" || fail "worktree-reap is not daily at 04:00"
+  want+="worktree-reap 0 0 4 * * *"$'\n'"backup-exclusions 0 */15 * * * *"$'\n'
 fi
+if [ -d "$HOME/accounts" ]; then
+  want+="accounts-backup-run 0 30 12 * * *"$'\n'"accounts-backup-stale 0 0 18 * * *"$'\n'"accounts-backup-verify 0 0 13 1 * *"$'\n'
+fi
+want+="network-config-drift 0 30 9 * * *"
+[ "$(schedules | sort)" = "$(printf '%s\n' "$want" | sort)" ] || fail "schedules differ: got $(schedules | sort) want $(printf '%s\n' "$want" | sort)"
+for job in $(schedules | cut -d' ' -f1); do
+  grep -q "\"global/$job\"" <<<"$daemons" || fail "$job is not a daemon pitchfork sees: $daemons"
+done
 
 # The agent's exact command, in launchd's environment, fires a job from the
 # jobs config — and nothing else.

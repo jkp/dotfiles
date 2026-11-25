@@ -7,4 +7,34 @@
 [daemons.worktree-reap]
 run = "{{ .chezmoi.homeDir }}/.local/bin/worktree-reap"
 cron = "0 0 4 * * *"
+
+# Drains the queue verity's dependency hook fills (which also starts it at
+# once), and runs the nightly Asimov sweep in its 03:00 slot.
+[daemons.backup-exclusions]
+run = "/usr/bin/python3 {{ .chezmoi.homeDir }}/.local/bin/backup-exclusions --run"
+cron = "0 */15 * * * *"
+env = { PATH = "{{ .chezmoi.homeDir }}/.local/share/asimov/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin" }
 {{- end }}
+{{- if stat (joinPath (toString .chezmoi.destDir) "accounts") }}
+
+# ~/accounts backups; secrets come from run_after_accounts-backup-secrets.
+# stale and verify are separate so a run that silently stops is still caught.
+# Output goes to the log their ntfy alerts point at.
+[daemons.accounts-backup-run]
+run = "{{ .chezmoi.destDir }}/.local/bin/accounts-backup run >> {{ .chezmoi.destDir }}/Library/Logs/accounts-backup.log 2>&1"
+cron = "0 30 12 * * *"
+
+[daemons.accounts-backup-stale]
+run = "{{ .chezmoi.destDir }}/.local/bin/accounts-backup stale >> {{ .chezmoi.destDir }}/Library/Logs/accounts-backup.log 2>&1"
+cron = "0 0 18 * * *"
+
+[daemons.accounts-backup-verify]
+run = "{{ .chezmoi.destDir }}/.local/bin/accounts-backup verify >> {{ .chezmoi.destDir }}/Library/Logs/accounts-backup.log 2>&1"
+cron = "0 0 13 1 * *"
+{{- end }}
+
+# Check-mode run of both network-config playbooks; ntfy on drift.
+[daemons.network-config-drift]
+run = "{{ .chezmoi.homeDir }}/.local/bin/mise run drift"
+dir = "{{ .chezmoi.homeDir }}/Development/network-config"
+cron = "0 30 9 * * *"

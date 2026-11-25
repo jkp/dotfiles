@@ -68,7 +68,6 @@ run_before_00-fetch-age-key.sh
 # macOS-only: LaunchAgents, and what they run
 {{ if ne .chezmoi.os "darwin" }}
 Library
-.local/share/safari-tabs-export
 .config/pitchfork-jobs
 load-pitchfork.sh
 {{ end }}
@@ -83,9 +82,7 @@ load-colima.sh
 {{ if not (stat (joinPath (toString .chezmoi.destDir) "accounts")) }}
 .local/bin/accounts-backup
 .config/accounts-backup
-Library/LaunchAgents/co.kirkconsulting.accounts-backup-*.plist
 accounts-backup-secrets.sh
-load-accounts-backup.sh
 {{ end }}
 
 # Repo tests, not dotfiles
@@ -96,7 +93,6 @@ tests
 .local/bin/backup-exclusions
 .config/asimov
 .config/mise/conf.d/backup-exclusions.toml
-Library/LaunchAgents/co.kirkconsulting.backup-exclusions.plist
 {{ end }}
 
 # Worktree reaper serves the verity checkout on TKOL.
