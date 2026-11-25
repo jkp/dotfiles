@@ -129,11 +129,16 @@ cz "$WORK/without" cat "$WORK/without/.config/pitchfork-jobs/config.toml" | grep
   fail "no ~/accounts, but backup jobs are scheduled"
 pass "managed only where ~/accounts exists"
 
-# op stub: answers op://Private/accounts-backup/<field>; FAKE_OP=fail makes it fail.
+# The personal 1Password account from .chezmoidata.yaml; op otherwise uses whichever account it last used.
+OP_PERSONAL="$(sed -n 's/^onePasswordAccount: *"\([a-z0-9.-]*\)".*/\1/p' "$HERE/.chezmoidata.yaml")"
+[[ -n "$OP_PERSONAL" ]] || fail ".chezmoidata.yaml names no onePasswordAccount"
+export OP_PERSONAL
+# op stub: answers op://Private/accounts-backup/<field> from the personal account; FAKE_OP=fail makes it fail.
 cat > "$WORK/bin/op" <<'EOF'
 #!/bin/bash
 echo "op $*" >> "$FAKE_LOG"
 [[ "${FAKE_OP:-}" == fail ]] && { echo "not signed in" >&2; exit 1; }
+[[ "${OP_ACCOUNT:-}" == "$OP_PERSONAL" ]] || { echo "isn't an item in the Private vault" >&2; exit 1; }
 case "${@: -1}" in
   op://Private/accounts-backup/password) printf '%s' 'p@ss $word"x'; [[ "$*" == *--no-newline* ]] || echo ;;
   op://Private/accounts-backup/r2_access_key_id) echo kid ;;
