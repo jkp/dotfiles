@@ -68,4 +68,5 @@ Spoons/
 .config/QtProject.conf
 .config/user-dirs.dirs
 .config/user-dirs.locale
-.config/btop/themes/
+# btop rewrites its own config, so it owns it.
+.config/btop/
