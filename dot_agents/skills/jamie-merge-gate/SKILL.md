@@ -50,8 +50,8 @@ A coordinator set up this way must, for each delegate PR:
 
 ## Starting point: the PR's own Risk profile
 
-Every PR already carries a review-workflow report. Read the latest one for
-the PR's current head before doing anything else. It contains:
+Use the repository's review-workflow report when one is provided. Read the
+latest one for the PR's current head before applying the gate. It contains:
 
 - `Risk profile` Tier: low, medium, or high
 - Worst credible failure
@@ -62,9 +62,9 @@ the PR's current head before doing anything else. It contains:
 
 Get it from the PR's review comments (the `github-actions[bot]`
 claude-review-summary / review-workflow report), not from the PR body.
-If there is no current Risk profile for the current head, stop: verdict is
-ESCALATE with reason "no current risk assessment". Do not invent one here;
-that assessment belongs to the repo's review workflow.
+If that workflow exists but its assessment is missing, stale or failing,
+do not substitute another assessment: obtain the required current evidence
+or ESCALATE with reason "no current risk assessment".
 
 **Local-evidence repos.** A repository that defines a `gate-evidence` mise
 task reviews and verifies locally instead of on GitHub. There, run
@@ -76,6 +76,23 @@ review comment and the required checks above; any MISSING or INVALID line is
 a missing input. Such a repository may have no branch protection or
 auto-merge: on PASS, merge with `gh pr merge <pr> --squash
 --match-head-commit <reviewed head>` instead of arming auto-merge.
+
+**Repositories without either assessment mechanism.** First verify that the
+repository has neither a review-workflow Risk profile nor a `gate-evidence`
+task. An independent reviewer (never the implementing agent) may then produce
+the full Risk profile above and a review verdict against the exact current
+head. Record the reviewer identity, head SHA, evidence, limitations and all
+profile fields durably in the private per-repository gate log (see Sampling
+in GATE.md), and reference that record from the gate result. The same independent
+reviewer may assess risk and apply the gate. An author's assessment, green CI
+alone or a bare "no findings" verdict is insufficient.
+
+This fallback changes only the source of the assessment. It must not bypass
+repository-required reviews or checks, lower an existing tier, waive findings,
+or relax the never-auto classes. A changed head needs a current assessment.
+If the reviewer cannot establish the required evidence, ESCALATE. On PASS,
+use the repository's merge mechanism; if auto-merge is unavailable, merge
+directly with an exact-head guard as above.
 
 This gate consumes that assessment. It may upgrade risk, add rules, or
 block auto-merge. It must never downgrade a tier, waive a finding, or

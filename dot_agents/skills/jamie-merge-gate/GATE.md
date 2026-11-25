@@ -20,7 +20,7 @@ For the target PR, collect:
 
 - Current head SHA and base SHA.
 - Required check status for that exact head.
-- Latest review-workflow report for that head: verdict, findings,
+- Current assessment from the applicable source in SKILL.md: verdict, findings,
   and the full Risk profile (Tier, Worst credible failure,
   Detection / recovery, Verification budget, Scope-growth trigger).
 - The PR brief / linked task scope, so scope growth can be judged.
@@ -38,6 +38,11 @@ missing input named. Never guess.
 In a local-evidence repository (see SKILL.md), `mise run gate-evidence --
 <pr>` supplies the head, review verdict, check status and tier in one
 call; read findings from the review ledger file it names.
+
+When neither repository assessment mechanism exists, use the independent
+assessment recorded in the private gate log as described in SKILL.md. Verify
+the reviewer's independence, exact head, full profile and supporting evidence;
+repository-required reviews and checks still apply.
 
 ## 2. Tier floor (from the Risk profile)
 
@@ -93,7 +98,8 @@ finding the author marked "accepted" is accepted only if you agree.
 
 All rules pass on the reviewed head, tier floor allows it, checks are
 green, no unresolved findings. Arm auto-merge for that exact head
-using the repo's normal mechanism; in a local-evidence repository,
+using the repo's normal mechanism; in a local-evidence repository or an
+independent-assessment repository without auto-merge,
 merge directly with `gh pr merge <pr> --squash --match-head-commit
 <reviewed head>` (see SKILL.md). Then stop watching/asking: report
 the PR, head SHA, tier, and any sampling selection (section 6), and
