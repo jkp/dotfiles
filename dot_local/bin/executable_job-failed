@@ -1,0 +1,11 @@
+#!/bin/bash
+# on_fail hook for ~/.config/pitchfork-jobs: a notification that stays until
+# dismissed. Hammerspoon posts it; osascript is the fallback when it can't.
+set -uo pipefail
+# The name comes from config and is spliced into Lua or AppleScript, so keep only safe characters.
+job="$(printf '%s' "${PITCHFORK_DAEMON_ID:-unknown}" | sed 's|^global/||' | tr -cd 'A-Za-z0-9._/-')"
+code="$(printf '%s' "${PITCHFORK_EXIT_CODE:-}" | tr -cd '0-9')"
+title="Scheduled job failed: $job"
+body="exit ${code:-?}. Why: pitchfork logs $job"
+hs -c "hs.notify.new({title=\"$title\", informativeText=\"$body\", withdrawAfter=0}):send()" >/dev/null 2>&1 ||
+    osascript -e "display notification \"$body\" with title \"$title\""

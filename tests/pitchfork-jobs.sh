@@ -53,6 +53,9 @@ fi
 for job in $(schedules | cut -d' ' -f1); do
   grep -q "\"global/$job\"" <<<"$daemons" || fail "$job is not a daemon pitchfork sees: $daemons"
 done
+# Every job notifies when it fails.
+[ "$(grep -c '^\[daemons\.' "$WORK/shipped.toml")" = "$(grep -c "^hooks = { on_fail = \"$HOME/.local/bin/job-failed\" }$" "$WORK/shipped.toml")" ] ||
+  fail "a job has no failure notification: $(cat "$WORK/shipped.toml")"
 
 # The agent's exact command, in launchd's environment, fires a job from the
 # jobs config — and nothing else.
@@ -61,12 +64,22 @@ cat > "$WORK/jobs/config.toml" <<EOF
 [daemons.tick]
 run = "date +%s >> $WORK/ticks"
 cron = "*/2 * * * * *"
+
+[daemons.broken]
+run = "exit 7"
+cron = "*/2 * * * * *"
+hooks = { on_fail = "$HERE/dot_local/bin/executable_job-failed" }
 EOF
-pf env PITCHFORK_CONFIG_DIR="$WORK/jobs" PITCHFORK_STATE_DIR="$WORK/s1" "${program[@]}" > "$WORK/sup.log" 2>&1 &
+# Hammerspoon stand-in: records what the failure hook asks it to post.
+mkdir "$WORK/stub"
+printf '#!/bin/sh\nprintf "%%s\\n" "$*" >> "%s/notified"\n' "$WORK" > "$WORK/stub/hs" && chmod +x "$WORK/stub/hs"
+pf env PATH="$WORK/stub:$(plist EnvironmentVariables.PATH)" PITCHFORK_CONFIG_DIR="$WORK/jobs" PITCHFORK_STATE_DIR="$WORK/s1" "${program[@]}" > "$WORK/sup.log" 2>&1 &
 sup=$!
 deadline=$((SECONDS + 40))
 until [ -s "$WORK/ticks" ] || [ "$SECONDS" -ge "$deadline" ]; do sleep 0.5; done
 [ -s "$WORK/ticks" ] || fail "no cron run within 40s: $(tail -5 "$WORK/sup.log")"
+until [ -s "$WORK/notified" ] || [ "$SECONDS" -ge "$deadline" ]; do sleep 0.5; done
+grep -qF 'Scheduled job failed: broken' "$WORK/notified" 2>/dev/null || fail "a failed run didn't notify: $(tail -5 "$WORK/sup.log")"
 grep -q 'registered config-only cron daemon .*tick' "$WORK/sup.log" || fail "tick not registered: $(cat "$WORK/sup.log")"
 ! grep -q 'worktree-reap' "$WORK/sup.log" || fail "supervisor picked up jobs outside its config dir"
 supervisor="$(pgrep -P "$sup")"
