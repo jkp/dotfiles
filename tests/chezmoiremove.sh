@@ -26,7 +26,14 @@ entries() { cz "$1" execute-template "$(cat "$HERE/.chezmoiremove")" | sed -E 's
 
 for os in darwin linux; do
     got="$(entries "$os" | sort)"
-    want="$(printf '%s\n' .claude/docs .claude/instructions .config/aerospace .config/karabiner .config/wezterm)"
+    want="$(printf '%s\n' .claude/docs .claude/instructions .config/aerospace .config/karabiner .config/wezterm \
+        .local/bin/safari-tabs-export .local/share/safari-tabs-export \
+        Library/LaunchAgents/co.kirkconsulting.accounts-backup-run.plist \
+        Library/LaunchAgents/co.kirkconsulting.accounts-backup-stale.plist \
+        Library/LaunchAgents/co.kirkconsulting.accounts-backup-verify.plist \
+        Library/LaunchAgents/co.kirkconsulting.backup-exclusions.plist \
+        Library/LaunchAgents/co.kirkconsulting.network-config-drift.plist \
+        Library/LaunchAgents/co.kirkconsulting.safari-tabs-export.plist | sort)"
     [[ "$got" == "$want" ]] || fail "$os entries are not the dropped configs: $got"
 
     managed="$(cz "$os" --destination "$WORK/empty" managed --include all)"

@@ -5,6 +5,10 @@
 # jobs: {{ include "dot_config/pitchfork-jobs/config.toml.tmpl" | sha256sum }}
 set -euo pipefail
 "$HOME/.local/bin/mise" install pitchfork
+# Agents whose jobs moved into the jobs config, or were dropped.
+for old in accounts-backup-run accounts-backup-stale accounts-backup-verify backup-exclusions network-config-drift safari-tabs-export; do
+    launchctl bootout "gui/$(id -u)/co.kirkconsulting.$old" 2>/dev/null || true
+done
 label=co.kirkconsulting.pitchfork
 launchctl bootout "gui/$(id -u)/$label" 2>/dev/null || true
 launchctl bootstrap "gui/$(id -u)" "$HOME/Library/LaunchAgents/$label.plist"

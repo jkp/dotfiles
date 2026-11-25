@@ -134,8 +134,16 @@ def main():
             with db:
                 db.executemany('INSERT OR REPLACE INTO jobs VALUES (?, ?)',
                                [(str(root), uuid.uuid4().hex) for root in roots])
-            subprocess.run(['launchctl', 'start', 'co.kirkconsulting.backup-exclusions'],
-                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=2, check=False)
+            # Wake the worker now through the job supervisor; the schedule is the fallback.
+            # A verity dev shell's PITCHFORK_STATE_DIR names its own worktree supervisor.
+            env = {k: v for k, v in os.environ.items() if k != 'PITCHFORK_STATE_DIR'}
+            env['PITCHFORK_CONFIG_DIR'] = str(Path.home() / '.config/pitchfork-jobs')
+            try:
+                subprocess.Popen(['pitchfork', 'start', 'backup-exclusions'], cwd='/', env=env,
+                                 stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                                 stderr=subprocess.DEVNULL, start_new_session=True)
+            except OSError:
+                pass
             return 0
         with (state / 'worker.lock').open('a') as lock:
             try:

@@ -1,6 +1,12 @@
 name: "Jamie Kirkpatrick"
 email: "jkp@kirkconsulting.co.uk"
 
+# Scheduled jobs per machine, by hostname. Only a Mac listed here gets the
+# pitchfork supervisor and ~/.config/pitchfork-jobs; every other machine,
+# including Linux, gets none of it.
+jobs:
+  tkol: [worktree-reap, backup-exclusions, accounts-backup, network-config-drift]
+
 # Agent plugins for Claude Code and Codex, from GitHub marketplaces.
 # modify_ templates declare them; run_onchange_after_install-agent-skills installs them.
 agentPlugins:

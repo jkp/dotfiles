@@ -13,3 +13,14 @@
 # 2026-11-12 (Thu): folded into ~/.agents/AGENTS.md, shared by Claude and Codex.
 .claude/instructions
 .claude/docs
+# 2026-11-25 (Wed): moved to ~/.config/pitchfork-jobs (run by co.kirkconsulting.pitchfork);
+# run_onchange_after_load-pitchfork boots out their old agents.
+Library/LaunchAgents/co.kirkconsulting.accounts-backup-run.plist
+Library/LaunchAgents/co.kirkconsulting.accounts-backup-stale.plist
+Library/LaunchAgents/co.kirkconsulting.accounts-backup-verify.plist
+Library/LaunchAgents/co.kirkconsulting.backup-exclusions.plist
+Library/LaunchAgents/co.kirkconsulting.network-config-drift.plist
+# 2026-11-25 (Wed): Safari tabs export dropped, unfinished; to be redone from scratch.
+Library/LaunchAgents/co.kirkconsulting.safari-tabs-export.plist
+.local/bin/safari-tabs-export
+.local/share/safari-tabs-export

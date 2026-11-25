@@ -110,19 +110,23 @@ quiet; pass "interactive passthrough failures don't alert"
 # --- chezmoi: managed only where ~/accounts exists; secrets fetched from 1Password.
 [[ "$(uname)" == Darwin ]] || { echo "SKIP: LaunchAgents are macOS-only"; exit 0; }
 CHEZMOI="$(command -v chezmoi)"
-cz() { "$CHEZMOI" --source "$HERE" --destination "$1" --config "$WORK/none.toml" "${@:2}"; }
+# A machine whose job list (.chezmoidata.yaml) includes accounts-backup.
+cz() { "$CHEZMOI" --source "$HERE" --destination "$1" --config "$WORK/none.toml" \
+    --override-data '{"chezmoi":{"hostname":"backup-host"},"jobs":{"backup-host":["accounts-backup"]}}' "${@:2}"; }
 
 mkdir -p "$WORK/with/accounts" "$WORK/without"
 with="$(cz "$WORK/with" managed --include=files,scripts --exclude=encrypted)"
-for f in .local/bin/accounts-backup Library/LaunchAgents/co.kirkconsulting.accounts-backup-{run,stale,verify}.plist; do
-  grep -qx "$f" <<<"$with" || fail "with an accounts folder, $f isn't managed"
-done
+grep -qx .local/bin/accounts-backup <<<"$with" || fail "with an accounts folder, the script isn't managed"
 grep -q accounts-backup-secrets <<<"$with" || fail "no secrets script"
-grep -q load-accounts-backup <<<"$with" || fail "no loader script"
-cz "$WORK/with" cat "$WORK/with/Library/LaunchAgents/co.kirkconsulting.accounts-backup-run.plist" |
-  grep -q "<string>$WORK/with/.local/bin/accounts-backup</string>" || fail "run agent doesn't run the script"
+jobs="$(cz "$WORK/with" cat "$WORK/with/.config/pitchfork-jobs/config.toml")"
+for job in run stale verify; do
+  grep -qx "run = \"$WORK/with/.local/bin/accounts-backup $job >> $WORK/with/Library/Logs/accounts-backup.log 2>&1\"" <<<"$jobs" ||
+    fail "no $job job running the script into the alerted log: $jobs"
+done
 without="$(cz "$WORK/without" managed --include=files,scripts --exclude=encrypted)"
 grep -q accounts-backup <<<"$without" && fail "no ~/accounts, but backup files are managed: $without"
+cz "$WORK/without" cat "$WORK/without/.config/pitchfork-jobs/config.toml" | grep -q accounts-backup &&
+  fail "no ~/accounts, but backup jobs are scheduled"
 pass "managed only where ~/accounts exists"
 
 # op stub: answers op://Private/accounts-backup/<field>; FAKE_OP=fail makes it fail.
