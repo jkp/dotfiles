@@ -28,11 +28,12 @@ program=()
 while IFS= read -r arg; do program+=("$arg"); done < <(plutil -extract ProgramArguments json -o - "$WORK/agent.plist" | python3 -c 'import json,sys; print("\n".join(json.load(sys.stdin)))')
 jobs_dir="$(plist EnvironmentVariables.PITCHFORK_CONFIG_DIR)"
 [ "$jobs_dir" = "$HOME/.config/pitchfork-jobs" ] || fail "supervisor reads $jobs_dir, not the jobs config"
+[ "$(plist WorkingDirectory)" = / ] || fail "supervisor runs from a directory others can plant pitchfork.toml in"
 
 # The shipped jobs config parses, and schedules the reaper on TKOL only.
 render dot_config/pitchfork-jobs/config.toml.tmpl > "$WORK/shipped.toml"
 mkdir "$WORK/shipped" && cp "$WORK/shipped.toml" "$WORK/shipped/config.toml"
-pf() { (cd "$WORK" && env -i HOME="$HOME" PATH="$(plist EnvironmentVariables.PATH)" MISE_GLOBAL_CONFIG_FILE="$WORK/mise.toml" "$@"); }
+pf() { (cd "$(plist WorkingDirectory)" && env -i HOME="$HOME" PATH="$(plist EnvironmentVariables.PATH)" MISE_GLOBAL_CONFIG_FILE="$WORK/mise.toml" "$@"); }
 printf '[tools]\npitchfork = "%s"\n' "$(sed -n 's/^pitchfork = "\(.*\)".*/\1/p' "$HERE/dot_config/mise/config.toml")" > "$WORK/mise.toml"
 grep -q '"[0-9]' "$WORK/mise.toml" || fail "pitchfork is not pinned in the global mise config"
 daemons="$(pf env PITCHFORK_CONFIG_DIR="$WORK/shipped" PITCHFORK_STATE_DIR="$WORK/s0" "${program[0]}" x -- pitchfork daemons --json)" || fail "jobs config does not parse"

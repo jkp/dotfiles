@@ -14,7 +14,9 @@
     <string>run</string>
     <string>--boot</string>
   </array>
-  <key>WorkingDirectory</key><string>{{ .chezmoi.homeDir }}</string>
+  <!-- The supervisor also reads pitchfork.toml from its working directory and
+       every parent. Only root can write those under /. -->
+  <key>WorkingDirectory</key><string>/</string>
   <key>EnvironmentVariables</key><dict>
     <key>PATH</key><string>{{ .chezmoi.homeDir }}/.local/share/mise/shims:{{ .chezmoi.homeDir }}/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
     <!-- Not ~/.config/pitchfork: every supervisor, including verity's
