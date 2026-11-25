@@ -43,7 +43,7 @@ daemons="$(pf env PITCHFORK_CONFIG_DIR="$WORK/shipped" PITCHFORK_STATE_DIR="$WOR
 schedules() { awk -F' = ' '/^\[daemons\./{job=substr($1,10,length($1)-10)} /^cron = /{gsub(/"/,"",$2); print job" "$2}' "$WORK/shipped.toml"; }
 want=""
 if [ "$(chezmoi execute-template '{{ .chezmoi.hostname }}')" = tkol ]; then
-  want+="worktree-reap 0 0 4 * * *"$'\n'"backup-exclusions 0 */15 * * * *"$'\n'
+  want+="worktree-reap 0 0 4 * * *"$'\n'"backup-exclusions 0 */15 * * * *"$'\n'"snapshot-thin 0 */15 * * * *"$'\n'
 fi
 if [ "$(chezmoi execute-template '{{ .chezmoi.hostname }}')" = tkol ]; then
   [ ! -d "$HOME/accounts" ] || want+="accounts-backup-run 0 30 12 * * *"$'\n'"accounts-backup-stale 0 0 18 * * *"$'\n'"accounts-backup-verify 0 0 13 1 * *"$'\n'
