@@ -26,6 +26,8 @@ plutil -lint -s "$WORK/agent.plist" || fail "plist does not lint"
 plist() { plutil -extract "$1" raw -o - "$WORK/agent.plist"; }
 program=()
 while IFS= read -r arg; do program+=("$arg"); done < <(plutil -extract ProgramArguments json -o - "$WORK/agent.plist" | python3 -c 'import json,sys; print("\n".join(json.load(sys.stdin)))')
+# CI installs mise elsewhere; there, run the agent's arguments with that mise.
+[ -x "${program[0]}" ] || program[0]="$(command -v mise)" || fail "no mise to run the agent with"
 jobs_dir="$(plist EnvironmentVariables.PITCHFORK_CONFIG_DIR)"
 [ "$jobs_dir" = "$HOME/.config/pitchfork-jobs" ] || fail "supervisor reads $jobs_dir, not the jobs config"
 [ "$(plist WorkingDirectory)" = / ] || fail "supervisor runs from a directory others can plant pitchfork.toml in"
