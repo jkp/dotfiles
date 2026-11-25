@@ -10,7 +10,7 @@ onePasswordAccount: "kirkpatrick.1password.com"
 # pitchfork supervisor and ~/.config/pitchfork-jobs; every other machine,
 # including Linux, gets none of it.
 jobs:
-  tkol: [worktree-reap, backup-exclusions, accounts-backup, network-config-drift]
+  tkol: [worktree-reap, backup-exclusions, accounts-backup, network-config-drift, snapshot-thin]
 
 # Agent plugins for Claude Code and Codex, from GitHub marketplaces.
 # modify_ templates declare them; run_onchange_after_install-agent-skills installs them.

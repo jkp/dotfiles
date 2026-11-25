@@ -107,3 +107,6 @@ load-pitchfork.sh
 {{ if or (ne .chezmoi.os "darwin") (not (has "worktree-reap" $jobs)) }}
 .local/bin/worktree-reap
 {{ end }}
+{{ if or (ne .chezmoi.os "darwin") (not (has "snapshot-thin" $jobs)) }}
+.local/bin/snapshot-thin
+{{ end }}

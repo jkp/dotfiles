@@ -1,0 +1,20 @@
+#!/bin/bash
+# Free the space Time Machine's local snapshots hold before the disk fills.
+# macOS thins them itself only under pressure, which came too late for Docker.
+# Run every 15 minutes by the snapshot-thin job (~/.config/pitchfork-jobs).
+#
+#   snapshot-thin [floor-GiB] [target-GiB]   # defaults: 60, 100
+set -euo pipefail
+floor="${1:-60}"; target="${2:-100}"
+gib=$((1024 * 1024))   # df -k reports KiB
+free_kib() { df -k /System/Volumes/Data | awk 'NR == 2 {print $4}'; }
+
+free="$(free_kib)"
+[ "$free" -lt $((floor * gib)) ] || exit 0
+purge=$(( (target * gib - free) * 1024 ))   # bytes
+echo "$(date '+%F %T') $((free / gib)) GiB free, under $floor GiB: thinning snapshots to reclaim $((purge / 1024 / gib)) GiB"
+tmutil thinlocalsnapshots / "$purge" 4
+free="$(free_kib)"
+echo "$(date '+%F %T') now $((free / gib)) GiB free"
+# Snapshots weren't what filled it: fail, so the job's notification says so.
+[ "$free" -ge $((floor * gib)) ] || { echo "Disk still under $floor GiB free after thinning snapshots." >&2; exit 1; }
