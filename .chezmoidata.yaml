@@ -26,6 +26,7 @@ claudeDeniedMcpServers:
   - plugin:small-business:notion
   - plugin:small-business:ramp
   - plugin:small-business:ringex-chat
+  - plugin:small-business:shopify
   - plugin:small-business:square
   - plugin:small-business:stripe
   - plugin:small-business:tiktok
