@@ -39,3 +39,4 @@ claudeDeniedMcpServers:
   - plugin:engineering:atlassian
   - plugin:engineering:datadog
   - plugin:engineering:linear
+  - plugin:engineering:notion
