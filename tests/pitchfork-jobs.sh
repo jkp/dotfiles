@@ -54,7 +54,9 @@ cron = "*/2 * * * * *"
 EOF
 pf env PITCHFORK_CONFIG_DIR="$WORK/jobs" PITCHFORK_STATE_DIR="$WORK/s1" "${program[@]}" > "$WORK/sup.log" 2>&1 &
 sup=$!
-gtimeout 40 bash -c "until [ -s '$WORK/ticks' ]; do sleep 0.5; done" || fail "no cron run within 40s: $(tail -5 "$WORK/sup.log")"
+deadline=$((SECONDS + 40))
+until [ -s "$WORK/ticks" ] || [ "$SECONDS" -ge "$deadline" ]; do sleep 0.5; done
+[ -s "$WORK/ticks" ] || fail "no cron run within 40s: $(tail -5 "$WORK/sup.log")"
 grep -q 'registered config-only cron daemon .*tick' "$WORK/sup.log" || fail "tick not registered: $(cat "$WORK/sup.log")"
 ! grep -q 'worktree-reap' "$WORK/sup.log" || fail "supervisor picked up jobs outside its config dir"
 supervisor="$(pgrep -P "$sup")"
