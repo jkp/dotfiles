@@ -1,0 +1,26 @@
+#!/bin/bash
+# Reap merged worktrees with the repository's own reaper, after fast-forwarding
+# the checkout to origin/main so the reaper is never stale code.
+# Run daily by co.kirkconsulting.worktree-reap.
+#
+#   worktree-reap [checkout]   # default ~/Work/tinyteam/verity
+set -uo pipefail
+
+checkout="${1:-$HOME/Work/tinyteam/verity}"
+lock="${WORKTREE_REAP_LOCK:-${TMPDIR:-/tmp}/worktree-reap.lock}"
+
+echo "--- $(date '+%Y-%m-%d %H:%M:%S') $checkout"
+mkdir "$lock" 2>/dev/null || { echo "Another run holds $lock; skipping."; exit 0; }
+trap 'rmdir "$lock"' EXIT
+
+branch=$(git -C "$checkout" branch --show-current) || exit 1
+[ "$branch" = main ] || { echo "Checkout is not on main (on '$branch'); not reaping with code that cannot be updated." >&2; exit 1; }
+git -C "$checkout" fetch --quiet origin main || { echo "Fetch failed; not reaping." >&2; exit 1; }
+git -C "$checkout" merge --ff-only --quiet origin/main || { echo "main cannot fast-forward to origin/main; not reaping." >&2; exit 1; }
+echo "Reaper at $(git -C "$checkout" log -1 --format='%h %s')"
+
+# Idle agent sessions hold no process, so recent git use is what keeps them.
+cd "$checkout" && bash scripts/worktree/reap.sh --execute --idle-days 3
+status=$?
+df -h "$HOME" | tail -1
+exit "$status"

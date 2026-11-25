@@ -1,0 +1,10 @@
+#:schema https://pitchfork.jdx.dev/schema.json
+# Scheduled jobs, run by the co.kirkconsulting.pitchfork supervisor.
+# Edit, then `chezmoi apply`. Check with `pitchfork list` / `pitchfork logs <job>`.
+# Cron is 6-field (seconds first); a run missed while asleep fires on wake.
+{{- if eq .chezmoi.hostname "tkol" }}
+
+[daemons.worktree-reap]
+run = "{{ .chezmoi.homeDir }}/.local/bin/worktree-reap"
+cron = "0 0 4 * * *"
+{{- end }}
