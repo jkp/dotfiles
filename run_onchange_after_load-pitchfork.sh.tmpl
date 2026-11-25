@@ -1,0 +1,11 @@
+{{- if eq .chezmoi.os "darwin" -}}
+#!/bin/bash
+# Restart the job supervisor whenever its agent or its jobs change.
+# plist: {{ include "private_Library/private_LaunchAgents/co.kirkconsulting.pitchfork.plist.tmpl" | sha256sum }}
+# jobs: {{ include "dot_config/pitchfork-jobs/config.toml.tmpl" | sha256sum }}
+set -euo pipefail
+"$HOME/.local/bin/mise" install pitchfork
+label=co.kirkconsulting.pitchfork
+launchctl bootout "gui/$(id -u)/$label" 2>/dev/null || true
+launchctl bootstrap "gui/$(id -u)" "$HOME/Library/LaunchAgents/$label.plist"
+{{ end -}}

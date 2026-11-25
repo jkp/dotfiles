@@ -1,9 +1,0 @@
-{{- if and (eq .chezmoi.os "darwin") (eq .chezmoi.hostname "tkol") -}}
-#!/bin/bash
-# (Re)load the worktree reaper whenever its plist or script changes.
-# script: {{ include "dot_local/bin/executable_worktree-reap" | sha256sum }}
-# plist: {{ include "private_Library/private_LaunchAgents/co.kirkconsulting.worktree-reap.plist.tmpl" | sha256sum }}
-label=co.kirkconsulting.worktree-reap
-launchctl bootout "gui/$(id -u)/$label" 2>/dev/null || true
-launchctl bootstrap "gui/$(id -u)" "$HOME/Library/LaunchAgents/$label.plist"
-{{ end -}}

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- The one launch agent for scheduled jobs: a pitchfork supervisor. Jobs live
+     in ~/.config/pitchfork-jobs/config.toml; this file should not need edits.
+     Not `pitchfork boot enable`: that pins the versioned binary path. -->
+<plist version="1.0"><dict>
+  <key>Label</key><string>co.kirkconsulting.pitchfork</string>
+  <key>ProgramArguments</key><array>
+    <string>{{ .chezmoi.homeDir }}/.local/bin/mise</string>
+    <string>x</string>
+    <string>--</string>
+    <string>pitchfork</string>
+    <string>supervisor</string>
+    <string>run</string>
+    <string>--boot</string>
+  </array>
+  <key>WorkingDirectory</key><string>{{ .chezmoi.homeDir }}</string>
+  <key>EnvironmentVariables</key><dict>
+    <key>PATH</key><string>{{ .chezmoi.homeDir }}/.local/share/mise/shims:{{ .chezmoi.homeDir }}/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <!-- Not ~/.config/pitchfork: every supervisor, including verity's
+         per-worktree ones, runs the cron jobs it finds there. -->
+    <key>PITCHFORK_CONFIG_DIR</key><string>{{ .chezmoi.homeDir }}/.config/pitchfork-jobs</string>
+  </dict>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><dict><key>SuccessfulExit</key><false/></dict>
+  <key>ProcessType</key><string>Background</string>
+  <key>StandardOutPath</key><string>{{ .chezmoi.homeDir }}/Library/Logs/pitchfork-supervisor.log</string>
+  <key>StandardErrorPath</key><string>{{ .chezmoi.homeDir }}/Library/Logs/pitchfork-supervisor.log</string>
+</dict></plist>
