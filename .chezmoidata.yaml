@@ -1,6 +1,11 @@
 name: "Jamie Kirkpatrick"
 email: "jkp@kirkconsulting.co.uk"
 
+# The personal 1Password account, by sign-in address (`op account list`): every
+# op:// reference in this repo is in its Private vault. op otherwise reads
+# from whichever account it last used, and the work one has no such items.
+onePasswordAccount: "kirkpatrick.1password.com"
+
 # Scheduled jobs per machine, by hostname. Only a Mac listed here gets the
 # pitchfork supervisor and ~/.config/pitchfork-jobs; every other machine,
 # including Linux, gets none of it.

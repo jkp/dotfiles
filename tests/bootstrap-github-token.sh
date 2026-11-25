@@ -10,6 +10,10 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 fail() { echo "FAIL: $*"; exit 1; }
+# The personal 1Password account from .chezmoidata.yaml; op otherwise uses whichever account it last used.
+OP_PERSONAL="$(sed -n 's/^onePasswordAccount: *"\([a-z0-9.-]*\)".*/\1/p' "$HERE/.chezmoidata.yaml")"
+[[ -n "$OP_PERSONAL" ]] || fail ".chezmoidata.yaml names no onePasswordAccount"
+export OP_PERSONAL
 
 stub() { printf '#!/bin/bash\n%s\n' "$2" > "$WORK/bin/$1"; chmod +x "$WORK/bin/$1"; }
 
@@ -30,7 +34,7 @@ setup() {
         gh-out) stub gh 'echo "gh $*" >> "$LOG"; exit 1' ;;
     esac
     case "$2" in
-        op-in) stub op 'echo "op $*" >> "$LOG"; [[ "$*" == "read op://Private/github-token/credential" ]] && echo op-secret; exit 0' ;;
+        op-in) stub op 'echo "op $*" >> "$LOG"; [[ "${OP_ACCOUNT:-}" == "$OP_PERSONAL" ]] || exit 1; [[ "$*" == "read op://Private/github-token/credential" ]] && echo op-secret; exit 0' ;;
         op-out) stub op 'echo "op $*" >> "$LOG"; exit 1' ;;
     esac
 }
@@ -38,7 +42,7 @@ setup() {
 # bootstrap [VAR=value...]: runs bootstrap.sh without a terminal; it must succeed
 bootstrap() {
     rc=0
-    env -i HOME="$WORK/home" PATH="$WORK/bin:/usr/bin:/bin" LOG="$WORK/log" BOOTSTRAP_TEST=1 "$@" \
+    env -i HOME="$WORK/home" PATH="$WORK/bin:/usr/bin:/bin" LOG="$WORK/log" OP_PERSONAL="$OP_PERSONAL" BOOTSTRAP_TEST=1 "$@" \
         bash "$HERE/bootstrap.sh" < /dev/null > "$WORK/out" 2>&1 || rc=$?
     [[ $rc -eq 0 ]] || fail "bootstrap failed: $(cat "$WORK/out")"
     grep -q secret "$WORK/out" && fail "printed the token: $(cat "$WORK/out")"

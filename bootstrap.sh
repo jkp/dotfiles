@@ -116,6 +116,9 @@ fi
 # unauthenticated that's 60 requests an hour. Use gh's login, else 1Password.
 # It's passed only to mise below: never printed, exported or written to disk.
 GITHUB_TOKEN_REF="op://Private/github-token/credential"
+# Its vault is in the personal 1Password account; op otherwise uses whichever it last used.
+OP_ACCOUNT="$(sed -n 's/^onePasswordAccount: *"\([a-z0-9.-]*\)".*/\1/p' "$(dirname "$0")/.chezmoidata.yaml" 2>/dev/null)"
+[[ -z "$OP_ACCOUNT" ]] || export OP_ACCOUNT
 github_token="${MISE_GITHUB_TOKEN:-${GITHUB_TOKEN:-}}"
 if [[ -z "$github_token" ]] && command -v gh &>/dev/null && ! gh auth status &>/dev/null &&
     [[ -z "$BOOTSTRAP_TEST" ]] && [[ -t 0 ]]; then

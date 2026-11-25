@@ -15,11 +15,16 @@ chezmoi --source "$HERE" --config "$WORK/none.toml" execute-template \
     --override-data '{"chezmoi":{"os":"darwin"}}' \
     < "$HERE/run_before_00-fetch-age-key.sh.tmpl" > "$WORK/fetch.sh"
 
+# The personal 1Password account from .chezmoidata.yaml; op otherwise uses whichever account it last used.
+OP_PERSONAL="$(sed -n 's/^onePasswordAccount: *"\([a-z0-9.-]*\)".*/\1/p' "$HERE/.chezmoidata.yaml")"
+[[ -n "$OP_PERSONAL" ]] || fail ".chezmoidata.yaml names no onePasswordAccount"
+export OP_PERSONAL
 KEY="$WORK/home/.config/chezmoi/key.txt"
 # op stub: `op read` prints $OP_KEY, or fails when it's unset.
 mkdir -p "$WORK/op-bin"
 cat > "$WORK/op-bin/op" <<'SH'
 #!/bin/sh
+[ "${OP_ACCOUNT:-}" = "$OP_PERSONAL" ] || { echo "op stub: \"chezmoi-age-key\" isn't an item in the \"Private\" vault" >&2; exit 1; }
 [ "$1" = read ] && [ -n "${OP_KEY:-}" ] && { echo "$OP_KEY"; exit 0; }
 echo "op stub: not signed in" >&2; exit 1
 SH
@@ -31,7 +36,7 @@ run() {
     [[ "$1" == with-op ]] && path="$WORK/op-bin:$path"
     shift
     rc=0
-    env -i HOME="$WORK/home" PATH="$path" "$@" sh "$WORK/fetch.sh" 2>"$WORK/err" || rc=$?
+    env -i HOME="$WORK/home" PATH="$path" OP_PERSONAL="$OP_PERSONAL" "$@" sh "$WORK/fetch.sh" 2>"$WORK/err" || rc=$?
 }
 reset() { rm -rf "$WORK/home"; }
 

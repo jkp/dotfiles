@@ -4,6 +4,7 @@
 # chezmoi can't decrypt *.age files without it, so fail here with a clear
 # message rather than let chezmoi fail with a decrypt error.
 case " $CHEZMOI_ARGS " in *" --exclude=encrypted "*) exit 0 ;; esac
+export OP_ACCOUNT={{ .onePasswordAccount | quote }}
 
 KEY_FILE="$HOME/.config/chezmoi/key.txt"
 [ -s "$KEY_FILE" ] && [ -z "$(find "$KEY_FILE" -mmin +60)" ] && exit 0
