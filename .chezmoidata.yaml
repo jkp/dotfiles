@@ -7,3 +7,35 @@ agentPlugins:
   - id: ponytail@ponytail
     marketplace: ponytail
     repo: DietrichGebert/ponytail
+
+# Plugin MCP servers Claude Code never loads. A project can't override this:
+# to use one, delete its line and apply.
+claudeDeniedMcpServers:
+  - plugin:small-business:airwallex
+  - plugin:small-business:apollo-io
+  - plugin:small-business:atlassian
+  - plugin:small-business:canva
+  - plugin:small-business:clay
+  - plugin:small-business:emergent
+  - plugin:small-business:expensify
+  - plugin:small-business:gusto
+  - plugin:small-business:intuit-mailchimp
+  - plugin:small-business:intuit-quickbooks
+  - plugin:small-business:monday-com
+  - plugin:small-business:myob
+  - plugin:small-business:notion
+  - plugin:small-business:ramp
+  - plugin:small-business:ringex-chat
+  - plugin:small-business:square
+  - plugin:small-business:stripe
+  - plugin:small-business:tiktok
+  - plugin:small-business:trello
+  - plugin:small-business:wix
+  - plugin:small-business:zapier
+  - plugin:small-business:zoho-books
+  - plugin:small-business:zoho-crm
+  - plugin:small-business:zoho-desk
+  - plugin:small-business:zoho-projects
+  - plugin:engineering:atlassian
+  - plugin:engineering:datadog
+  - plugin:engineering:linear

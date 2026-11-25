@@ -1,5 +1,5 @@
 {{- /* chezmoi:modify-template */ -}}
-{{- /* Add agentPlugins to Claude's settings, leaving everything else as the app wrote it. */ -}}
+{{- /* Add agentPlugins and the MCP deny list to Claude's settings, leaving everything else as the app wrote it. */ -}}
 {{- $in := .chezmoi.stdin -}}
 {{- $s := dict -}}
 {{- if trim $in }}{{ $s = fromJson $in }}{{ end -}}
@@ -12,6 +12,10 @@
 {{-   $_ := set $mps .marketplace (dict "source" (dict "source" "github" "repo" .repo)) -}}
 {{-   $_ := set $out "extraKnownMarketplaces" $mps -}}
 {{- end -}}
+{{- /* Owned list: removing a name from the data re-enables that server. */ -}}
+{{- $denied := list -}}
+{{- range .claudeDeniedMcpServers }}{{ $denied = append $denied (dict "serverName" .) }}{{ end -}}
+{{- $_ := set $out "deniedMcpServers" $denied -}}
 {{- /* Keep transcripts ~forever; the 30-day default silently deleted past sessions. */ -}}
 {{- $_ := set $out "cleanupPeriodDays" 36500 -}}
 {{- if and (trim $in) (eq (toJson $s) (toJson $out)) -}}
