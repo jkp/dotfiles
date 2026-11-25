@@ -139,7 +139,9 @@ def main():
             env = {k: v for k, v in os.environ.items() if k != 'PITCHFORK_STATE_DIR'}
             env['PITCHFORK_CONFIG_DIR'] = str(Path.home() / '.config/pitchfork-jobs')
             try:
-                subprocess.Popen(['pitchfork', 'start', 'backup-exclusions'], cwd='/', env=env,
+                # As the supervisor's agent runs it: the pinned pitchfork, whatever the caller's PATH.
+                subprocess.Popen([str(Path.home() / '.local/bin/mise'), 'x', '--', 'pitchfork', 'start', 'backup-exclusions'],
+                                 cwd='/', env=env,
                                  stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                                  stderr=subprocess.DEVNULL, start_new_session=True)
             except OSError:
