@@ -49,6 +49,11 @@
 
 [supertest]
     agentHandle = jamie
+
+# bd reads this wherever it runs and warns on every command without it. Every
+# Beads tracker here is Jamie's own; a repo he only contributes to can override it.
+[beads]
+    role = maintainer
 {{- if lookPath "gh" }}
 
 [credential "https://github.com"]
