@@ -27,6 +27,7 @@ claudeDeniedMcpServers:
   - plugin:small-business:ramp
   - plugin:small-business:ringex-chat
   - plugin:small-business:shopify
+  - plugin:small-business:slack
   - plugin:small-business:square
   - plugin:small-business:stripe
   - plugin:small-business:tiktok
@@ -41,3 +42,4 @@ claudeDeniedMcpServers:
   - plugin:engineering:datadog
   - plugin:engineering:linear
   - plugin:engineering:notion
+  - plugin:engineering:slack
