@@ -96,3 +96,10 @@ tests
 .config/mise/conf.d/backup-exclusions.toml
 Library/LaunchAgents/co.kirkconsulting.backup-exclusions.plist
 {{ end }}
+
+# Worktree reaper serves the verity checkout on TKOL.
+{{ if or (ne .chezmoi.os "darwin") (ne .chezmoi.hostname "tkol") }}
+.local/bin/worktree-reap
+Library/LaunchAgents/co.kirkconsulting.worktree-reap.plist
+load-worktree-reap.sh
+{{ end }}

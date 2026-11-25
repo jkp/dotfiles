@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>co.kirkconsulting.worktree-reap</string>
+  <key>ProgramArguments</key><array>
+    <string>{{ .chezmoi.homeDir }}/.local/bin/worktree-reap</string>
+  </array>
+  <key>EnvironmentVariables</key><dict>
+    <key>PATH</key><string>{{ .chezmoi.homeDir }}/.local/share/mise/shims:{{ .chezmoi.homeDir }}/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
+  <!-- Daily; a run missed while asleep fires on wake. -->
+  <key>StartCalendarInterval</key><dict>
+    <key>Hour</key><integer>4</integer>
+    <key>Minute</key><integer>0</integer>
+  </dict>
+  <key>ProcessType</key><string>Background</string>
+  <key>LowPriorityIO</key><true/>
+  <key>StandardOutPath</key><string>{{ .chezmoi.homeDir }}/Library/Logs/worktree-reap.log</string>
+  <key>StandardErrorPath</key><string>{{ .chezmoi.homeDir }}/Library/Logs/worktree-reap.log</string>
+</dict></plist>
