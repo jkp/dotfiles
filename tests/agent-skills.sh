@@ -71,6 +71,11 @@ for name in ('empty.json', 'merged.json'):
 d = json.loads((w / 'merged.json').read_text())
 assert d['model'] == 'opus' and d['permissions'] == {'allow': ['Bash(ls)']}
 assert d['enabledPlugins']['x@y'] is False, 'must not touch other plugins'
+for name in ('empty.json', 'merged.json'):
+    denied = [e['serverName'] for e in json.loads((w / name).read_text())['deniedMcpServers']]
+    assert len(denied) == len(set(denied)) == 32, name
+    assert {'plugin:small-business:stripe', 'plugin:engineering:datadog', 'plugin:engineering:notion', 'plugin:small-business:shopify', 'plugin:small-business:slack', 'plugin:engineering:slack'} <= set(denied), name
+    assert all(n.startswith(('plugin:small-business:', 'plugin:engineering:')) for n in denied), name
 PY
 
 # Codex config: tables appended once, existing text byte-for-byte preserved.
