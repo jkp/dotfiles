@@ -2,13 +2,17 @@
 # Scheduled jobs, run by the co.kirkconsulting.pitchfork supervisor.
 # Edit, then `chezmoi apply`. Check with `pitchfork list` / `pitchfork logs <job>`.
 # Cron is 6-field (seconds first); a run missed while asleep fires on wake.
+# A failed run posts a notification that stays until dismissed.
 # Which jobs a machine runs: .chezmoidata.yaml, jobs.<hostname>.
 {{- $jobs := dig .chezmoi.hostname list .jobs }}
+{{- /* Every job notifies on failure; see ~/.local/bin/job-failed. */}}
+{{- $onFail := printf "hooks = { on_fail = %q }" (joinPath .chezmoi.homeDir ".local/bin/job-failed") }}
 {{- if has "worktree-reap" $jobs }}
 
 [daemons.worktree-reap]
 run = "{{ .chezmoi.homeDir }}/.local/bin/worktree-reap"
 cron = "0 0 4 * * *"
+{{ $onFail }}
 {{- end }}
 {{- if has "backup-exclusions" $jobs }}
 
@@ -17,6 +21,7 @@ cron = "0 0 4 * * *"
 [daemons.backup-exclusions]
 run = "/usr/bin/python3 {{ .chezmoi.homeDir }}/.local/bin/backup-exclusions --run"
 cron = "0 */15 * * * *"
+{{ $onFail }}
 env = { PATH = "{{ .chezmoi.homeDir }}/.local/share/asimov/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin" }
 {{- end }}
 {{- if and (has "accounts-backup" $jobs) (stat (joinPath (toString .chezmoi.destDir) "accounts")) }}
@@ -27,14 +32,17 @@ env = { PATH = "{{ .chezmoi.homeDir }}/.local/share/asimov/bin:/opt/homebrew/bin
 [daemons.accounts-backup-run]
 run = "{{ .chezmoi.destDir }}/.local/bin/accounts-backup run >> {{ .chezmoi.destDir }}/Library/Logs/accounts-backup.log 2>&1"
 cron = "0 30 12 * * *"
+{{ $onFail }}
 
 [daemons.accounts-backup-stale]
 run = "{{ .chezmoi.destDir }}/.local/bin/accounts-backup stale >> {{ .chezmoi.destDir }}/Library/Logs/accounts-backup.log 2>&1"
 cron = "0 0 18 * * *"
+{{ $onFail }}
 
 [daemons.accounts-backup-verify]
 run = "{{ .chezmoi.destDir }}/.local/bin/accounts-backup verify >> {{ .chezmoi.destDir }}/Library/Logs/accounts-backup.log 2>&1"
 cron = "0 0 13 1 * *"
+{{ $onFail }}
 {{- end }}
 {{- if has "network-config-drift" $jobs }}
 
@@ -43,4 +51,5 @@ cron = "0 0 13 1 * *"
 run = "{{ .chezmoi.homeDir }}/.local/bin/mise run drift"
 dir = "{{ .chezmoi.homeDir }}/Development/network-config"
 cron = "0 30 9 * * *"
+{{ $onFail }}
 {{- end }}
