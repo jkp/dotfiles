@@ -95,7 +95,14 @@ tests
 .config/mise/conf.d/backup-exclusions.toml
 {{ end }}
 
-# Worktree reaper serves the verity checkout on TKOL.
-{{ if or (ne .chezmoi.os "darwin") (ne .chezmoi.hostname "tkol") }}
+# Scheduled jobs only on Macs that list some in .chezmoidata.yaml (jobs).
+{{ $jobs := dig .chezmoi.hostname list .jobs }}
+{{ if or (ne .chezmoi.os "darwin") (not $jobs) }}
+.config/pitchfork-jobs
+.config/mise/conf.d/pitchfork.toml
+Library/LaunchAgents/co.kirkconsulting.pitchfork.plist
+load-pitchfork.sh
+{{ end }}
+{{ if or (ne .chezmoi.os "darwin") (not (has "worktree-reap" $jobs)) }}
 .local/bin/worktree-reap
 {{ end }}

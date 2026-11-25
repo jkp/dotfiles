@@ -1,0 +1,3 @@
+# Only on machines with scheduled jobs (.chezmoidata.yaml: jobs).
+[tools]
+pitchfork = "2.36.0"  # supervisor for ~/.config/pitchfork-jobs

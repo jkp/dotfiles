@@ -2,11 +2,15 @@
 # Scheduled jobs, run by the co.kirkconsulting.pitchfork supervisor.
 # Edit, then `chezmoi apply`. Check with `pitchfork list` / `pitchfork logs <job>`.
 # Cron is 6-field (seconds first); a run missed while asleep fires on wake.
-{{- if eq .chezmoi.hostname "tkol" }}
+# Which jobs a machine runs: .chezmoidata.yaml, jobs.<hostname>.
+{{- $jobs := dig .chezmoi.hostname list .jobs }}
+{{- if has "worktree-reap" $jobs }}
 
 [daemons.worktree-reap]
 run = "{{ .chezmoi.homeDir }}/.local/bin/worktree-reap"
 cron = "0 0 4 * * *"
+{{- end }}
+{{- if has "backup-exclusions" $jobs }}
 
 # Drains the queue verity's dependency hook fills (which also starts it at
 # once), and runs the nightly Asimov sweep in its 03:00 slot.
@@ -15,7 +19,7 @@ run = "/usr/bin/python3 {{ .chezmoi.homeDir }}/.local/bin/backup-exclusions --ru
 cron = "0 */15 * * * *"
 env = { PATH = "{{ .chezmoi.homeDir }}/.local/share/asimov/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin" }
 {{- end }}
-{{- if stat (joinPath (toString .chezmoi.destDir) "accounts") }}
+{{- if and (has "accounts-backup" $jobs) (stat (joinPath (toString .chezmoi.destDir) "accounts")) }}
 
 # ~/accounts backups; secrets come from run_after_accounts-backup-secrets.
 # stale and verify are separate so a run that silently stops is still caught.
@@ -32,9 +36,11 @@ cron = "0 0 18 * * *"
 run = "{{ .chezmoi.destDir }}/.local/bin/accounts-backup verify >> {{ .chezmoi.destDir }}/Library/Logs/accounts-backup.log 2>&1"
 cron = "0 0 13 1 * *"
 {{- end }}
+{{- if has "network-config-drift" $jobs }}
 
 # Check-mode run of both network-config playbooks; ntfy on drift.
 [daemons.network-config-drift]
 run = "{{ .chezmoi.homeDir }}/.local/bin/mise run drift"
 dir = "{{ .chezmoi.homeDir }}/Development/network-config"
 cron = "0 30 9 * * *"
+{{- end }}

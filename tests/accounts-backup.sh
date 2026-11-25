@@ -110,7 +110,9 @@ quiet; pass "interactive passthrough failures don't alert"
 # --- chezmoi: managed only where ~/accounts exists; secrets fetched from 1Password.
 [[ "$(uname)" == Darwin ]] || { echo "SKIP: LaunchAgents are macOS-only"; exit 0; }
 CHEZMOI="$(command -v chezmoi)"
-cz() { "$CHEZMOI" --source "$HERE" --destination "$1" --config "$WORK/none.toml" "${@:2}"; }
+# A machine whose job list (.chezmoidata.yaml) includes accounts-backup.
+cz() { "$CHEZMOI" --source "$HERE" --destination "$1" --config "$WORK/none.toml" \
+    --override-data '{"chezmoi":{"hostname":"backup-host"},"jobs":{"backup-host":["accounts-backup"]}}' "${@:2}"; }
 
 mkdir -p "$WORK/with/accounts" "$WORK/without"
 with="$(cz "$WORK/with" managed --include=files,scripts --exclude=encrypted)"

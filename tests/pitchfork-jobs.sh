@@ -36,7 +36,7 @@ jobs_dir="$(plist EnvironmentVariables.PITCHFORK_CONFIG_DIR)"
 render dot_config/pitchfork-jobs/config.toml.tmpl > "$WORK/shipped.toml"
 mkdir "$WORK/shipped" && cp "$WORK/shipped.toml" "$WORK/shipped/config.toml"
 pf() { (cd "$(plist WorkingDirectory)" && env -i HOME="$HOME" PATH="$(plist EnvironmentVariables.PATH)" MISE_GLOBAL_CONFIG_FILE="$WORK/mise.toml" "$@"); }
-printf '[tools]\npitchfork = "%s"\n' "$(sed -n 's/^pitchfork = "\(.*\)".*/\1/p' "$HERE/dot_config/mise/config.toml")" > "$WORK/mise.toml"
+printf '[tools]\npitchfork = "%s"\n' "$(sed -n 's/^pitchfork = "\(.*\)".*/\1/p' "$HERE/dot_config/mise/conf.d/pitchfork.toml")" > "$WORK/mise.toml"
 grep -q '"[0-9]' "$WORK/mise.toml" || fail "pitchfork is not pinned in the global mise config"
 daemons="$(pf env PITCHFORK_CONFIG_DIR="$WORK/shipped" PITCHFORK_STATE_DIR="$WORK/s0" "${program[0]}" x -- pitchfork daemons --json)" || fail "jobs config does not parse"
 # Each job's schedule, as "<job> <cron>", from the rendered config.
@@ -45,11 +45,11 @@ want=""
 if [ "$(chezmoi execute-template '{{ .chezmoi.hostname }}')" = tkol ]; then
   want+="worktree-reap 0 0 4 * * *"$'\n'"backup-exclusions 0 */15 * * * *"$'\n'
 fi
-if [ -d "$HOME/accounts" ]; then
-  want+="accounts-backup-run 0 30 12 * * *"$'\n'"accounts-backup-stale 0 0 18 * * *"$'\n'"accounts-backup-verify 0 0 13 1 * *"$'\n'
+if [ "$(chezmoi execute-template '{{ .chezmoi.hostname }}')" = tkol ]; then
+  [ ! -d "$HOME/accounts" ] || want+="accounts-backup-run 0 30 12 * * *"$'\n'"accounts-backup-stale 0 0 18 * * *"$'\n'"accounts-backup-verify 0 0 13 1 * *"$'\n'
+  want+="network-config-drift 0 30 9 * * *"
 fi
-want+="network-config-drift 0 30 9 * * *"
-[ "$(schedules | sort)" = "$(printf '%s\n' "$want" | sort)" ] || fail "schedules differ: got $(schedules | sort) want $(printf '%s\n' "$want" | sort)"
+[ "$(schedules | sort)" = "$(printf '%s' "$want" | sort)" ] || fail "schedules differ: got $(schedules | sort) want $(printf '%s\n' "$want" | sort)"
 for job in $(schedules | cut -d' ' -f1); do
   grep -q "\"global/$job\"" <<<"$daemons" || fail "$job is not a daemon pitchfork sees: $daemons"
 done
