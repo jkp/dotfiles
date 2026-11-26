@@ -23,7 +23,7 @@ managed() {
 
 # What tkol gets from its host lists: everything that goes when they're emptied.
 gated="$(comm -23 <(managed darwin tkol) <(managed darwin tkol ',"jobs":{"tkol":[]},"scratch":{"tkol":[]}'))"
-for anchor in Library/LaunchAgents/co.kirkconsulting.pitchfork.plist .config/pitchfork-jobs/config.toml .tart .colima; do
+for anchor in Library/LaunchAgents/co.kirkconsulting.pitchfork.plist .config/pitchfork-jobs/config.toml .local/bin/scratch-volume .tart .colima; do
     grep -qx "$anchor" <<<"$gated" || fail "tkol's host lists don't bring $anchor: $gated"
 done
 
