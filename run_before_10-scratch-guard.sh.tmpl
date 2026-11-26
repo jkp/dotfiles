@@ -1,0 +1,15 @@
+{{- $scratch := dig .chezmoi.hostname list .scratch -}}
+{{- if and (eq .chezmoi.os "darwin") $scratch -}}
+#!/bin/bash
+# chezmoi replaces a real folder with a symlink by deleting it. Stop instead,
+# so a folder still holding data (Colima's Docker volumes) is moved by hand first.
+set -euo pipefail
+status=0
+{{- range $scratch }}
+if [ -d "{{ $.chezmoi.destDir }}/.{{ . }}" ] && [ ! -L "{{ $.chezmoi.destDir }}/.{{ . }}" ]; then
+  echo "~/.{{ . }} is a real folder; move it to /Volumes/Scratch/{{ . }} first, then apply." >&2
+  status=1
+fi
+{{- end }}
+exit "$status"
+{{ end -}}
