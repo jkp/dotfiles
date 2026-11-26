@@ -1,0 +1,44 @@
+#!/bin/bash
+# The Scratch volume: an encrypted APFS volume next to the Data volume, sharing
+# its free space, that Time Machine never snapshots. Deleted VM and Docker data
+# there is freed at once instead of being held by hourly snapshots for 24h.
+# Which ~/.<name> folders link into it: .chezmoidata.yaml, scratch.<hostname>.
+#
+#   scratch-volume create < passphrase   # once, needs admin; nothing if it exists
+#   scratch-volume check <name>...       # the live setup is as intended
+set -euo pipefail
+VOL=Scratch MNT=/Volumes/Scratch
+
+create() {
+  if diskutil info "$VOL" >/dev/null 2>&1; then echo "$VOL already exists; nothing to do."; return; fi
+  container=$(diskutil info -plist /System/Volumes/Data | plutil -extract APFSContainerReference raw -)
+  sudo diskutil apfs addVolume "$container" APFS "$VOL" -stdinpassphrase
+  sudo tmutil addexclusion -v "$MNT"
+  sudo mdutil -i off "$MNT"
+  echo "$VOL created in $container: encrypted, off Time Machine and Spotlight."
+}
+
+check() {
+  local problems=() name
+  info=$(diskutil info "$VOL" 2>/dev/null) || { echo "No $VOL volume; run scratch-volume create." >&2; return 1; }
+  grep -qE '^ *Mount Point: *'"$MNT"'$' <<<"$info" || problems+=("$VOL is not mounted at $MNT (locked?)")
+  grep -qE '^ *FileVault: *Yes' <<<"$info" || problems+=("$VOL is not encrypted")
+  [[ "$(tmutil isexcluded "$MNT" 2>/dev/null)" == *"[Excluded]"* ]] || problems+=("Time Machine is not kept off $VOL")
+  ! tmutil listlocalsnapshots "$MNT" 2>/dev/null | grep -q 'com.apple.TimeMachine' || problems+=("Time Machine has snapshots of $VOL")
+  mdutil -s "$MNT" 2>/dev/null | grep -qi 'disabled' || problems+=("Spotlight indexes $VOL")
+  for name in "$@"; do
+    [ "$(readlink "$HOME/.$name")" = "$MNT/$name" ] || problems+=("~/.$name does not link to $MNT/$name")
+    [ -d "$MNT/$name" ] || problems+=("$MNT/$name is missing")
+  done
+  [ ${#problems[@]} = 0 ] && { echo "$VOL is set up as intended."; return; }
+  printf '%s\n' "${problems[@]}" >&2
+  # The failure notification shows the last line.
+  echo "Scratch problems: ${problems[*]}" | cut -c1-160 >&2
+  return 1
+}
+
+case "${1:-}" in
+  create) create ;;
+  check) shift; check "$@" ;;
+  *) sed -n '7,8p' "$0" >&2; exit 2 ;;
+esac

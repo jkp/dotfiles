@@ -10,7 +10,12 @@ onePasswordAccount: "kirkpatrick.1password.com"
 # pitchfork supervisor and ~/.config/pitchfork-jobs; every other machine,
 # including Linux, gets none of it.
 jobs:
-  tkol: [worktree-reap, backup-exclusions, accounts-backup, network-config-drift, snapshot-thin, docker-prune]
+  tkol: [worktree-reap, backup-exclusions, accounts-backup, network-config-drift, snapshot-thin, docker-prune, scratch-check]
+
+# Folders kept on the Scratch volume, which Time Machine never snapshots:
+# ~/.<name> links to /Volumes/Scratch/<name>. Create it with `scratch-volume create`.
+scratch:
+  tkol: [tart, colima]
 
 # Agent plugins for Claude Code and Codex, from GitHub marketplaces.
 # modify_ templates declare them; run_onchange_after_install-agent-skills installs them.

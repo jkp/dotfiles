@@ -32,6 +32,15 @@ run = "{{ .chezmoi.homeDir }}/.local/bin/docker-prune"
 cron = "0 0 5 * * Sun"
 {{ $onFail }}
 {{- end }}
+{{- if has "scratch-check" $jobs }}
+
+# The Scratch volume is mounted, encrypted, never snapshotted, and the
+# folders listed for this machine link into it.
+[daemons.scratch-check]
+run = "{{ .chezmoi.homeDir }}/.local/bin/scratch-volume check {{ dig .chezmoi.hostname list .scratch | join " " }}"
+cron = "0 0 6 * * Sun"
+{{ $onFail }}
+{{- end }}
 {{- if has "backup-exclusions" $jobs }}
 
 # Drains the queue verity's dependency hook fills (which also starts it at

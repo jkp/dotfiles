@@ -110,6 +110,16 @@ load-pitchfork.sh
 {{ if or (ne .chezmoi.os "darwin") (not (has "snapshot-thin" $jobs)) }}
 .local/bin/snapshot-thin
 {{ end }}
+{{ $scratch := dig .chezmoi.hostname list .scratch }}
+{{ if or (ne .chezmoi.os "darwin") (not $scratch) }}
+.local/bin/scratch-volume
+{{ end }}
+{{ if or (ne .chezmoi.os "darwin") (not (has "tart" $scratch)) }}
+.tart
+{{ end }}
+{{ if or (ne .chezmoi.os "darwin") (not (has "colima" $scratch)) }}
+.colima
+{{ end }}
 {{ if or (ne .chezmoi.os "darwin") (not (has "docker-prune" $jobs)) }}
 .local/bin/docker-prune
 {{ end }}
