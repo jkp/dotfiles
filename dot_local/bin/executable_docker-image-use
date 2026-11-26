@@ -1,0 +1,35 @@
+#!/bin/bash
+# Records which image each container starts from, to learn which tagged images
+# are really used before docker-prune removes any (Docker keeps no last-used time).
+#   docker-image-use watch    log container starts; run by the pitchfork daemon
+#   docker-image-use report   each image's size, starts and last start, unused first
+set -uo pipefail
+log="${XDG_STATE_HOME:-$HOME/.local/state}/docker-image-use/starts.log"
+
+case "${1:-}" in
+  watch)
+    mkdir -p "$(dirname "$log")"
+    while :; do
+      # Resume after the last logged start (Docker replays what it still holds);
+      # the first run takes what it has from the past week.
+      last="$(tail -1 "$log" 2>/dev/null | cut -d' ' -f1)"
+      since=$(( ${last:-$(( $(date +%s) - 604800 ))} + 1 ))
+      # Returns when Docker goes away (Colima stopped); try again shortly.
+      docker events --filter type=container --filter event=start --format '{{.Time}} {{.Actor.Attributes.image}}' --since "$since" >> "$log"
+      sleep 30
+    done ;;
+  report)
+    [ -s "$log" ] || { echo "No container starts recorded yet in $log."; exit 0; }
+    first="$(head -1 "$log" | cut -d' ' -f1)"
+    echo "Since $(date -u -r "$first" +%F 2>/dev/null || date -u -d "@$first" +%F)"
+    docker image ls --format '{{.Repository}}:{{.Tag}} {{.Size}}' |
+      awk -v lf="$log" '
+        BEGIN { while ((getline l < lf) > 0) { split(l, f, " "); n[f[2]]++; if (f[1] > t[f[2]]) t[f[2]] = f[1] } }
+        { print (t[$1] ? t[$1] : 0), $1, $2, n[$1] + 0 }' |
+      sort -n |
+      while read -r ts image size starts; do
+        last=never; [ "$ts" = 0 ] || last="$(date -u -r "$ts" +%F 2>/dev/null || date -u -d "@$ts" +%F)"
+        printf '%s %s %s %s\n' "$image" "$size" "$starts" "$last"
+      done | { echo "IMAGE SIZE STARTS LAST-START"; cat; } | column -t ;;
+  *) echo "usage: docker-image-use watch|report" >&2; exit 2 ;;
+esac

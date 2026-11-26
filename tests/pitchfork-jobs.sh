@@ -54,6 +54,13 @@ fi
 for job in $(schedules | cut -d' ' -f1); do
   grep -q "\"global/$job\"" <<<"$daemons" || fail "$job is not a daemon pitchfork sees: $daemons"
 done
+# Where the prune runs, the image-use watcher starts with the supervisor and stays up.
+if grep -q '^\[daemons\.docker-prune\]' "$WORK/shipped.toml"; then
+  grep -q '"global/docker-image-use"' <<<"$daemons" || fail "no docker-image-use daemon beside docker-prune: $daemons"
+  awk '/^\[daemons\.docker-image-use\]/{f=1;next} /^\[/{f=0} f' "$WORK/shipped.toml" > "$WORK/watcher"
+  grep -qx 'boot_start = true' "$WORK/watcher" && grep -qx 'retry = true' "$WORK/watcher" && ! grep -q '^cron' "$WORK/watcher" ||
+    fail "docker-image-use is not a boot-started, always-retried daemon: $(cat "$WORK/watcher")"
+fi
 # Every job notifies when it fails.
 [ "$(grep -c '^\[daemons\.' "$WORK/shipped.toml")" = "$(grep -c "^hooks = { on_fail = \"$HOME/.local/bin/job-failed\" }$" "$WORK/shipped.toml")" ] ||
   fail "a job has no failure notification: $(cat "$WORK/shipped.toml")"
