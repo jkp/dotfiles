@@ -25,8 +25,8 @@ function chezmoi-unmanaged
 
         # Second filter: .chezmoiunmanagedignore patterns
         if not test -f $ignore_file
-            printf '%s\n' $output
-            return
+            string join \n -- $output
+            return 0
         end
 
         # Read and convert gitignore patterns to fish globs
@@ -65,7 +65,7 @@ function chezmoi-unmanaged
             test "$skip" = false && echo $item
         end
     else
-        printf '%s\n' $output
+        string join \n -- $output
     end
     return 0
 end

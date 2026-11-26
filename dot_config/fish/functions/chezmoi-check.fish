@@ -58,7 +58,7 @@ function chezmoi-check
         # Scripts with pipx/uv/venv/system shebangs (skip installed tools)
         set -l installed
         if test -n "$scripts"
-            set installed (awk 'FNR==1 && /(pipx|uvenv|uv\/tools|venv|\/Applications\/)/ {print FILENAME}' (printf "$HOME/%s\n" $scripts) 2>/dev/null | sed "s|$HOME/||")
+            set installed (awk 'FNR==1 { if (/(pipx|uvenv|uv\/tools|venv|\/Applications\/)/) print FILENAME; nextfile }' (printf "$HOME/%s\n" $scripts) 2>/dev/null | sed "s|$HOME/||")
         end
 
         # Add non-skipped files to untracked

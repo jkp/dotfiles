@@ -6,6 +6,9 @@ trap 'rm -rf "$WORK"' EXIT
 mkdir -p "$WORK/home/.local/share/chezmoi" "$WORK/home/.local/bin" "$WORK/bin"
 ln -s /bin/ls "$WORK/home/.local/bin/installed-tool"
 printf '#!/bin/sh\necho custom\n' > "$WORK/home/.local/bin/custom-tool"
+# A multi-GB untracked file must only have its first line read (sparse, so no disk cost).
+printf '#!/bin/sh\n' > "$WORK/home/.local/bin/huge-db"
+truncate -s 16G "$WORK/home/.local/bin/huge-db"
 cat > "$WORK/bin/chezmoi" <<'EOF'
 #!/bin/bash
 if [[ "${FAIL_CHECK:-}" == "$1" ]]; then
@@ -24,7 +27,7 @@ fi
 case "$1" in
 status) printf ' M .config/real-drift\n R setup.sh\n';;
 managed) echo '.local/bin';;
-unmanaged) printf '.local/bin/installed-tool\n.local/bin/custom-tool\n';;
+unmanaged) printf '.local/bin/installed-tool\n.local/bin/custom-tool\n.local/bin/huge-db\n';;
 esac
 EOF
 printf '#!/bin/sh\nexit 0\n' > "$WORK/bin/git"
@@ -33,7 +36,9 @@ run_check() {
     HOME="$WORK/home" PATH="$WORK/bin:$PATH" fish --no-config -c \
         "source '$HERE/dot_config/fish/functions/chezmoi-unmanaged.fish'; source '$HERE/dot_config/fish/functions/chezmoi-check.fish'; chezmoi-check $*"
 }
+start=$SECONDS
 out="$(run_check -v)"
+(( SECONDS - start < 15 )) || { echo "FAIL: chezmoi-check read whole untracked files ($((SECONDS - start))s)"; exit 1; }
 grep -q 'real-drift' <<<"$out"
 grep -q 'custom-tool' <<<"$out"
 ! grep -q 'installed-tool\|setup.sh' <<<"$out"
@@ -43,5 +48,6 @@ for failure in status managed unmanaged; do
     fi
     grep -q 'synthetic failure' "$WORK/out"
 done
-EMPTY_CHECK=1 run_check -q
+out="$(EMPTY_CHECK=1 run_check -q)"
+[[ -z "$out" ]] || { echo "FAIL: a clean tree still reports issues: $out"; exit 1; }
 echo 'PASS: drift and custom scripts visible, installed binaries excluded, failures surfaced'

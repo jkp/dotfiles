@@ -70,3 +70,5 @@ Spoons/
 .config/user-dirs.locale
 # btop rewrites its own config, so it owns it.
 .config/btop/
+# Codex CLI runtime databases (history/state/logs), multi-GB and app-owned.
+.codex/*.sqlite*
