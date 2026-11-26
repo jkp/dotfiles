@@ -16,7 +16,8 @@ mkdir -p "$WORK/config/fish/functions" "$WORK/cache"
 printf 'function chezmoi-check; sleep 2; echo "fresh $argv"; end\n' > "$WORK/config/fish/functions/chezmoi-check.fish"
 
 start_shell() {
-    XDG_CONFIG_HOME="$WORK/config" XDG_CACHE_HOME="$WORK/cache" fish --no-config -i -c \
+    # CI=true takes the foreground path; this tests the interactive one.
+    env -u CI XDG_CONFIG_HOME="$WORK/config" XDG_CACHE_HOME="$WORK/cache" fish --no-config -i -c \
         "source '$HERE/dot_config/fish/conf.d/chezmoi-drift.fish'" 2>&1
 }
 wait_for_cache() {
