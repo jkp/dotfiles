@@ -1,7 +1,7 @@
 #!/bin/bash
 # Reap merged worktrees with the repository's own reaper, after fast-forwarding
 # the checkout to origin/main so the reaper is never stale code.
-# Run daily by co.kirkconsulting.worktree-reap.
+# Run daily by the pitchfork worktree-reap job.
 #
 #   worktree-reap [checkout]   # default ~/Work/tinyteam/verity
 set -uo pipefail
@@ -20,7 +20,12 @@ git -C "$checkout" merge --ff-only --quiet origin/main || { echo "main cannot fa
 echo "Reaper at $(git -C "$checkout" log -1 --format='%h %s')"
 
 # Idle agent sessions hold no process, so recent git use is what keeps them.
-cd "$checkout" && bash scripts/worktree/reap.sh --execute --idle-days 3
-status=$?
+out="$(mktemp)"
+trap 'rmdir "$lock"; rm -f "$out"' EXIT
+cd "$checkout" && bash scripts/worktree/reap.sh --execute --idle-days 3 2>&1 | tee "$out"
+status=${PIPESTATUS[0]}
 df -h "$HOME" | tail -1
+# The failure notification shows the last line.
+failed="$(sed -n 's/.*rm\.sh failed for //p' "$out" | tr '\n' ' ' | sed 's/ $//')"
+[ -z "$failed" ] || echo "Could not remove: $failed"
 exit "$status"
