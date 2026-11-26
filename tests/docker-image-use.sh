@@ -9,7 +9,12 @@ BIN="$HERE/dot_local/bin/executable_docker-image-use"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 fail() { echo "FAIL: $*"; exit 1; }
-to="$(command -v timeout || command -v gtimeout)" || fail "no timeout command"
+# Run watch for $1 seconds; fails if it exits on its own instead of waiting to reconnect.
+watch_for() {
+  "$BIN" watch > "$WORK/out" 2>&1 & local pid=$!
+  sleep "$1"; kill -0 "$pid" 2>/dev/null || return 1
+  pkill -P "$pid" 2>/dev/null; kill "$pid"; wait "$pid" 2>/dev/null || true
+}
 
 mkdir "$WORK/bin"
 # docker events emits two starts then drops (as when Colima stops); image ls lists three images.
@@ -25,16 +30,16 @@ chmod +x "$WORK/bin/docker"
 export PATH="$WORK/bin:/usr/bin:/bin" HOME="$WORK/home" XDG_STATE_HOME=
 log="$WORK/home/.local/state/docker-image-use/starts.log"
 
-"$to" 3 "$BIN" watch > "$WORK/out" 2>&1 && fail "watch returned instead of waiting to reconnect"
+watch_for 3 || fail "watch returned instead of waiting to reconnect"
 grep -Eqx 'docker events --filter type=container --filter event=start --format \{\{\.Time}} \{\{\.Actor\.Attributes\.image}} --since [0-9]+' "$WORK/calls" ||
   fail "did not watch container starts: $(cat "$WORK/calls")"
 since="$(sed -n 's/.*--since //p' "$WORK/calls")"
 [ $(( $(date +%s) - since )) -ge 604700 ] || fail "first run should replay the past week, got --since $since"
 echo 1764200000 ubuntu:24.04 > "$log"; : > "$WORK/calls"
-"$to" 2 "$BIN" watch > "$WORK/out" 2>&1 || true
+watch_for 2 || fail "watch returned instead of waiting to reconnect"
 grep -q -- '--since 1764200001$' "$WORK/calls" || fail "did not resume after the last logged start: $(cat "$WORK/calls")"
 [ "$(cat "$log")" = $'1764200000 ubuntu:24.04\n1764100000 ubuntu:24.04\n1764200000 ubuntu:24.04' ] || fail "log not appended to: $(cat "$log")"
-: > "$log"; : > "$WORK/calls"; "$to" 3 "$BIN" watch > "$WORK/out" 2>&1 || true
+: > "$log"; : > "$WORK/calls"; watch_for 3 || fail "watch returned instead of waiting to reconnect"
 [ "$(cat "$log")" = $'1764100000 ubuntu:24.04\n1764200000 ubuntu:24.04' ] || fail "starts not logged: $(cat "$log" 2>&1)"
 [ "$(grep -c '^docker events' "$WORK/calls")" = 1 ] || fail "reconnected without a pause: $(cat "$WORK/calls")"
 echo "PASS: logs each container start's image, and waits before reconnecting"
