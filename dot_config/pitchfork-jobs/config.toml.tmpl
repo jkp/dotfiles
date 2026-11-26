@@ -73,10 +73,13 @@ cron = "0 0 13 1 * *"
 {{- end }}
 {{- if has "network-config-drift" $jobs }}
 
-# Check-mode run of both network-config playbooks; ntfy on drift.
+# Check-mode run of both network-config playbooks; fails, naming the drift,
+# when a host differs from master. 05:00, before agents load orchestra; a run
+# missed while asleep fires on wake. Not `mise run drift`: mise would print its
+# own error after the checker's last line, which the notification shows.
 [daemons.network-config-drift]
-run = "{{ .chezmoi.homeDir }}/.local/bin/mise run drift"
+run = "{{ .chezmoi.homeDir }}/.local/bin/mise x -- scripts/drift-check.sh"
 dir = "{{ .chezmoi.homeDir }}/Development/network-config"
-cron = "0 30 9 * * *"
+cron = "0 0 5 * * *"
 {{ $onFail }}
 {{- end }}

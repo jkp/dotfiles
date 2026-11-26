@@ -47,7 +47,7 @@ if [ "$(chezmoi execute-template '{{ .chezmoi.hostname }}')" = tkol ]; then
 fi
 if [ "$(chezmoi execute-template '{{ .chezmoi.hostname }}')" = tkol ]; then
   [ ! -d "$HOME/accounts" ] || want+="accounts-backup-run 0 30 12 * * *"$'\n'"accounts-backup-stale 0 0 18 * * *"$'\n'"accounts-backup-verify 0 0 13 1 * *"$'\n'
-  want+="network-config-drift 0 30 9 * * *"
+  want+="network-config-drift 0 0 5 * * *"
 fi
 [ "$(schedules | sort)" = "$(printf '%s' "$want" | sort)" ] || fail "schedules differ: got $(schedules | sort) want $(printf '%s\n' "$want" | sort)"
 for job in $(schedules | cut -d' ' -f1); do
