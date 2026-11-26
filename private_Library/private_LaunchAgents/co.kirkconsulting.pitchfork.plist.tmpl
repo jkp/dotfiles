@@ -13,6 +13,9 @@
     <string>supervisor</string>
     <string>run</string>
     <string>--boot</string>
+    <!-- Replace a stray supervisor (any pitchfork command starts one if none
+         runs) instead of exiting 0, which launchd would not restart. -->
+    <string>--force</string>
   </array>
   <!-- The supervisor also reads pitchfork.toml from its working directory and
        every parent. Only root can write those under /. -->

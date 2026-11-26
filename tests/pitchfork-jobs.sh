@@ -12,6 +12,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # The supervisor socket path must fit in 104 bytes.
 WORK="$(mktemp -d /tmp/pfjXXXX)"
 stop() {
+  [ -z "${stray:-}" ] || kill "$stray" 2>/dev/null || true
   [ -n "${sup:-}" ] || return 0
   # mise runs pitchfork as a child, so stop the supervisor itself, not mise.
   pf env PITCHFORK_STATE_DIR="$WORK/s1" "${program[0]}" x -- pitchfork supervisor stop >/dev/null 2>&1 || true
@@ -73,6 +74,14 @@ EOF
 # Hammerspoon stand-in: records what the failure hook asks it to post.
 mkdir "$WORK/stub"
 printf '#!/bin/sh\nprintf "%%s\\n" "$*" >> "%s/notified"\n' "$WORK" > "$WORK/stub/hs" && chmod +x "$WORK/stub/hs"
+# A stray supervisor (any pitchfork command starts one if none is running, e.g.
+# while the loader restarts the agent) must not keep the agent's out: the agent
+# would exit 0 and launchd wouldn't restart it, leaving the stray on old config.
+mkdir -p "$WORK/empty"; pf env PITCHFORK_CONFIG_DIR="$WORK/empty" PITCHFORK_STATE_DIR="$WORK/s1" "${program[0]}" x -- pitchfork supervisor run > "$WORK/stray.log" 2>&1 &
+stray_wrapper=$!
+deadline=$((SECONDS + 20))
+until stray="$(pgrep -P "$stray_wrapper")" && [ -S "$WORK/s1/ipc/main.sock" ] || [ "$SECONDS" -ge "$deadline" ]; do sleep 0.3; done
+[ -n "$stray" ] || fail "the stray supervisor didn't start: $(cat "$WORK/stray.log")"
 pf env PATH="$WORK/stub:$(plist EnvironmentVariables.PATH)" PITCHFORK_CONFIG_DIR="$WORK/jobs" PITCHFORK_STATE_DIR="$WORK/s1" "${program[@]}" > "$WORK/sup.log" 2>&1 &
 sup=$!
 deadline=$((SECONDS + 40))
@@ -84,6 +93,8 @@ grep -qF 'exit 7: Could not remove: wt-a' "$WORK/notified" || fail "notification
 grep -q 'registered config-only cron daemon .*tick' "$WORK/sup.log" || fail "tick not registered: $(cat "$WORK/sup.log")"
 ! grep -q 'worktree-reap' "$WORK/sup.log" || fail "supervisor picked up jobs outside its config dir"
 supervisor="$(pgrep -P "$sup")"
+[ -n "$supervisor" ] || fail "the agent's supervisor gave way to a stray one: $(tail -3 "$WORK/sup.log")"
+! kill -0 "$stray" 2>/dev/null || fail "the stray supervisor $stray outlived the agent's start"
 stop; sup=""
 ! kill -0 "$supervisor" 2>/dev/null || fail "supervisor $supervisor outlived stop"
 
