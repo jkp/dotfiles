@@ -122,4 +122,5 @@ load-pitchfork.sh
 {{ end }}
 {{ if or (ne .chezmoi.os "darwin") (not (has "docker-prune" $jobs)) }}
 .local/bin/docker-prune
+.local/bin/docker-image-use
 {{ end }}

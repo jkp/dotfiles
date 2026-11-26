@@ -1,6 +1,7 @@
 #!/bin/bash
-# docker-prune: removes unused images and build cache, then trims Colima's
-# disk so the space returns to macOS. Does nothing while Colima is stopped;
+# docker-prune: removes build cache unused for 7 days and untagged images older
+# than 7 days, logging Docker's disk use before and after, then trims Colima's
+# disk so the space returns to macOS. Tagged images stay. Does nothing while Colima is stopped;
 # fails (so the job notifies) when a step fails.
 #
 #   ./tests/docker-prune.sh
@@ -25,11 +26,14 @@ run() { : > "$WORK/calls"; PATH="$WORK/bin:/usr/bin:/bin" "$BIN" > "$WORK/out" 2
 
 run || fail "a normal run failed: $(cat "$WORK/out")"
 want='colima status
-docker image prune -a -f
-docker builder prune -a -f
-colima ssh -- sudo fstrim -av'
-[ "$(cat "$WORK/calls")" = "$want" ] || fail "expected status, image prune, builder prune, trim; got: $(cat "$WORK/calls")"
-echo "PASS: prunes unused images and build cache, then trims the disk"
+docker system df
+docker image prune -f --filter until=168h
+docker builder prune -a -f --filter until=168h
+colima ssh -- sudo fstrim -av
+docker system df'
+[ "$(cat "$WORK/calls")" = "$want" ] || fail "expected status, df, 7-day image and cache prunes, trim, df; got: $(cat "$WORK/calls")"
+grep -q 'Before:' "$WORK/out" && grep -q 'After:' "$WORK/out" || fail "disk use not labelled before and after: $(cat "$WORK/out")"
+echo "PASS: prunes only cache and untagged images idle for 7 days, logging disk use around it"
 
 echo status > "$WORK/colima.fails"
 run || fail "stopped Colima should exit 0: $(cat "$WORK/out")"

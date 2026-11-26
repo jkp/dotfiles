@@ -25,11 +25,19 @@ cron = "0 */15 * * * *"
 {{- end }}
 {{- if has "docker-prune" $jobs }}
 
-# Sundays: unused images and build cache go, then Colima's disk is trimmed so
-# macOS gets the space back.
+# Sundays: build cache unused for 7 days and untagged images older than 7 days
+# go, then Colima's disk is trimmed so macOS gets the space back.
 [daemons.docker-prune]
 run = "{{ .chezmoi.homeDir }}/.local/bin/docker-prune"
 cron = "0 0 5 * * Sun"
+{{ $onFail }}
+
+# Logs each container start's image, to learn which tagged images are used
+# (`docker-image-use report`). Temporary: remove once we have the data.
+[daemons.docker-image-use]
+run = "{{ .chezmoi.homeDir }}/.local/bin/docker-image-use watch"
+boot_start = true
+retry = true
 {{ $onFail }}
 {{- end }}
 {{- if has "scratch-check" $jobs }}
