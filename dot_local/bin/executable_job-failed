@@ -5,7 +5,11 @@ set -uo pipefail
 # The name comes from config and is spliced into Lua or AppleScript, so keep only safe characters.
 job="$(printf '%s' "${PITCHFORK_DAEMON_ID:-unknown}" | sed 's|^global/||' | tr -cd 'A-Za-z0-9._/-')"
 code="$(printf '%s' "${PITCHFORK_EXIT_CODE:-}" | tr -cd '0-9')"
+# A job's last line says why it failed. Log text is untrusted too: printable ASCII, no quotes or backslashes.
+why="$(pitchfork logs "${PITCHFORK_DAEMON_ID:-}" -n 1 --raw --no-timestamp 2>/dev/null |
+    LC_ALL=C tr -cd ' -~' | tr -d '"\\' | sed 's/^ *//' | cut -c1-160)"
 title="Scheduled job failed: $job"
 body="exit ${code:-?}. Why: pitchfork logs $job"
+[ -z "$why" ] || body="exit ${code:-?}: $why"
 hs -c "hs.notify.new({title=\"$title\", informativeText=\"$body\", withdrawAfter=0}):send()" >/dev/null 2>&1 ||
     osascript -e "display notification \"$body\" with title \"$title\""

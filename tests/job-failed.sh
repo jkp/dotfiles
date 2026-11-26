@@ -13,7 +13,7 @@ trap 'rm -rf "$WORK"' EXIT
 fail() { echo "FAIL: $*"; exit 1; }
 
 mkdir "$WORK/bin"
-for tool in hs osascript; do
+for tool in hs osascript pitchfork; do
   printf '#!/bin/sh\nprintf "%%s\\n" "$*" >> "%s/%s.calls"\n[ ! -f "%s/%s.fails" ]\n' "$WORK" "$tool" "$WORK" "$tool" > "$WORK/bin/$tool"
   chmod +x "$WORK/bin/$tool"
 done
@@ -38,3 +38,17 @@ touch "$WORK/hs.fails"
 hook global/worktree-reap 1 || fail "hook failed when Hammerspoon couldn't post"
 grep -qF 'Scheduled job failed: worktree-reap' "$WORK/osascript.calls" || fail "no osascript fallback: $(cat "$WORK/osascript.calls" 2>/dev/null)"
 echo "PASS: falls back to osascript when Hammerspoon can't post"
+rm "$WORK/hs.fails"
+
+# The job's last log line says why it failed, in the notification itself.
+printf '#!/bin/sh\nprintf "%%s\\n" "$*" >> "%s/pitchfork.calls"\nprintf "%%s\\n" "$LAST_LINE"\n' "$WORK" > "$WORK/bin/pitchfork"
+: > "$WORK/hs.calls"
+LAST_LINE='Could not remove: screen-prompt' hook global/worktree-reap 1 || fail "hook failed with a reason"
+grep -qF 'logs global/worktree-reap -n 1 --raw --no-timestamp' "$WORK/pitchfork.calls" || fail "didn't read the job's last line: $(cat "$WORK/pitchfork.calls")"
+grep -qF 'informativeText="exit 1: Could not remove: screen-prompt"' "$WORK/hs.calls" || fail "reason missing: $(cat "$WORK/hs.calls")"
+echo "PASS: names why the job failed"
+
+: > "$WORK/hs.calls"
+LAST_LINE='⚠️ bad "quote") os.execute("x") \\' hook global/worktree-reap 1 || fail "hook failed on a hostile log line"
+grep -q 'informativeText="[^"\\]*", withdrawAfter=0' "$WORK/hs.calls" || fail "quote or backslash from the log reached the notification: $(cat "$WORK/hs.calls")"
+echo "PASS: a hostile log line can't break out of the notification"
