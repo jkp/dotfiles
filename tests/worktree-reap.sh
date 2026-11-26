@@ -58,4 +58,10 @@ rmdir "$WORKTREE_REAP_LOCK"
 run || fail "normal run: $(cat "$WORK/out")"
 [ ! -e "$WORKTREE_REAP_LOCK" ] || fail "lock left behind"
 
+# A failed removal is named on the last line, where the failure notification reads it.
+printf '#!/bin/bash\necho "  ⚠️  rm.sh failed for wt-a"\necho "  ⚠️  rm.sh failed for wt-b"\necho summary\nexit 1\n' > "$WORK/checkout/scripts/worktree/reap.sh"
+g -C "$WORK/checkout" update-index --assume-unchanged scripts/worktree/reap.sh
+run && fail "a failed reap exited 0"
+[ "$(tail -1 "$WORK/out")" = "Could not remove: wt-a wt-b" ] || fail "last line doesn't name the failures: $(tail -3 "$WORK/out")"
+
 echo "OK: worktree-reap"

@@ -66,7 +66,7 @@ run = "date +%s >> $WORK/ticks"
 cron = "*/2 * * * * *"
 
 [daemons.broken]
-run = "exit 7"
+run = "echo working; echo 'Could not remove: wt-a' >&2; exit 7"
 cron = "*/2 * * * * *"
 hooks = { on_fail = "$HERE/dot_local/bin/executable_job-failed" }
 EOF
@@ -80,6 +80,7 @@ until [ -s "$WORK/ticks" ] || [ "$SECONDS" -ge "$deadline" ]; do sleep 0.5; done
 [ -s "$WORK/ticks" ] || fail "no cron run within 40s: $(tail -5 "$WORK/sup.log")"
 until [ -s "$WORK/notified" ] || [ "$SECONDS" -ge "$deadline" ]; do sleep 0.5; done
 grep -qF 'Scheduled job failed: broken' "$WORK/notified" 2>/dev/null || fail "a failed run didn't notify: $(tail -5 "$WORK/sup.log")"
+grep -qF 'exit 7: Could not remove: wt-a' "$WORK/notified" || fail "notification lacks the job's last line: $(cat "$WORK/notified")"
 grep -q 'registered config-only cron daemon .*tick' "$WORK/sup.log" || fail "tick not registered: $(cat "$WORK/sup.log")"
 ! grep -q 'worktree-reap' "$WORK/sup.log" || fail "supervisor picked up jobs outside its config dir"
 supervisor="$(pgrep -P "$sup")"
