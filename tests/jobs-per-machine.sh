@@ -20,7 +20,7 @@ managed() {
         --override-data "{\"chezmoi\":{\"os\":\"$1\",\"hostname\":\"$2\"}}" \
         managed --include files,scripts --exclude encrypted </dev/null
 }
-jobs_parts='pitchfork|worktree-reap|job-failed|snapshot-thin'
+jobs_parts='pitchfork|worktree-reap|job-failed|snapshot-thin|docker-prune'
 
 for machine in "linux tkol" "linux some-box" "darwin agatas-mac"; do
     # shellcheck disable=SC2086 # two words: os hostname
@@ -30,7 +30,7 @@ done
 
 got="$(managed darwin tkol | grep -E "$jobs_parts" | sort)"
 want="$(printf '%s\n' .config/mise/conf.d/pitchfork.toml .config/pitchfork-jobs/config.toml \
-    .local/bin/job-failed .local/bin/snapshot-thin .local/bin/worktree-reap Library/LaunchAgents/co.kirkconsulting.pitchfork.plist load-pitchfork.sh | sort)"
+    .local/bin/docker-prune .local/bin/job-failed .local/bin/snapshot-thin .local/bin/worktree-reap Library/LaunchAgents/co.kirkconsulting.pitchfork.plist load-pitchfork.sh | sort)"
 [ "$got" = "$want" ] || fail "tkol's jobs parts differ: got $got"
 
 grep -q '^pitchfork' "$HERE/dot_config/mise/config.toml" && fail "pitchfork is pinned for every machine"

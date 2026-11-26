@@ -110,3 +110,6 @@ load-pitchfork.sh
 {{ if or (ne .chezmoi.os "darwin") (not (has "snapshot-thin" $jobs)) }}
 .local/bin/snapshot-thin
 {{ end }}
+{{ if or (ne .chezmoi.os "darwin") (not (has "docker-prune" $jobs)) }}
+.local/bin/docker-prune
+{{ end }}
