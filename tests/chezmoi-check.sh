@@ -48,5 +48,6 @@ for failure in status managed unmanaged; do
     fi
     grep -q 'synthetic failure' "$WORK/out"
 done
-EMPTY_CHECK=1 run_check -q
+out="$(EMPTY_CHECK=1 run_check -q)"
+[[ -z "$out" ]] || { echo "FAIL: a clean tree still reports issues: $out"; exit 1; }
 echo 'PASS: drift and custom scripts visible, installed binaries excluded, failures surfaced'
