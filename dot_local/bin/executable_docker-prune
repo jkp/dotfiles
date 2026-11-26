@@ -1,0 +1,13 @@
+#!/bin/bash
+# Remove unused Docker images and build cache, then trim Colima's disk so the
+# freed space returns to macOS (its disk image never shrinks on its own).
+# Run weekly by the pitchfork docker-prune job. Volumes are left alone: they hold data.
+set -uo pipefail
+
+colima status >/dev/null 2>&1 || { echo "Colima is not running; nothing to prune."; exit 0; }
+status=0
+docker image prune -a -f | tail -1 || status=1
+docker builder prune -a -f | tail -1 || status=1
+colima ssh -- sudo fstrim -av || status=1
+[ "$status" = 0 ] || echo "A prune or trim step failed; see above." >&2
+exit "$status"

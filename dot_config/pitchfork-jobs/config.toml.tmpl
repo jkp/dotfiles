@@ -23,6 +23,15 @@ run = "{{ .chezmoi.homeDir }}/.local/bin/snapshot-thin"
 cron = "0 */15 * * * *"
 {{ $onFail }}
 {{- end }}
+{{- if has "docker-prune" $jobs }}
+
+# Sundays: unused images and build cache go, then Colima's disk is trimmed so
+# macOS gets the space back.
+[daemons.docker-prune]
+run = "{{ .chezmoi.homeDir }}/.local/bin/docker-prune"
+cron = "0 0 5 * * Sun"
+{{ $onFail }}
+{{- end }}
 {{- if has "backup-exclusions" $jobs }}
 
 # Drains the queue verity's dependency hook fills (which also starts it at
